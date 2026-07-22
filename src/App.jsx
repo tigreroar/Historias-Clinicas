@@ -135,35 +135,27 @@ export default function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   
-  // Tab activa en el visualizador de historias clínicas
   const [activeTab, setActiveTab] = useState("personales");
-
-  // Estado del Formulario
   const [formData, setFormData] = useState(null);
   
-  // Estado de Notas de Seguimiento rápidas
   const [newFollowUpDate, setNewFollowUpDate] = useState(new Date().toISOString().split('T')[0]);
   const [newFollowUpText, setNewFollowUpText] = useState("");
 
-  // --- BASE DE DATOS CIE-10 (CARGA DINÁMICA DESDE JSON) ---
+  // --- BASE DE DATOS CIE-10 (JSON) ---
   const [cieDatabase, setCieDatabase] = useState([]);
   const [loadingCie, setLoadingCie] = useState(true);
   const [showCieSuggestions, setShowCieSuggestions] = useState(false);
 
-  // Control de alertas modal personalizadas
   const [modalAlert, setModalAlert] = useState(null);
-
-  // Control de confirmación personalizado de eliminación
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: "" });
 
-  // Referencia para la carga de archivos
   const fileInputRef = useRef(null);
 
-  // Cargar asincrónicamente el archivo JSON completo del CIE-10 subido a /public/data/cie10.json
+  // Carga asincrónica del archivo JSON desde public/data/cie10.json
   useEffect(() => {
     fetch('/data/cie10.json')
       .then((res) => {
-        if (!res.ok) throw new Error("No se encontró la base de datos CIE-10");
+        if (!res.ok) throw new Error("No se encontró el archivo cie10.json");
         return res.json();
       })
       .then((data) => {
@@ -176,7 +168,6 @@ export default function App() {
       });
   }, []);
 
-  // Cargar de manera asíncrona la herramienta para exportar a Excel
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
@@ -184,7 +175,6 @@ export default function App() {
     document.body.appendChild(script);
   }, []);
 
-  // Guardar en LocalStorage automáticamente ante cambios
   useEffect(() => {
     localStorage.setItem('hc_rehab_patients', JSON.stringify(patients));
   }, [patients]);
@@ -195,29 +185,29 @@ export default function App() {
 
   const selectedPatient = patients.find(p => p.id === selectedPatientId) || patients[0] || null;
 
-  // --- BUSCADOR DE PACIENTES ---
   const filteredPatients = patients.filter(p => 
     p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (p.diagnostico && p.diagnostico.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (p.cedulaIdentidad && p.cedulaIdentidad.includes(searchTerm))
   );
 
-  // --- FILTRO SUGERENCIAS CIE-10 EN TIEMPO REAL ---
+  // --- FILTRO DE SUGERENCIAS CIE-10 EN TIEMPO REAL (MEJORADO) ---
   const getCieSuggestions = () => {
     if (!formData || !formData.diagnostico) return [];
-    const searchVal = formData.diagnostico.toLowerCase().trim();
-    if (searchVal === "") return [];
+    
+    // Limpiamos y separamos por espacios para permitir búsquedas flexibles (ej: "colera", "A00")
+    const query = formData.diagnostico.toLowerCase().trim();
+    if (query.length === 0) return [];
 
-    // Filtrar por código o por descripción en cieDatabase
-    return cieDatabase.filter(item => 
-      item.code.toLowerCase().includes(searchVal) || 
-      item.description.toLowerCase().includes(searchVal)
-    ).slice(0, 15); // Mostrar hasta 15 sugerencias rápidas
+    return cieDatabase.filter(item => {
+      const codeMatch = item.code.toLowerCase().includes(query);
+      const descMatch = item.description.toLowerCase().includes(query);
+      return codeMatch || descMatch;
+    }).slice(0, 20); // Muestra hasta 20 coincidencias fluidas
   };
 
   const cieSuggestions = getCieSuggestions();
 
-  // --- IMPRESIÓN Y COPIAS DE SEGURIDAD ---
   const handlePrint = () => {
     window.print();
   };
@@ -262,7 +252,6 @@ export default function App() {
     e.target.value = "";
   };
 
-  // --- EXPORTAR A EXCEL DIRECTO ---
   const handleExportExcel = () => {
     if (!window.XLSX) {
       showAlert("Cargando Motor", "El procesador de Excel se está cargando de fondo, inténtelo de nuevo en 3 segundos.", "info");
@@ -304,7 +293,6 @@ export default function App() {
       const wb = window.XLSX.utils.book_new();
       window.XLSX.utils.book_append_sheet(wb, ws, "Historias Clínicas");
       
-      // Ajustar anchos de columnas automático
       const maxW = flatData.reduce((acc, row) => {
         Object.keys(row).forEach((key, i) => {
           const v = row[key] ? row[key].toString() : "";
@@ -321,7 +309,6 @@ export default function App() {
     }
   };
 
-  // --- MANIPULACIÓN DE FORMULARIO ---
   const handleStartCreate = () => {
     setFormData({
       fechaRegistro: new Date().toISOString().split('T')[0],
@@ -391,7 +378,6 @@ export default function App() {
     }
   };
 
-  // Autocompletar con la sugerencia seleccionada
   const handleSelectCie = (cieItem) => {
     setFormData(prev => ({
       ...prev,
@@ -441,7 +427,6 @@ export default function App() {
     showAlert("Paciente Eliminado", "La ficha médica fue eliminada del sistema.", "info");
   };
 
-  // --- GESTIÓN DE SEGUIMIENTOS ---
   const handleAddFollowUp = (e) => {
     e.preventDefault();
     if (!newFollowUpText.trim()) return;
@@ -480,9 +465,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased flex flex-col">
-      {/* ==========================================
-          HEADER PRINCIPAL (Invisible al imprimir)
-          ========================================== */}
       <header className="bg-gradient-to-r from-teal-700 via-cyan-700 to-blue-800 text-white shadow-lg print:hidden">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="flex items-center space-x-3">
@@ -497,7 +479,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Botones de acción general */}
           <div className="flex items-center space-x-2">
             <input 
               type="file" 
@@ -534,15 +515,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* ==========================================
-          CUERPO DE TRABAJO (Invisible al imprimir)
-          ========================================== */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-6 print:hidden">
-        
-        {/* PANEL IZQUIERDO: Búsqueda y Lista de Pacientes */}
         <section className="lg:col-span-4 flex flex-col space-y-4">
-          
-          {/* Panel de estadísticas express */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex justify-between items-center">
             <div>
               <span className="text-xs text-slate-400 font-semibold tracking-wider block uppercase">Historias de Pacientes</span>
@@ -558,7 +532,6 @@ export default function App() {
             </button>
           </div>
 
-          {/* Buscador */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-3">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Búsqueda rápida</label>
             <div className="relative">
@@ -575,7 +548,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Listado de Pacientes */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex-1 flex flex-col min-h-[400px]">
             <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
               <h2 className="text-sm font-bold text-slate-600 uppercase tracking-wider">Historial Clínico</h2>
@@ -638,13 +610,9 @@ export default function App() {
               )}
             </div>
           </div>
-
         </section>
 
-        {/* PANEL DERECHO: Visualización, Formulario de Creación / Edición */}
         <section className="lg:col-span-8 flex flex-col space-y-4">
-          
-          {/* MODO FORMULARIO: Crear o Editar */}
           {isCreating || isEditing ? (
             <form onSubmit={handleSave} className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
               <div className="px-6 py-4 bg-gradient-to-r from-teal-800 to-cyan-800 text-white flex justify-between items-center">
@@ -675,8 +643,6 @@ export default function App() {
               </div>
 
               <div className="p-6 space-y-8 max-h-[75vh] overflow-y-auto">
-                
-                {/* 1. Datos Personales */}
                 <div className="space-y-4">
                   <h3 className="text-xs font-bold text-teal-700 uppercase tracking-widest border-b border-teal-100 pb-2">
                     1. Datos Personales del Paciente
@@ -796,7 +762,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 2. Antecedentes & Patología */}
                 <div className="space-y-4">
                   <h3 className="text-xs font-bold text-teal-700 uppercase tracking-widest border-b border-teal-100 pb-2">
                     2. Clínica, Antecedentes & Alergias
@@ -846,7 +811,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 3. Examen Físico */}
                 <div className="space-y-4">
                   <h3 className="text-xs font-bold text-teal-700 uppercase tracking-widest border-b border-teal-100 pb-2">
                     3. Examen Físico & Signos Vitales
@@ -957,21 +921,20 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 4. Diagnóstico y Tratamiento */}
                 <div className="space-y-4">
                   <h3 className="text-xs font-bold text-teal-700 uppercase tracking-widest border-b border-teal-100 pb-2">
                     4. Diagnóstico, Tratamiento y Exámenes Complementarios
                   </h3>
                   <div className="space-y-3">
                     
-                    {/* DIAGNÓSTICO PRINCIPAL CON AUTOCOMPLETADO CIE-10 (CONECTADO A cie10.json) */}
+                    {/* DIAGNÓSTICO PRINCIPAL CON AUTOCOMPLETADO CIE-10 EN TIEMPO REAL */}
                     <div className="relative">
                       <label className="text-xs font-semibold text-teal-700 mb-1 flex justify-between items-center">
                         <span>Diagnóstico Principal (CIE-10 / Descripción) *</span>
-                        {loadingCie && (
-                          <span className="text-[10px] text-amber-600 font-normal">
-                            Cargando catálogo CIE-10...
-                          </span>
+                        {loadingCie ? (
+                          <span className="text-[10px] text-amber-600 font-normal">Cargando catálogo CIE-10...</span>
+                        ) : (
+                          <span className="text-[10px] text-emerald-600 font-normal">Catálogo activo ({cieDatabase.length} códigos)</span>
                         )}
                       </label>
                       <input
@@ -982,12 +945,12 @@ export default function App() {
                         onChange={handleFormChange}
                         onFocus={() => setShowCieSuggestions(true)}
                         onBlur={() => setTimeout(() => setShowCieSuggestions(false), 250)}
-                        placeholder={loadingCie ? "Cargando base CIE-10..." : "Escriba código o descripción de la afección..."}
+                        placeholder={loadingCie ? "Cargando base CIE-10..." : "Escriba código (ej: A00, M17) o descripción..."}
                         autoComplete="off"
                         className="w-full bg-teal-50/50 border border-teal-200/60 rounded-xl px-3 py-2.5 text-sm font-semibold text-teal-950 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
                       />
                       
-                      {/* Dropdown flotante con sugerencias dinámicas del CIE-10 */}
+                      {/* Dropdown flotante con sugerencias inteligentes */}
                       {showCieSuggestions && cieSuggestions.length > 0 && (
                         <div className="absolute z-20 w-full bg-white border border-slate-200 rounded-2xl shadow-xl mt-1.5 max-h-60 overflow-y-auto divide-y divide-slate-100">
                           {cieSuggestions.map((item) => (
@@ -1009,7 +972,6 @@ export default function App() {
                       )}
                     </div>
 
-                    {/* TRATAMIENTO */}
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Esquema de Tratamiento Indicado</label>
                       <textarea
@@ -1037,7 +999,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Botonera de Envío */}
               <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3">
                 <button
                   type="button"
@@ -1058,10 +1019,7 @@ export default function App() {
               </div>
             </form>
           ) : selectedPatient ? (
-            /* VISUALIZACIÓN DE LA HISTORIA CLÍNICA SELECCIONADA */
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col flex-1">
-              
-              {/* Encabezado Ficha */}
               <div className="p-6 bg-gradient-to-br from-slate-900 via-slate-800 to-teal-950 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="space-y-2">
                   <div className="flex flex-wrap gap-2 items-center">
@@ -1111,7 +1069,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* TABS INTERNAS DE NAVEGACIÓN */}
               <div className="flex border-b border-slate-100 bg-slate-50/50 p-1">
                 {[
                   { id: "personales", label: "📋 Datos Personales" },
@@ -1133,10 +1090,7 @@ export default function App() {
                 ))}
               </div>
 
-              {/* CONTENIDO DE TABS */}
               <div className="p-6 flex-1 overflow-y-auto max-h-[60vh]">
-                
-                {/* Tab 1: Datos Personales */}
                 {activeTab === "personales" && (
                   <div className="space-y-6 animate-fadeIn">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
@@ -1196,10 +1150,8 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Tab 2: Examen Físico */}
                 {activeTab === "clinica" && (
                   <div className="space-y-6 animate-fadeIn">
-                    {/* Tarjetas de Signos Vitales */}
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                       <div className="bg-rose-50/50 border border-rose-100 rounded-2xl p-3 text-center">
                         <span className="flex justify-center text-rose-600 mb-1"><SVGIcon name="heart" /></span>
@@ -1232,7 +1184,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Reporte de Exámenes Segmentados */}
                     <div className="space-y-4">
                       {["cabeza", "torax", "abdomen", "extremidades"].map((segment) => (
                         <div key={segment} className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
@@ -1248,7 +1199,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Tab 3: Diagnóstico & Tratamiento */}
                 {activeTab === "diagnostico" && (
                   <div className="space-y-5 animate-fadeIn">
                     <div className="bg-teal-50 border border-teal-100 rounded-2xl p-5">
@@ -1274,11 +1224,8 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Tab 4: Seguimiento e Historial */}
                 {activeTab === "seguimientos" && (
                   <div className="space-y-6 animate-fadeIn">
-                    
-                    {/* Formulario rápido para añadir notas de seguimiento */}
                     <form onSubmit={handleAddFollowUp} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 space-y-3">
                       <span className="text-xs font-bold text-slate-600 block uppercase tracking-wider">Añadir Evolución / Sesión de Fisioterapia</span>
                       <div className="flex flex-col sm:flex-row gap-3">
@@ -1305,7 +1252,6 @@ export default function App() {
                       </div>
                     </form>
 
-                    {/* Línea de tiempo */}
                     <div className="relative border-l-2 border-slate-200 pl-4 space-y-5">
                       {(!selectedPatient.seguimientos || selectedPatient.seguimientos.length === 0) ? (
                         <p className="text-xs text-slate-400 italic">No hay notas de seguimiento registradas para este paciente.</p>
@@ -1337,7 +1283,6 @@ export default function App() {
                     </div>
                   </div>
                 )}
-
               </div>
             </div>
           ) : (
@@ -1359,23 +1304,15 @@ export default function App() {
               </button>
             </div>
           )}
-
         </section>
       </main>
 
-      {/* ==========================================
-          PIE DE PÁGINA (Invisible al imprimir)
-          ========================================== */}
       <footer className="bg-slate-100 border-t border-slate-200 py-4 text-center text-xs text-slate-400 print:hidden mt-auto">
         <p>© 2026 Centro de Rehabilitación Integral Monteagudo. Sistema Seguro Local.</p>
       </footer>
 
-      {/* ==========================================
-          VISTA DE IMPRESIÓN EXCLUSIVA (Optimizado para hojas físicas)
-          ========================================== */}
       {selectedPatient && (
         <div className="hidden print:block p-8 font-serif bg-white text-black min-h-screen">
-          {/* Header Institucional */}
           <div className="text-center border-b-4 border-double border-black pb-4 mb-6 relative">
             <h1 className="text-2xl font-black uppercase tracking-wide">Centro de Rehabilitación Integral Monteagudo</h1>
             <h2 className="text-sm font-bold tracking-widest uppercase text-slate-700 mt-1">Historia Clínica Médica General</h2>
@@ -1387,7 +1324,6 @@ export default function App() {
             )}
           </div>
 
-          {/* Tabla de Datos Personales */}
           <div className="mb-6">
             <h3 className="text-sm font-bold bg-slate-100 px-2 py-1 border border-black uppercase mb-3">1. Información Personal del Paciente</h3>
             <table className="w-full text-xs border-collapse border border-black">
@@ -1424,7 +1360,6 @@ export default function App() {
             </table>
           </div>
 
-          {/* Antecedentes y Clínica de Entrada */}
           <div className="mb-6">
             <h3 className="text-sm font-bold bg-slate-100 px-2 py-1 border border-black uppercase mb-3">2. Antecedentes & Cuadro Clínico de Entrada</h3>
             <div className="border border-black p-3 text-xs space-y-3 leading-relaxed uppercase">
@@ -1437,7 +1372,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Examen Físico & Signos */}
           <div className="mb-6">
             <h3 className="text-sm font-bold bg-slate-100 px-2 py-1 border border-black uppercase mb-3">3. Examen Físico & Signos Vitales</h3>
             <div className="grid grid-cols-5 border border-black text-xs text-center divide-x divide-black bg-slate-50 mb-3">
@@ -1469,7 +1403,6 @@ export default function App() {
             </table>
           </div>
 
-          {/* Diagnóstico & Plan de Tratamiento */}
           <div className="mb-6">
             <h3 className="text-sm font-bold bg-slate-100 px-2 py-1 border border-black uppercase mb-3">4. Diagnóstico Clínico & Tratamiento de Rehabilitación</h3>
             <div className="border border-black p-3 text-xs space-y-3 leading-relaxed uppercase">
@@ -1479,7 +1412,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Historial de Evolución */}
           <div className="mb-12">
             <h3 className="text-sm font-bold bg-slate-100 px-2 py-1 border border-black uppercase mb-3">5. Historial de Evolución Terapéutica</h3>
             <div className="border border-black divide-y divide-black text-xs uppercase">
@@ -1496,7 +1428,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Sección de Firmas al final de la página */}
           <div className="mt-16 grid grid-cols-2 gap-12 text-center text-xs">
             <div className="space-y-1">
               <div className="border-t border-black w-2/3 mx-auto pt-2" />
@@ -1512,9 +1443,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ==========================================
-          MODAL DE CONFIRMACIÓN DE ELIMINACIÓN 
-          ========================================== */}
       {deleteConfirm.show && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center space-y-4">
@@ -1549,9 +1477,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ==========================================
-          MODAL ALERTAS PERSONALIZADAS 
-          ========================================== */}
       {modalAlert && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center space-y-4">
@@ -1572,7 +1497,6 @@ export default function App() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
