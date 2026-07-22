@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 // Extraídos y optimizados de la Clasificación Internacional de Enfermedades (CIE-10)
 // ==========================================
 const CIE10_DATABASE = [
-  // --- CIES CODIGOS DE TODO EN UNO ---
+  // --- CIES CODIGOS TODOS ---
   { code: "A00", description: "CÓLERA" },
   { code: "A01", description: "FIEBRES TIFOIDEA Y PARATIFOIDEA" },
   { code: "A02", description: "OTRAS INFECCIONES DEBIDAS A SALMONELLA" },
