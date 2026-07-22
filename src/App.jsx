@@ -113,10 +113,11 @@ export default function App() {
 
   const fileInputRef = useRef(null);
 
+  // Carga robusta del JSON usando ruta absoluta pública
   useEffect(() => {
-    fetch('/data/cie10.json')
+    fetch(`${process.env.PUBLIC_URL || ''}/data/cie10.json`)
       .then((res) => {
-        if (!res.ok) throw new Error("No se encontró el archivo cie10.json");
+        if (!res.ok) throw new Error("No se pudo conectar con el archivo cie10.json");
         return res.json();
       })
       .then((data) => {
@@ -152,13 +153,13 @@ export default function App() {
     (p.cedulaIdentidad && p.cedulaIdentidad.includes(searchTerm))
   );
 
-  // --- FUNCIÓN PARA ELIMINAR ACENTOS Y NORMALIZAR BÚSQUEDAS ---
+  // Función para normalizar texto (elimina tildes y pasa a minúsculas para búsqueda tipo Google)
   const normalizeText = (str) => {
     if (!str) return "";
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return str.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   };
 
-  // --- FILTRO CIE-10 ROBUSTO (IGNORA MAYÚSCULAS Y ACENTOS) ---
+  // --- FILTRO DE SUGERENCIAS EN TIEMPO REAL TIPO GOOGLE ---
   const getCieSuggestions = () => {
     if (!formData || typeof formData.diagnostico !== 'string') return [];
     const query = normalizeText(formData.diagnostico).trim();
@@ -168,7 +169,7 @@ export default function App() {
       const codeNorm = normalizeText(item.code);
       const descNorm = normalizeText(item.description);
       return codeNorm.includes(query) || descNorm.includes(query);
-    }).slice(0, 20);
+    }).slice(0, 25);
   };
 
   const cieSuggestions = getCieSuggestions();
@@ -621,7 +622,7 @@ export default function App() {
                   <h3 className="text-xs font-bold text-teal-700 uppercase tracking-widest border-b border-teal-100 pb-2">4. Diagnóstico, Tratamiento y Exámenes Complementarios</h3>
                   <div className="space-y-3">
                     
-                    {/* AUTOCOMPLETADO CIE-10 CON NORMALIZACIÓN DE ACENTOS Y MAYÚSCULAS */}
+                    {/* SECCIÓN 4: CAMPO DE DIAGNÓSTICO PRINCIPAL */}
                     <div className="relative">
                       <label className="text-xs font-semibold text-teal-700 mb-1 flex justify-between items-center">
                         <span>Diagnóstico Principal (CIE-10 / Descripción) *</span>
@@ -639,12 +640,12 @@ export default function App() {
                         onChange={handleFormChange}
                         onFocus={() => setShowCieSuggestions(true)}
                         onBlur={() => setTimeout(() => setShowCieSuggestions(false), 300)}
-                        placeholder="Escriba código (ej. A00, M17) o descripción sin importar acentos..."
+                        placeholder="Escriba código (ej. A00, M17) o nombre..."
                         autoComplete="off"
                         className="w-full bg-teal-50/50 border border-teal-200/60 rounded-xl px-3 py-2.5 text-sm font-semibold text-teal-950 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
                       />
                       
-                      {/* Desplegable de opciones dinámicas */}
+                      {/* DESPLEGABLE TIPO GOOGLE */}
                       {showCieSuggestions && cieSuggestions.length > 0 && (
                         <div className="absolute z-30 w-full bg-white border border-slate-200 rounded-2xl shadow-2xl mt-1.5 max-h-60 overflow-y-auto divide-y divide-slate-100">
                           {cieSuggestions.map((item) => (
