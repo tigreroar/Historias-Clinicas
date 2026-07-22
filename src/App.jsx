@@ -104,7 +104,6 @@ export default function App() {
   const [newFollowUpDate, setNewFollowUpDate] = useState(new Date().toISOString().split('T')[0]);
   const [newFollowUpText, setNewFollowUpText] = useState("");
 
-  // Base de datos CIE-10 cargada desde el JSON
   const [cieDatabase, setCieDatabase] = useState([]);
   const [loadingCie, setLoadingCie] = useState(true);
   const [showCieSuggestions, setShowCieSuggestions] = useState(false);
@@ -114,7 +113,6 @@ export default function App() {
 
   const fileInputRef = useRef(null);
 
-  // Carga asincrónica del JSON de CIE-10
   useEffect(() => {
     fetch('/data/cie10.json')
       .then((res) => {
@@ -154,17 +152,23 @@ export default function App() {
     (p.cedulaIdentidad && p.cedulaIdentidad.includes(searchTerm))
   );
 
-  // --- FILTRO INTELIGENTE Y DIRECTO CIE-10 ---
+  // --- FUNCIÓN PARA ELIMINAR ACENTOS Y NORMALIZAR BÚSQUEDAS ---
+  const normalizeText = (str) => {
+    if (!str) return "";
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  };
+
+  // --- FILTRO CIE-10 ROBUSTO (IGNORA MAYÚSCULAS Y ACENTOS) ---
   const getCieSuggestions = () => {
     if (!formData || typeof formData.diagnostico !== 'string') return [];
-    const query = formData.diagnostico.toLowerCase().trim();
+    const query = normalizeText(formData.diagnostico).trim();
     if (query.length === 0) return [];
 
     return cieDatabase.filter(item => {
-      const codeStr = item.code ? item.code.toLowerCase() : "";
-      const descStr = item.description ? item.description.toLowerCase() : "";
-      return codeStr.includes(query) || descStr.includes(query);
-    }).slice(0, 15);
+      const codeNorm = normalizeText(item.code);
+      const descNorm = normalizeText(item.description);
+      return codeNorm.includes(query) || descNorm.includes(query);
+    }).slice(0, 20);
   };
 
   const cieSuggestions = getCieSuggestions();
@@ -617,30 +621,30 @@ export default function App() {
                   <h3 className="text-xs font-bold text-teal-700 uppercase tracking-widest border-b border-teal-100 pb-2">4. Diagnóstico, Tratamiento y Exámenes Complementarios</h3>
                   <div className="space-y-3">
                     
-                    {/* SECCIÓN CRÍTICA DE AUTOCOMPLETADO CIE-10 */}
+                    {/* AUTOCOMPLETADO CIE-10 CON NORMALIZACIÓN DE ACENTOS Y MAYÚSCULAS */}
                     <div className="relative">
                       <label className="text-xs font-semibold text-teal-700 mb-1 flex justify-between items-center">
                         <span>Diagnóstico Principal (CIE-10 / Descripción) *</span>
                         {loadingCie ? (
                           <span className="text-[10px] text-amber-600 font-normal">Cargando catálogo...</span>
                         ) : (
-                          <span className="text-[10px] text-emerald-600 font-bold">Catálogo listo ({cieDatabase.length} registros)</span>
+                          <span className="text-[10px] text-emerald-600 font-bold">Catálogo activo ({cieDatabase.length} registros)</span>
                         )}
                       </label>
                       <input
                         type="text"
                         name="diagnostico"
                         required
-                        value={formData.diagnostico}
+                        value={formData.diagnostico || ""}
                         onChange={handleFormChange}
                         onFocus={() => setShowCieSuggestions(true)}
                         onBlur={() => setTimeout(() => setShowCieSuggestions(false), 300)}
-                        placeholder="Escriba código (ej. A00, M17) o nombre..."
+                        placeholder="Escriba código (ej. A00, M17) o descripción sin importar acentos..."
                         autoComplete="off"
                         className="w-full bg-teal-50/50 border border-teal-200/60 rounded-xl px-3 py-2.5 text-sm font-semibold text-teal-950 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
                       />
                       
-                      {/* Desplegable en tiempo real */}
+                      {/* Desplegable de opciones dinámicas */}
                       {showCieSuggestions && cieSuggestions.length > 0 && (
                         <div className="absolute z-30 w-full bg-white border border-slate-200 rounded-2xl shadow-2xl mt-1.5 max-h-60 overflow-y-auto divide-y divide-slate-100">
                           {cieSuggestions.map((item) => (
