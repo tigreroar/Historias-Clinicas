@@ -1,101 +1,3621 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 // ==========================================
-// BASE DE DATOS CIE-10 COMPLETA Y LIMPIA
+// BASE DE DATOS EXTENDIDA DE CÓDIGOS CIE-10 
+// Extraídos y optimizados de la Clasificación Internacional de Enfermedades (CIE-10)
 // ==========================================
-const CIE10_MASTER_DATABASE = [
-  { code: "A00", description: "Cólera" },
-  { code: "A00.0", description: "Cólera debido a Vibrio cholerae O1, biotipo cholerae" },
-  { code: "A00.1", description: "Cólera debido a Vibrio cholerae O1, biotipo El Tor" },
-  { code: "A00.9", description: "Cólera, no especificado" },
-  { code: "A01", description: "Fiebres tifoidea y paratifoidea" },
-  { code: "A01.0", description: "Fiebre tifoidea" },
-  { code: "A01.1", description: "Fiebre paratifoidea A" },
-  { code: "A01.2", description: "Fiebre paratifoidea B" },
-  { code: "A01.3", description: "Fiebre paratifoidea C" },
-  { code: "A01.4", description: "Fiebre paratifoidea, no especificada" },
-  { code: "A02", description: "Otras infecciones debidas a Salmonella" },
-  { code: "A02.0", description: "Enteritis debida a Salmonella" },
-  { code: "A02.1", description: "Septicemia debida a Salmonella" },
-  { code: "A02.2", description: "Infecciones localizadas debidas a Salmonella" },
-  { code: "A02.8", description: "Otras infecciones especificadas como debidas a Salmonella" },
-  { code: "A02.9", description: "Infección debida a Salmonella, no especificada" },
-  { code: "A03", description: "Shigelosis" },
-  { code: "A03.0", description: "Shigelosis debida a Shigella dysenteriae" },
-  { code: "A03.1", description: "Shigelosis debida a Shigella flexneri" },
-  { code: "A03.2", description: "Shigelosis debida a Shigella boydii" },
-  { code: "A03.3", description: "Shigelosis debida a Shigella sonnei" },
-  { code: "A03.8", description: "Otras shigelosis" },
-  { code: "A03.9", description: "Shigelosis de tipo no especificado" },
-  { code: "A04", description: "Otras infecciones intestinales bacterianas" },
-  { code: "A05", description: "Otras intoxicaciones alimentarias bacterianas, no clasificadas en otra parte" },
-  { code: "A06", description: "Amebiasis" },
-  { code: "A07", description: "Otras enfermedades intestinales debidas a protozoarios" },
-  { code: "A08", description: "Infecciones intestinales debidas a virus y otros organismos especificados" },
-  { code: "A09", description: "Diarrea y gastroenteritis de presunto origen infeccioso" },
-  { code: "A15", description: "Tuberculosis respiratoria, confirmada bacteriológica e histológicamente" },
-  { code: "A16", description: "Tuberculosis respiratoria, no confirmada bacteriológica o histológicamente" },
-  { code: "A17", description: "Tuberculosis del sistema nervioso" },
-  { code: "A18", description: "Tuberculosis de otros órganos" },
-  { code: "A19", description: "Tuberculosis miliar" },
-  { code: "A20", description: "Peste" },
-  { code: "A21", description: "Tularemia" },
-  { code: "A22", description: "Carbunco [ántrax]" },
-  { code: "A23", description: "Brucelosis" },
-  { code: "A24", description: "Muermo y melioidosis" },
-  { code: "A25", description: "Fiebres por mordedura de rata" },
-  { code: "A26", description: "Erisipeloide" },
-  { code: "A27", description: "Leptospirosis" },
-  { code: "A28", description: "Otras enfermedades zoonóticas bacterianas, no clasificadas en otra parte" },
-  { code: "A30", description: "Lepra [enfermedad de Hansen]" },
-  { code: "A31", description: "Infecciones debidas a otras micobacterias" },
-  { code: "A32", description: "Listeriosis" },
-  { code: "A33", description: "Tétanos neonatal" },
-  { code: "A34", description: "Tétanos obstétrico" },
-  { code: "A35", description: "Otros tétanos" },
-  { code: "A36", description: "Difteria" },
-  { code: "A37", description: "Tos ferina [tos convulsiva]" },
-  { code: "A38", description: "Escarlatina" },
-  { code: "A39", description: "Infección meningocócica" },
-  { code: "A40", description: "Septicemia estreptocócica" },
-  { code: "A41", description: "Otras septicemias" },
-  { code: "A42", description: "Actinomicosis" },
-  { code: "A43", description: "Nocardiosis" },
-  { code: "A44", description: "Bartonelosis" },
-  { code: "A46", description: "Erisipela" },
-  { code: "A48", description: "Otras enfermedades bacterianas, no clasificadas en otra parte" },
-  { code: "A49", description: "Infección bacteriana de sitio no especificado" },
-  { "code": "G56.0", "description": "SINDROME DEL TUNEL CARPIANO" },
-  { "code": "G51.0", "description": "PARALISIS DE BELL (PARALISIS FACIAL)" },
-  { "code": "I10", "description": "HIPERTENSION ESENCIAL (PRIMARIA)" },
-  { "code": "M16.0", "description": "COXARTROSIS PRIMARIA BILATERAL" },
-  { "code": "M16.1", "description": "COXARTROSIS PRIMARIA UNILATERAL" },
-  { "code": "M17.0", "description": "GONARTROSIS PRIMARIA BILATERAL" },
-  { "code": "M17.1", "description": "GONARTROSIS PRIMARIA UNILATERAL" },
-  { "code": "M17.3", "description": "GONARTROSIS POSTRAUMATICA UNILATERAL" },
-  { "code": "M17.9", "description": "GONARTROSIS, NO ESPECIFICADA" },
-  { "code": "M23.0", "description": "MENISCO QUISTICO" },
-  { "code": "M23.2", "description": "TRASTORNO DE MENISCO DEBIDO A DESGARRO O LESION ANTIGUA" },
-  { "code": "M23.3", "description": "OTROS TRASTORNOS DE LOS MENISCOS (DESGARRO DEGENERATIVO)" },
-  { "code": "M23.8", "description": "OTROS TRASTORNOS INTERNOS DE LA RODILLA (LESION DE LIGAMENTOS COLATERALES/CRUZADOS)" },
-  { "code": "M25.51", "description": "DOLOR EN ARTICULACION DEL HOMBRO" },
-  { "code": "M25.55", "description": "DOLOR EN ARTICULACION DE LA CADERA" },
-  { "code": "M25.56", "description": "DOLOR EN ARTICULACION DE LA RODILLA" },
-  { "code": "M54.2", "description": "CERVICALGIA" },
-  { "code": "M54.3", "description": "CIATICA" },
-  { "code": "M54.4", "description": "LUMBAGO CON CIATICA" },
-  { "code": "M54.5", "description": "LUMBAGO NO ESPECIFICADO (LUMBALGIA AGUDA O CRONICA)" },
-  { "code": "M54.6", "description": "DOLOR EN LA COLUMNA TORACICA (DORSALGIA)" },
-  { "code": "M75.0", "description": "CAPSULITIS ADHESIVA DEL HOMBRO (HOMBRO CONGELADO)" },
-  { "code": "M75.1", "description": "SINDROME DEL MANGUITO ROTATORIO" },
-  { "code": "M77.0", "description": "EPICONDILITIS MEDIAL (CODO DE GOLFISTA)" },
-  { "code": "M77.1", "description": "EPICONDILITIS LATERAL (CODO DE TENISTA)" },
-  { "code": "R26.2", "description": "DIFICULTAD PARA CAMINAR, NO CLASIFICADA EN OTRA PARTE" },
-  { "code": "R52.2", "description": "OTRO DOLOR CRONICO" }
+const CIE10_DATABASE = [
+  // --- CIES CODIGOS DE TODO EN UNO ---
+  { code: "A00", description: "CÓLERA" },
+  { code: "A01", description: "FIEBRES TIFOIDEA Y PARATIFOIDEA" },
+  { code: "A02", description: "OTRAS INFECCIONES DEBIDAS A SALMONELLA" },
+  { code: "A03", description: "SHIGELOSIS" },
+  { code: "A04", description: "OTRAS INFECCIONES INTESTINALES BACTERIANAS" },
+  { code: "A05", description: "OTRAS INTOXICACIONES ALIMENTARIAS BACTERIANAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "A06", description: "AMEBIASIS" },
+  { code: "A07", description: "OTRAS ENFERMEDADES INTESTINALES DEBIDAS A PROTOZOARIOS" },
+  { code: "A08", description: "INFECCIONES INTESTINALES DEBIDAS A VIRUS Y OTROS ORGANISMOS ESPECIFICADOS" },
+  { code: "A09", description: "DIARREA Y GASTROENTERITIS DE PRESUNTO ORIGEN INFECCIOSO" },
+  { code: "A15", description: "TUBERCULOSIS RESPIRATORIA, CONFIRMADA BACTERIOLÓGICA E HISTOLÓGICAMENTE" },
+  { code: "A16", description: "TUBERCULOSIS RESPIRATORIA, NO CONFIRMADA BACTERIOLÓGICA O HISTOLÓGICAMENTE" },
+  { code: "A17", description: "TUBERCULOSIS DEL SISTEMA NERVIOSO" },
+  { code: "A18", description: "TUBERCULOSIS DE OTROS ÓRGANOS" },
+  { code: "A19", description: "TUBERCULOSIS MILIAR" },
+  { code: "A20", description: "PESTE" },
+  { code: "A21", description: "TULAREMIA" },
+  { code: "A22", description: "CARBUNCO [ÁNTRAX]" },
+  { code": "A23", description: "BRUCELOSIS" },
+  { code": "A24", description: "MUERMO Y MELIOIDOSIS" },
+  { code": "A25", description: "FIEBRES POR MORDEDURA DE RATA" },
+  { code": "A26", description: "ERISIPELOIDE" },
+  { code": "A27", description: "LEPTOSPIROSIS" },
+  { code": "A28", description: "OTRAS ENFERMEDADES ZOONÓTICAS BACTERIANAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code": "A30", description: "LEPRA [ENFERMEDAD DE HANSEN]" },
+  { code": "A31", description: "INFECCIONES DEBIDAS A OTRAS MICOBACTERIAS" },
+  { code": "A32", description: "LISTERIOSIS" },
+  { code": "A33", description: "TÉTANOS NEONATAL" },
+  { code": "A34", description: "TÉTANOS OBSTÉTRICO" },
+  { code": "A35", description: "OTROS TÉTANOS" },
+  { code": "A36", description: "DIFTERIA" },
+  { code": "A37", description: "TOS FERINA [TOS CONVULSIVA]" },
+  { code": "A38", description: "ESCARLATINA" },
+  { code": "A39", description: "INFECCIÓN MENINGOCÓCICA" },
+  { code": "A40", description: "SEPTICEMIA ESTREPTOCÓCICA" },
+  { code": "A41", description: "OTRAS SEPTICEMIAS" },
+  { code": "A42", description: "ACTINOMICOSIS" },
+  { code": "A43", description: "NOCARDIOSIS" },
+  { code": "A44", description: "BARTONELOSIS" },
+  { code": "A46", description: "ERISIPELA" },
+  { code": "A48", description: "OTRAS ENFERMEDADES BACTERIANAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code": "A49", description: "INFECCIÓN BACTERIANA DE SITIO NO ESPECIFICADO" },
+  { code": "A50", description: "SÍFILIS CONGÉNITA" },
+  { code": "A51", description: "SÍFILIS PRECOZ" },
+  { code": "A52", description: "SÍFILIS TARDÍA" },
+  { code": "A53", description: "OTRAS SÍFILIS Y LAS NO ESPECIFICADAS" },
+  { code": "A54", description: "INFECCIÓN GONOCÓCICA" },
+  { code": "A55", description: "LINFOGRANULOMA (VENÉREO) POR CLAMIDIAS" },
+  { code": "A56", description: "OTRAS ENFERMEDADES DE TRANSMISIÓN SEXUAL DEBIDAS A CLAMIDIAS" },
+  { code": "A57", description: "CHANCRO BLANDO" },
+  { code": "A58", description: "GRANULOMA INGUINAL" },
+  { code": "A59", description: "TRICOMONIASIS" },
+  { code": "A60", description: "INFECCIÓN ANOGENITAL DEBIDA A VIRUS DEL HERPES [HERPES SIMPLE]" },
+  { code: "A63", description: "OTRAS ENFERMEDADES DE TRANSMISIÓN PREDOMINANTEMENTE SEXUAL, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "A64", description: "ENFERMEDAD DE TRANSMISIÓN SEXUAL NO ESPECIFICADA" },
+  { code: "A65", description: "SÍFILIS NO VENÉREA" },
+  { code: "A66", description: "FRAMBESIA" },
+  { code: "A67", description: "PINTA [CARATE]" },
+  { code: "A68", description: "FIEBRES RECURRENTES" },
+  { code: "A69", description: "OTRAS INFECCIONES CAUSADAS POR ESPIROQUETAS" },
+  { code: "A70", description: "INFECCIÓN DEBIDA A CHLAMYDIA PSITTACI" },
+  { code: "A71", description: "TRACOMA" },
+  { code: "A74", description: "OTRAS ENFERMEDADES CAUSADAS POR CLAMIDIAS" },
+  { code: "A75", description: "TIFUS" },
+  { code: "A77", description: "FIEBRE MACULOSA [RICKETTSIOSIS TRANSMITIDA POR GARRAPATAS]" },
+  { code: "A78", description: "FIEBRE Q" },
+  { code: "A79", description: "OTRAS RICKETTSIOSIS" },
+  { code: "A80", description: "POLIOMIELITIS AGUDA" },
+  { code: "A81", description: "INFECCIONES DEL SISTEMA NERVIOSO CENTRAL POR VIRUS ATÍPICO" },
+  { code: "A82", description: "RABIA" },
+  { code: "A83", description: "ENCEFALITIS VIRAL TRANSMITIDA POR MOSQUITOS" },
+  { code: "A84", description: "ENCEFALITIS VIRAL TRANSMITIDA POR GARRAPATAS" },
+  { code: "A85", description: "OTRAS ENCEFALITIS VIRALES, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "A86", description: "ENCEFALITIS VIRAL, NO ESPECIFICADA" },
+  { code: "A87", description: "MENINGITIS VIRAL" },
+  { code: "A88", description: "OTRAS INFECCIONES VIRALES DEL SISTEMA NERVIOSO CENTRAL, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "A89", description: "INFECCIÓN VIRAL DEL SISTEMA NERVIOSO CENTRAL, NO ESPECIFICADA" },
+  { code: "A90", description: "FIEBRE DEL DENGUE [DENGUE CLÁSICO]" },
+  { code: "A91", description: "FIEBRE DEL DENGUE HEMORRÁGICO" },
+  { code: "A92", description: "OTRAS FIEBRES VIRALES TRANSMITIDAS POR MOSQUITOS" },
+  { code: "A93", description: "OTRAS FIEBRES VIRALES TRANSMITIDAS POR ARTRÓPODOS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "A94", description: "FIEBRE VIRAL TRANSMITIDA POR ARTRÓPODOS, NO ESPECIFICADA" },
+  { code: "A95", description: "FIEBRE AMARILLA" },
+  { code: "A96", description: "FIEBRE HEMORRÁGICA POR ARENAVIRUS" },
+  { code: "A98", description: "OTRAS FIEBRES VIRALES HEMORRÁGICAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "A99", description: "FIEBRE VIRAL HEMORRÁGICA, NO ESPECIFICADA" },
+  { code: "B00", description: "INFECCIONES HERPÉTICAS [HERPES SIMPLE]" },
+  { code: "B01", description: "VARICELA" },
+  { code: "B02", description: "HERPES ZOSTER" },
+  { code: "B03", description: "VIRUELA" },
+  { code: "B04", description: "VIRUELA DE LOS MONOS" },
+  { code: "B05", description: "SARAMPIÓN" },
+  { code: "B06", description: "RUBÉOLA [SARAMPIÓN ALEMÁN]" },
+  { code: "B07", description: "VERRUGAS VÍRICAS" },
+  { code: "B08", description: "OTRAS INFECCIONES VÍRICAS CARACTERIZADAS POR LESIONES DE LA PIEL Y DE LAS MEMBRANAS MUCOSAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "B09", description: "INFECCIÓN VIRAL NO ESPECIFICADA, CARACTERIZADA POR LESIONES DE LA PIEL Y DE LAS MEMBRANAS MUCOSAS" },
+  { code: "B15", description: "HEPATITIS AGUDA TIPO A" },
+  { code: "B16", description: "HEPATITIS AGUDA TIPO B" },
+  { code: "B17", description: "OTRAS HEPATITIS VIRALES AGUDAS" },
+  { code: "B18", description: "HEPATITIS VIRAL CRÓNICA" },
+  { code: "B19", description: "HEPATITIS VIRAL, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B20", description: "ENFERMEDAD POR VIRUS DE LA INMUNODEFICIENCIA HUMANA [VIH], RESULTANTE EN ENFERMEDADES INFECCIOSAS Y PARASITARIAS" },
+  { code: "B21", description: "ENFERMEDAD POR VIRUS DE LA INMUNODEFICIENCIA HUMANA [VIH], RESULTANTE EN TUMORES MALIGNOS" },
+  { code: "B22", description: "ENFERMEDAD POR VIRUS DE LA INMUNODEFICIENCIA HUMANA [VIH], RESULTANTE EN OTRAS ENFERMEDADES ESPECIFICADAS" },
+  { code: "B23", description: "ENFERMEDAD POR VIRUS DE LA INMUNODEFICIENCIA HUMANA [VIH], RESULTANTE EN OTRAS AFECCIONES" },
+  { code: "B24", description: "ENFERMEDAD POR VIRUS DE LA INMUNODEFICIENCIA HUMANA [VIH], SIN OTRA ESPECIFICACIÓN" },
+  { code: "B25", description: "ENFERMEDAD DEBIDA A VIRUS CITOMEGÁLICO" },
+  { code: "B26", description: "PAROTIDITIS INFECCIOSA" },
+  { code: "B27", description: "MONONUCLEOSIS INFECCIOSA" },
+  { code: "B30", description: "CONJUNTIVITIS VIRAL" },
+  { code: "B33", description: "OTRAS ENFERMEDADES VIRALES, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "B34", description: "INFECCIÓN VIRAL DE SITIO NO ESPECIFICADO" },
+  { code: "B35", description: "DERMATOFITOSIS" },
+  { code: "B36", description: "OTRAS MICOSIS SUPERFICIALES" },
+  { code: "B37", description: "CANDIDIASIS" },
+  { code: "B38", description: "COCCIDIOIDOMICOSIS" },
+  { code: "B39", description: "HISTOPLASMOSIS" },
+  { code: "B40", description: "BLASTOMICOSIS" },
+  { code: "B41", description: "PARACOCCIDIOIDOMICOSIS" },
+  { code: "B42", description: "ESPOROTRICOSIS" },
+  { code: "B43", description: "CROMOMICOSIS Y ABSCESO FEOMICÓTICO" },
+  { code: "B44", description: "ASPERGILOSIS" },
+  { code: "B45", description: "CRIPTOCOCOSIS" },
+  { code: "B46", description: "CIGOMICOSIS" },
+  { code: "B47", description: "MICETOMA" },
+  { code: "B48", description: "OTRAS MICOSIS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "B49", description: "MICOSIS, NO ESPECIFICADA" },
+  { code: "B50", description: "PALUDISMO [MALARIA] DEBIDO A PLASMODIUM FALCIPARUM" },
+  { code: "B51", description: "PALUDISMO [MALARIA] DEBIDO A PLASMODIUM VIVAX" },
+  { code: "B52", description: "PALUDISMO [MALARIA] DEBIDO A PLASMODIUM MALARIAE" },
+  { code: "B53", description: "OTRO PALUDISMO [MALARIA] CONFIRMADO PARASITOLÓGICAMENTE" },
+  { code: "B54", description: "PALUDISMO [MALARIA] NO ESPECIFICADO" },
+  { code: "B55", description: "LEISHMANIASIS" },
+  { code: "B56", description: "TRIPANOSOMIASIS AFRICANA" },
+  { code: "B57", description: "ENFERMEDAD DE CHAGAS" },
+  { code: "B58", description: "TOXOPLASMOSIS" },
+  { code: "B59", description: "NEUMOCISTOSIS" },
+  { code: "B60", description: "OTRAS ENFERMEDADES DEBIDAS A PROTOZOARIOS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "B64", description: "ENFERMEDAD DEBIDA A PROTOZOARIOS, NO ESPECIFICADA" },
+  { code: "B65", description: "ESQUISTOSOMIASIS [BILHARZIASIS]" },
+  { code: "B66", description: "OTRAS INFECCIONES DEBIDAS A TREMATODOS" },
+  { code: "B67", description: "EQUINOCOCOSIS" },
+  { code: "B68", description: "TENIASIS" },
+  { code: "B69", description: "CISTICERCOSIS" },
+  { code: "B70", description: "DIFILOBOTRIASIS Y ESPARGANOSIS" },
+  { code: "B71", description: "OTRAS INFECCIONES DEBIDAS A CESTODOS" },
+  { code: "B72", description: "DRACONTIASIS" },
+  { code: "B73", description: "ONCOCERCOSIS" },
+  { code: "B74", description: "FILARIASIS" },
+  { code: "B75", description: "TRIQUINOSIS" },
+  { code: "B76", description: "ANQUILOSTOMIASIS Y NECATORIASIS" },
+  { code: "B77", description: "ASCARIASIS" },
+  { code: "B78", description: "ESTRONGILOIDIASIS" },
+  { code: "B79", description: "TRICURIASIS" },
+  { code: "B80", description: "ENTEROBIASIS" },
+  { code: "B81", description: "OTRAS HELMINTIASIS INTESTINALES, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "B82", description: "PARASITOSIS INTESTINALES, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B83", description: "OTRAS HELMINTIASIS" },
+  { code: "B85", description: "PEDICULOSIS Y PHTHIRIASIS" },
+  { code: "B86", description: "ESCABIOSIS" },
+  { code: "B87", description: "MIASIS" },
+  { code: "B88", description: "OTRAS INFESTACIONES" },
+  { code: "B89", description: "ENFERMEDAD PARASITARIA, NO ESPECIFICADA" },
+  { code: "B90", description: "SECUELAS DE TUBERCULOSIS" },
+  { code: "B91", description: "SECUELAS DE POLIOMIELITIS" },
+  { code: "B92", description: "SECUELAS DE LEPRA" },
+  { code: "B94", description: "SECUELAS DE OTRAS ENFERMEDADES INFECCIOSAS Y PARASITARIAS Y DE LAS NO ESPECIFICADAS" },
+  { code: "B95", description: "ESTREPTOCOCOS Y ESTAFILOCOCOS COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B96", description: "OTROS AGENTES BACTERIANOS COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B97", description: "AGENTES VIRALES COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B99", description: "OTRAS ENFERMEDADES INFECCIOSAS Y LAS NO ESPECIFICADAS" },
+  { code: "C00", description: "TUMOR MALIGNO DEL LABIO" },
+  { code: "C01", description: "TUMOR MALIGNO DE LA BASE DE LA LENGUA" },
+  { code: "C02", description: "TUMOR MALIGNO DE OTRAS PARTES Y DE LAS NO ESPECIFICADAS DE LA LENGUA" },
+  { code: "C03", description: "TUMOR MALIGNO DE LA ENCÍA" },
+  { code: "C04", description: "TUMOR MALIGNO DEL PISO DE LA BOCA" },
+  { code: "C05", description: "TUMOR MALIGNO DEL PALADAR" },
+  { code: "C06", description: "TUMOR MALIGNO DE OTRAS PARTES Y DE LAS NO ESPECIFICADAS DE LA BOCA" },
+  { code: "C07", description: "TUMOR MALIGNO DE LA GLÁNDULA PARÓTIDA" },
+  { code: "C08", description: "TUMOR MALIGNO DE OTRAS GLÁNDULAS SALIVALES MAYORES Y DE LAS NO ESPECIFICADAS" },
+  { code: "C09", description: "TUMOR MALIGNO DE LA AMÍGDALA" },
+  { code: "C10", description: "TUMOR MALIGNO DE LA OROFARINGE" },
+  { code: "C11", description: "TUMOR MALIGNO DE LA NASOFARINGE" },
+  { code: "C12", description: "TUMOR MALIGNO DEL SENO PIRIFORME" },
+  { code: "C13", description: "TUMOR MALIGNO DE LA HIPOFARINGE" },
+  { code: "C14", description: "TUMOR MALIGNO DE OTROS SITIOS Y DE LOS MAL DEFINIDOS DEL LABIO, DE LA CAVIDAD BUCAL Y DE LA FARINGE" },
+  { code: "C15", description: "TUMOR MALIGNO DEL ESÓFAGO" },
+  { code: "C16", description: "TUMOR MALIGNO DEL ESTÓMAGO" },
+  { code: "C17", description: "TUMOR MALIGNO DEL INTESTINO DELGADO" },
+  { code: "C18", description: "TUMOR MALIGNO DEL COLON" },
+  { code: "C19", description: "TUMOR MALIGNO DE LA UNIÓN RECTOSIGMOIDEA" },
+  { code: "C20", description: "TUMOR MALIGNO DEL RECTO" },
+  { code: "C21", description: "TUMOR MALIGNO DEL ANO Y DEL CONDUCTO ANAL" },
+  { code: "C22", description: "TUMOR MALIGNO DEL HÍGADO Y DE LAS VÍAS BILIARES INTRAHEPÁTICAS" },
+  { code: "C23", description: "TUMOR MALIGNO DE LA VESÍCULA BILIAR" },
+  { code: "C24", description: "TUMOR MALIGNO DE OTRAS PARTES Y DE LAS NO ESPECIFICADAS DE LAS VÍAS BILIARES" },
+  { code: "C25", description: "TUMOR MALIGNO DEL PÁNCREAS" },
+  { code: "C26", description: "TUMOR MALIGNO DE OTROS SITIOS Y DE LOS MAL DEFINIDOS DE LOS ÓRGANOS DIGESTIVOS" },
+  { code: "C30", description: "TUMOR MALIGNO DE LAS FOSAS NASALES Y DEL OÍDO MEDIO" },
+  { code: "C31", description: "TUMOR MALIGNO DE LOS SENOS PARANASALES" },
+  { code: "C32", description: "TUMOR MALIGNO DE LA LARINGE" },
+  { code: "C33", description: "TUMOR MALIGNO DE LA TRÁQUEA" },
+  { code: "C34", description: "TUMOR MALIGNO DE LOS BRONQUIOS Y DEL PULMÓN" },
+  { code: "C37", description: "TUMOR MALIGNO DEL TIMO" },
+  { code: "C38", description: "TUMOR MALIGNO DEL CORAZÓN, DEL MEDIASTINO Y DE LA PLEURA" },
+  { code: "C39", description: "TUMOR MALIGNO DE OTROS SITIOS Y DE LOS MAL DEFINIDOS DEL SISTEMA RESPIRATORIO Y DE LOS ÓRGANOS INTRATORÁCICOS" },
+  { code: "C40", description: "TUMOR MALIGNO DE LOS HUESOS Y DE LOS CARTÍLAGOS ARTICULARES DE LOS MIEMBROS" },
+  { code: "C41", description: "TUMOR MALIGNO DE LOS HUESOS Y DE LOS CARTÍLAGOS ARTICULARES, DE OTROS SITIOS Y DE SITIOS NO ESPECIFICADOS" },
+  { code: "C43", description: "MELANOMA MALIGNO DE LA PIEL" },
+  { code: "C44", description: "OTROS TUMORES MALIGNOS DE LA PIEL" },
+  { code: "C45", description: "MESOTELIOMA" },
+  { code: "C46", description: "SARCOMA DE KAPOSI" },
+  { code: "C47", description: "TUMOR MALIGNO DE LOS NERVIOS PERIFÉRICOS Y DEL SISTEMA NERVIOSO AUTÓNOMO" },
+  { code: "C48", description: "TUMOR MALIGNO DEL PERITONEO Y DEL RETROPERITONEO" },
+  { code: "C49", description: "TUMOR MALIGNO DE OTROS TEJIDOS CONJUNTIVOS Y DE TEJIDOS BLANDOS" },
+  { code: "C50", description: "TUMOR MALIGNO DE LA MAMA" },
+  { code: "C51", description: "TUMOR MALIGNO DE LA VULVA" },
+  { code: "C52", description: "TUMOR MALIGNO DE LA VAGINA" },
+  { code: "C53", description: "TUMOR MALIGNO DEL CUELLO DEL ÚTERO" },
+  { code: "C54", description: "TUMOR MALIGNO DEL CUERPO DEL ÚTERO" },
+  { code: "C55", description: "TUMOR MALIGNO DEL ÚTERO, PARTE NO ESPECIFICADA" },
+  { code: "C56", description: "TUMOR MALIGNO DEL OVARIO" },
+  { code: "C57", description: "TUMOR MALIGNO DE OTROS ÓRGANOS GENITALES FEMENINOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "C58", description: "TUMOR MALIGNO DE LA PLACENTA" },
+  { code: "C60", description: "TUMOR MALIGNO DEL PENE" },
+  { code: "C61", description: "TUMOR MALIGNO DE LA PRÓSTATA" },
+  { code: "C62", description: "TUMOR MALIGNO DEL TESTÍCULO" },
+  { code: "C63", description: "TUMOR MALIGNO DE OTROS ÓRGANOS GENITALES MASCULINOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "C64", description: "TUMOR MALIGNO DEL RIÑÓN, EXCEPTO DE LA PELVIS RENAL" },
+  { code: "C65", description: "TUMOR MALIGNO DE LA PELVIS RENAL" },
+  { code: "C66", description: "TUMOR MALIGNO DEL URÉTER" },
+  { code: "C67", description: "TUMOR MALIGNO DE LA VEJIGA URINARIA" },
+  { code: "C68", description: "TUMOR MALIGNO DE OTROS ÓRGANOS URINARIOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "C69", description: "TUMOR MALIGNO DEL OJO Y SUS ANEXOS" },
+  { code: "C70", description: "TUMOR MALIGNO DE LAS MENINGES" },
+  { code: "C71", description: "TUMOR MALIGNO DEL ENCÉFALO" },
+  { code: "C72", description: "TUMOR MALIGNO DE LA MÉDULA ESPINAL, DE LOS NERVIOS CRANEALES Y DE OTRAS PARTES DEL SISTEMA NERVIOSO CENTRAL" },
+  { code: "C73", description: "TUMOR MALIGNO DE LA GLÁNDULA TIROIDES" },
+  { code: "C74", description: "TUMOR MALIGNO DE LA GLÁNDULA SUPRARRENAL" },
+  { code: "C75", description: "TUMOR MALIGNO DE OTRAS GLÁNDULAS ENDOCRINAS Y DE ESTRUCTURAS AFINES" },
+  { code: "C76", description: "TUMOR MALIGNO DE OTROS SITIOS Y DE SITIOS MAL DEFINIDOS" },
+  { code: "C77", description: "TUMOR MALIGNO SECUNDARIO Y EL NO ESPECIFICADO DE LOS GANGLIOS LINFÁTICOS" },
+  { code: "C78", description: "TUMOR MALIGNO SECUNDARIO DE LOS ÓRGANOS RESPIRATORIOS Y DIGESTIVOS" },
+  { code: "C79", description: "TUMOR MALIGNO SECUNDARIO DE OTROS SITIOS" },
+  { code: "C80", description: "TUMOR MALIGNO DE SITIOS NO ESPECIFICADOS" },
+  { code: "C81", description: "ENFERMEDAD DE HODGKIN" },
+  { code: "C82", description: "LINFOMA NO-HODGKIN FOLICULAR [NODULAR]" },
+  { code: "C83", description: "LINFOMA NO-HODGKIN DIFUSO" },
+  { code: "C84", description: "LINFOMA DE CÉLULAS T, PERIFÉRICO Y CUTÁNEO" },
+  { code: "C85", description: "LINFOMA NO-HODGKIN DE OTRO TIPO Y EL NO ESPECIFICADO" },
+  { code: "C88", description: "ENFERMEDADES INMUNOPROLIFERATIVAS MALIGNAS" },
+  { code: "C90", description: "MIELOMA MÚLTIPLE Y TUMORES MALIGNOS DE CÉLULAS PLASMÁTICAS" },
+  { code: "C91", description: "LEUCEMIA LINFOIDE" },
+  { code: "C92", description: "LEUCEMIA MIELOIDE" },
+  { code: "C93", description: "LEUCEMIA MONOCÍTICA" },
+  { code: "C94", description: "OTRAS LEUCEMIAS DE TIPO CELULAR ESPECIFICADO" },
+  { code: "C95", description: "LEUCEMIA DE CÉLULAS DE TIPO NO ESPECIFICADO" },
+  { code: "C96", description: "OTROS TUMORES MALIGNOS Y LOS NO ESPECIFICADOS DEL TEJIDO LINFÁTICO, DE LOS ÓRGANOS HEMATOPOYÉTICOS Y DE TEJIDOS AFINES" },
+  { code: "C97", description: "TUMORES MALIGNOS (PRIMARIOS) DE SITIOS MÚLTIPLES INDEPENDIENTES" },
+  { code: "D00", description: "CARCINOMA IN SITU DE LA CAVIDAD BUCAL, DEL ESÓFAGO Y DEL ESTÓMAGO" },
+  { code: "D01", description: "CARCINOMA IN SITU DE OTROS ÓRGANOS DIGESTIVOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "D02", description: "CARCINOMA IN SITU DEL SISTEMA RESPIRATORIO Y DEL OÍDO MEDIO" },
+  { code: "D03", description: "MELANOMA IN SITU" },
+  { code: "D04", description: "CARCINOMA IN SITU DE LA PIEL" },
+  { code: "D05", description: "CARCINOMA IN SITU DE LA MAMA" },
+  { code: "D06", description: "CARCINOMA IN SITU DEL CUELLO DEL ÚTERO" },
+  { code: "D07", description: "CARCINOMA IN SITU DE OTROS ÓRGANOS GENITALES Y DE LOS NO ESPECIFICADOS" },
+  { code: "D09", description: "CARCINOMA IN SITU DE OTROS SITIOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "D10", description: "TUMOR BENIGNO DE LA BOCA Y DE LA FARINGE" },
+  { code: "D11", description: "TUMOR BENIGNO DE LAS GLÁNDULAS SALIVALES MAYORES" },
+  { code: "D12", description: "TUMOR BENIGNO DEL COLON, DEL RECTO, DEL CONDUCTO ANAL Y DEL ANO" },
+  { code: "D13", description: "TUMOR BENIGNO DE OTRAS PARTES Y DE LAS MAL DEFINIDAS DEL SISTEMA DIGESTIVO" },
+  { code: "D14", description: "TUMOR BENIGNO DEL OÍDO MEDIO Y DEL SISTEMA RESPIRATORIO" },
+  { code: "D15", description: "TUMOR BENIGNO DE OTROS ÓRGANOS INTRATORÁCICOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "D16", description: "TUMOR BENIGNO DEL HUESO Y DEL CARTÍLAGO ARTICULAR" },
+  { code: "D17", description: "TUMORES BENIGNOS LIPOMATOSOS" },
+  { code: "D18", description: "HEMANGIOMA Y LINFANGIOMA DE CUALQUIER SITIO" },
+  { code: "D19", description: "TUMORES BENIGNOS DEL TEJIDO MESOTELIAL" },
+  { code: "D20", description: "TUMOR BENIGNO DEL TEJIDO BLANDO DEL PERITONEO Y DEL RETROPERITONEO" },
+  { code: "D21", description: "OTROS TUMORES BENIGNOS DEL TEJIDO CONJUNTIVO Y DE LOS TEJIDOS BLANDOS" },
+  { code: "D22", description: "NEVO MELANOCÍTICO" },
+  { code: "D23", description: "OTROS TUMORES BENIGNOS DE LA PIEL" },
+  { code: "D24", description: "TUMOR BENIGNO DE LA MAMA" },
+  { code: "D25", description: "LEIOMIOMA DEL ÚTERO" },
+  { code: "D26", description: "OTROS TUMORES BENIGNOS DEL ÚTERO" },
+  { code: "D27", description: "TUMOR BENIGNO DEL OVARIO" },
+  { code: "D28", description: "TUMOR BENIGNO DE OTROS ÓRGANOS GENITALES FEMENINOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "D29", description: "TUMOR BENIGNO DE LOS ÓRGANOS GENITALES MASCULINOS" },
+  { code: "D30", description: "TUMOR BENIGNO DE LOS ÓRGANOS URINARIOS" },
+  { code: "D31", description: "TUMOR BENIGNO DEL OJO Y SUS ANEXOS" },
+  { code: "D32", description: "TUMORES BENIGNOS DE LAS MENINGES" },
+  { code: "D33", description: "TUMOR BENIGNO DEL ENCÉFALO Y DE OTRAS PARTES DEL SISTEMA NERVIOSO CENTRAL" },
+  { code: "D34", description: "TUMOR BENIGNO DE LA GLÁNDULA TIROIDES" },
+  { code: "D35", description: "TUMOR BENIGNO DE OTRAS GLÁNDULAS ENDOCRINAS Y DE LAS NO ESPECIFICADAS" },
+  { code: "D36", description: "TUMOR BENIGNO DE OTROS SITIOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "D37", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA CAVIDAD BUCAL Y DE LOS ÓRGANOS DIGESTIVOS" },
+  { code: "D38", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL OÍDO MEDIO Y DE LOS ÓRGANOS RESPIRATORIOS E INTRATORÁCICOS" },
+  { code: "D39", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LOS ÓRGANOS GENITALES FEMENINOS" },
+  { code: "D40", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LOS ÓRGANOS GENITALES MASCULINOS" },
+  { code: "D41", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LOS ÓRGANOS URINARIOS" },
+  { code: "D42", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LAS MENINGES" },
+  { code: "D43", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL ENCÉFALO Y DEL SISTEMA NERVIOSO CENTRAL" },
+  { code: "D44", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LAS GLÁNDULAS ENDOCRINAS" },
+  { code: "D45", description: "POLICITEMIA VERA" },
+  { code: "D46", description: "SÍNDROMES MIELODISPLÁSICOS" },
+  { code: "D47", description: "OTROS TUMORES DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL TEJIDO LINFÁTICO, DE LOS ÓRGANOS HEMATOPOYÉTICOS Y DE TEJIDOS AFINES" },
+  { code: "D48", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE OTROS SITIOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "D50", description: "ANEMIAS POR DEFICIENCIA DE HIERRO" },
+  { code: "D51", description: "ANEMIA POR DEFICIENCIA DE VITAMINA B12" },
+  { code: "D52", description: "ANEMIA POR DEFICIENCIA DE FOLATOS" },
+  { code: "D53", description: "OTRAS ANEMIAS NUTRICIONALES" },
+  { code: "D55", description: "ANEMIA DEBIDA A TRASTORNOS ENZIMÁTICOS" },
+  { code: "D56", description: "TALASEMIA" },
+  { code: "D57", description: "TRASTORNOS FALCIFORMES" },
+  { code: "D58", description: "OTRAS ANEMIAS HEMOLÍTICAS HEREDITARIAS" },
+  { code: "D59", description: "ANEMIA HEMOLÍTICA ADQUIRIDA" },
+  { code: "D60", description: "APLASIA ADQUIRIDA, EXCLUSIVA DE LA SERIE ROJA [ERITROBLASTOPENIA]" },
+  { code: "D61", description: "OTRAS ANEMIAS APLÁSTICAS" },
+  { code: "D62", description: "ANEMIA POSTHEMORRÁGICA AGUDA" },
+  { code: "D63", description: "ANEMIA EN ENFERMEDADES CRÓNICAS CLASIFICADAS EN OTRA PARTE" },
+  { code: "D64", description: "OTRAS ANEMIAS" },
+  { code: "D65", description: "COAGULACIÓN INTRAVASCULAR DISEMINADA [SÍNDROME DE DESFIBRINACIÓN]" },
+  { code: "D66", description: "DEFICIENCIA HEREDITARIA DEL FACTOR VIII" },
+  { code: "D67", description: "DEFICIENCIA HEREDITARIA DEL FACTOR IX" },
+  { code: "D68", description: "OTROS DEFECTOS DE LA COAGULACIÓN" },
+  { code: "D69", description: "PÚRPURA Y OTRAS AFECCIONES HEMORRÁGICAS" },
+  { code: "D70", description: "AGRANULOCITOSIS" },
+  { code: "D71", description: "TRASTORNOS FUNCIONALES DE LOS POLIMORFONUCLEARES NEUTRÓFILOS" },
+  { code: "D72", description: "OTROS TRASTORNOS DE LOS LEUCOCITOS" },
+  { code: "D73", description: "ENFERMEDADES DEL BAZO" },
+  { code: "D74", description: "METAHEMOGLOBINEMIA" },
+  { code: "D75", description: "OTRAS ENFERMEDADES DE LA SANGRE Y DE LOS ÓRGANOS HEMATOPOYÉTICOS" },
+  { code: "D76", description: "CIERTAS ENFERMEDADES QUE AFECTAN AL TEJIDO LINFORRETICULAR Y AL SISTEMA RETICULOENDOTELIAL" },
+  { code: "D77", description: "OTROS TRASTORNOS DE LA SANGRE Y DE LOS ÓRGANOS HEMATOPOYÉTICOS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "D80", description: "INMUNODEFICIENCIA CON PREDOMINIO DE DEFECTOS DE LOS ANTICUERPOS" },
+  { code: "D81", description: "INMUNODEFICIENCIAS COMBINADAS" },
+  { code: "D82", description: "INMUNODEFICIENCIA ASOCIADA CON OTROS DEFECTOS MAYORES" },
+  { code: "D83", description: "INMUNODEFICIENCIA VARIABLE COMÚN" },
+  { code: "D84", description: "OTRAS INMUNODEFICIENCIAS" },
+  { code: "D86", description: "SARCOIDOSIS" },
+  { code: "D89", description: "OTROS TRASTORNOS QUE AFECTAN EL MECANISMO DE LA INMUNIDAD, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "E00", description: "SÍNDROME CONGÉNITO DE DEFICIENCIA DE YODO" },
+  { code: "E01", description: "TRASTORNOS TIROIDEOS VINCULADOS A DEFICIENCIA DE YODO Y AFECCIONES RELACIONADAS" },
+  { code: "E02", description: "HIPOTIROIDISMO SUBCLÍNICO POR DEFICIENCIA DE YODO" },
+  { code: "E03", description: "OTROS HIPOTIROIDISMOS" },
+  { code: "E04", description: "OTROS BOCIOS NO TÓXICOS" },
+  { code: "E05", description: "TIROTOXICOSIS [HIPERTIROIDISMO]" },
+  { code: "E06", description: "TIROIDITIS" },
+  { code: "E07", description: "OTROS TRASTORNOS TIROIDEOS" },
+  { code: "E10", description: "DIABETES MELLITUS INSULINODEPENDIENTE" },
+  { code: "E11", description: "DIABETES MELLITUS NO INSULINODEPENDIENTE" },
+  { code: "E12", description: "DIABETES MELLITUS ASOCIADA CON DESNUTRICIÓN" },
+  { code: "E13", description: "OTRAS DIABETES MELLITUS ESPECIFICADAS" },
+  { code: "E14", description: "DIABETES MELLITUS, NO ESPECIFICADA" },
+  { code: "E15", description: "COMA HIPOGLICÉMICO NO DIABÉTICO" },
+  { code: "E16", description: "OTROS TRASTORNOS DE LA SECRECIÓN INTERNA DEL PÁNCREAS" },
+  { code: "E20", description: "HIPOPARATIROIDISMO" },
+  { code: "E21", description: "HIPERPARATIROIDISMO Y OTROS TRASTORNOS DE LA GLÁNDULA PARATIROIDES" },
+  { code: "E22", description: "HIPERFUNCIÓN DE LA GLÁNDULA HIPÓFISIS" },
+  { code: "E23", description: "HIPOFUNCIÓN Y OTROS TRASTORNOS DE LA GLÁNDULA HIPÓFISIS" },
+  { code: "E24", description: "SÍNDROME DE CUSHING" },
+  { code: "E25", description: "TRASTORNOS ADRENOGENITALES" },
+  { code: "E26", description: "HIPERALDOSTERONISMO" },
+  { code: "E27", description: "OTROS TRASTORNOS DE LA GLÁNDULA SUPRARRENAL" },
+  { code: "E28", description: "DISFUNCIÓN OVÁRICA" },
+  { code: "E29", description: "DISFUNCIÓN TESTICULAR" },
+  { code: "E30", description: "TRASTORNOS DE LA PUBERTAD, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "E31", description: "DISFUNCIÓN POLIGLANDULAR" },
+  { code: "E32", description: "ENFERMEDADES DEL TIMO" },
+  { code: "E34", description: "OTROS TRASTORNOS ENDOCRINOS" },
+  { code: "E35", description: "TRASTORNOS ENDOCRINOS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "E40", description: "KWASHIORKOR" },
+  { code: "E41", description: "MARASMO NUTRICIONAL" },
+  { code: "E42", description: "KWASHIORKOR MARASMÁTICO" },
+  { code: "E43", description: "DESNUTRICIÓN PROTEICOCALÓRICA SEVERA NO ESPECIFICADA" },
+  { code: "E44", description: "DESNUTRICIÓN PROTEICOCALÓRICA DE GRADO MODERADO Y LEVE" },
+  { code: "E45", description: "RETARDO DEL DESARROLLO DEBIDO A DESNUTRICIÓN PROTEICOCALÓRICA" },
+  { code: "E46", description: "DESNUTRICIÓN PROTEICOCALÓRICA, NO ESPECIFICADA" },
+  { code: "E50", description: "DEFICIENCIA DE VITAMINA A" },
+  { code: "E51", description: "DEFICIENCIA DE TIAMINA" },
+  { code: "E52", description: "DEFICIENCIA DE NIACINA [PELAGRA]" },
+  { code: "E53", description: "DEFICIENCIAS DE OTRAS VITAMINAS DEL GRUPO B" },
+  { code: "E54", description: "DEFICIENCIA DE ÁCIDO ASCÓRBICO" },
+  { code: "E55", description: "DEFICIENCIA DE VITAMINA D" },
+  { code: "E56", description: "OTRAS DEFICIENCIAS DE VITAMINAS" },
+  { code: "E58", description: "DEFICIENCIA DIETÉTICA DE CALCIO" },
+  { code: "E59", description: "DEFICIENCIA DIETÉTICA DE SELENIO" },
+  { code: "E60", description: "DEFICIENCIA DIETÉTICA DE ZINC" },
+  { code: "E61", description: "DEFICIENCIAS DE OTROS ELEMENTOS NUTRICIONALES" },
+  { code: "E63", description: "OTRAS DEFICIENCIAS NUTRICIONALES" },
+  { code: "E64", description: "SECUELAS DE LA DESNUTRICIÓN Y DE OTRAS DEFICIENCIAS NUTRICIONALES" },
+  { code: "E65", description: "ADIPOSIDAD LOCALIZADA" },
+  { code: "E66", description: "OBESIDAD" },
+  { code: "E67", description: "OTROS TIPOS DE HIPERALIMENTACIÓN" },
+  { code: "E68", description: "SECUELAS DE HIPERALIMENTACIÓN" },
+  { code: "E70", description: "TRASTORNOS DEL METABOLISMO DE LOS AMINOÁCIDOS AROMÁTICOS" },
+  { code: "E71", description: "TRASTORNOS DEL METABOLISMO DE LOS AMINOÁCIDOS DE CADENA RAMIFICADA Y DE LOS ÁCIDOS GRASOS" },
+  { code: "E72", description: "OTROS TRASTORNOS DEL METABOLISMO DE LOS AMINOÁCIDOS" },
+  { code: "E73", description: "INTOLERANCIA A LA LACTOSA" },
+  { code: "E74", description: "OTROS TRASTORNOS DEL METABOLISMO DE LOS CARBOHIDRATOS" },
+  { code: "E75", description: "TRASTORNOS DEL METABOLISMO DE LOS ESFINGOLÍPIDOS Y OTROS TRASTORNOS POR ALMACENAMIENTO DE LÍPIDOS" },
+  { code: "E76", description: "TRASTORNOS DEL METABOLISMO DE LOS GLUCOSAMINOGLICANOS" },
+  { code: "E77", description: "TRASTORNOS DEL METABOLISMO DE LAS GLUCOPROTEÍNAS" },
+  { code: "E78", description: "TRASTORNOS DEL METABOLISMO DE LAS LIPOPROTEÍNAS Y OTRAS LIPIDEMIAS" },
+  { code: "E79", description: "TRASTORNOS DEL METABOLISMO DE LAS PURINAS Y DE LAS PIRIMIDINAS" },
+  { code: "E80", description: "TRASTORNOS DEL METABOLISMO DE LAS PORFIRINAS Y DE LA BILIRRUBINA" },
+  { code: "E83", description: "TRASTORNOS DEL METABOLISMO DE LOS MINERALES" },
+  { code: "E84", description: "FIBROSIS QUÍSTICA" },
+  { code: "E85", description: "AMILOIDOSIS" },
+  { code: "E86", description: "DEPLECIÓN DE VOLUMEN" },
+  { code: "E87", description: "OTROS TRASTORNOS DE LOS LÍQUIDOS, DE LOS ELECTRÓLITOS Y DEL EQUILIBRIO ÁCIDO-BÁSICO" },
+  { code: "E88", description: "OTROS TRASTORNOS METABÓLICOS" },
+  { code: "E89", description: "TRASTORNOS ENDOCRINOS Y METABÓLICOS CONSECUTIVOS A PROCEDIMIENTOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "E90", description: "TRASTORNOS NUTRICIONALES Y METABÓLICOS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "F00", description: "DEMENCIA EN LA ENFERMEDAD DE ALZHEIMER" },
+  { code: "F01", description: "DEMENCIA VASCULAR" },
+  { code: "F02", description: "DEMENCIA EN OTRAS ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "F03", description: "DEMENCIA, NO ESPECIFICADA" },
+  { code: "F04", description: "SÍNDROME AMNÉSICO ORGÁNICO, NO INDUCIDO POR ALCOHOL O POR OTRAS SUSTANCIAS PSICOACTIVAS" },
+  { code: "F05", description: "DELIRIO, NO INDUCIDO POR ALCOHOL O POR OTRAS SUSTANCIAS PSICOACTIVAS" },
+  { code: "F06", description: "OTROS TRASTORNOS MENTALES DEBIDOS A LESIÓN Y DISFUNCIÓN CEREBRAL, Y A ENFERMEDAD FÍSICA" },
+  { code: "F07", description: "TRASTORNOS DE LA PERSONALIDAD Y DEL COMPORTAMIENTO DEBIDOS A ENFERMEDAD, LESIÓN O DISFUNCIÓN CEREBRAL" },
+  { code: "F09", description: "TRASTORNO MENTAL ORGÁNICO O SINTOMÁTICO, NO ESPECIFICADO" },
+  { code: "F10", description: "TRASTORNOS MENTALES Y DEL COMPORTAMIENTO DEBIDOS AL USO DE ALCOHOL" },
+  { code: "F11", description: "TRASTORNOS MENTALES Y DEL COMPORTAMIENTO DEBIDOS AL USO DE OPIÁCEOS" },
+  { code: "F12", description: "TRASTORNOS MENTALES Y DEL COMPORTAMIENTO DEBIDOS AL USO DE CANNABINOIDES" },
+  { code: "F13", description: "TRASTORNOS MENTALES Y DEL COMPORTAMIENTO DEBIDOS AL USO DE SEDANTES O HIPNÓTICOS" },
+  { code: "F14", description: "TRASTORNOS MENTALES Y DEL COMPORTAMIENTO DEBIDOS AL USO DE COCAÍNA" },
+  { code: "F15", description: "TRASTORNOS MENTALES Y DEL COMPORTAMIENTO DEBIDOS AL USO DE OTROS ESTIMULANTES, INCLUIDA LA CAFEÍNA" },
+  { code: "F16", description: "TRASTORNOS MENTALES Y DEL COMPORTAMIENTO DEBIDOS AL USO DE ALUCINÓGENOS" },
+  { code: "F17", description: "TRASTORNOS MENTALES Y DEL COMPORTAMIENTO DEBIDOS AL USO DE TABACO" },
+  { code: "F18", description: "TRASTORNOS MENTALES Y DEL COMPORTAMIENTO DEBIDOS AL USO DE DISOLVENTES VOLÁTILES" },
+  { code: "F19", description: "TRASTORNOS MENTALES Y DEL COMPORTAMIENTO DEBIDOS AL USO DE MÚLTIPLES DROGAS Y AL USO DE OTRAS SUSTANCIAS PSICOACTIVAS" },
+  { code: "F20", description: "ESQUIZOFRENIA" },
+  { code: "F21", description: "TRASTORNO ESQUIZOTÍPICO" },
+  { code: "F22", description: "TRASTORNOS DELIRANTES PERSISTENTES" },
+  { code: "F23", description: "TRASTORNOS PSICÓTICOS AGUDOS Y TRANSITORIOS" },
+  { code: "F24", description: "TRASTORNO DELIRANTE INDUCIDO" },
+  { code: "F25", description: "TRASTORNOS ESQUIZOAFECTIVOS" },
+  { code: "F28", description: "OTROS TRASTORNOS PSICÓTICOS DE ORIGEN NO ORGÁNICO" },
+  { code: "F29", description: "PSICOSIS DE ORIGEN NO ORGÁNICO, NO ESPECIFICADA" },
+  { code: "F30", description: "EPISODIO MANÍACO" },
+  { code: "F31", description: "TRASTORNO AFECTIVO BIPOLAR" },
+  { code: "F32", description: "EPISODIO DEPRESIVO" },
+  { code: "F33", description: "TRASTORNO DEPRESIVO RECURRENTE" },
+  { code: "F34", description: "TRASTORNOS DEL HUMOR [AFECTIVOS] PERSISTENTES" },
+  { code: "F38", description: "OTROS TRASTORNOS DEL HUMOR [AFECTIVOS]" },
+  { code: "F39", description: "TRASTORNO DEL HUMOR [AFECTIVO], NO ESPECIFICADO" },
+  { code: "F40", description: "TRASTORNOS FÓBICOS DE ANSIEDAD" },
+  { code: "F41", description: "OTROS TRASTORNOS DE ANSIEDAD" },
+  { code: "F42", description: "TRASTORNO OBSESIVO-COMPULSIVO" },
+  { code: "F43", description: "REACCIÓN AL ESTRÉS GRAVE Y TRASTORNOS DE ADAPTACIÓN" },
+  { code: "F44", description: "TRASTORNOS DISOCIATIVOS [DE CONVERSIÓN]" },
+  { code: "F45", description: "TRASTORNOS SOMATOMORFOS" },
+  { code: "F48", description: "OTROS TRASTORNOS NEURÓTICOS" },
+  { code: "F50", description: "TRASTORNOS DE LA INGESTIÓN DE ALIMENTOS" },
+  { code: "F51", description: "TRASTORNOS NO ORGÁNICOS DEL SUEÑO" },
+  { code: "F52", description: "DISFUNCIÓN SEXUAL NO OCASIONADA POR TRASTORNO NI ENFERMEDAD ORGÁNICOS" },
+  { code: "F53", description: "TRASTORNOS MENTALES Y DEL COMPORTAMIENTO ASOCIADOS CON EL PUERPERIO, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "F54", description: "FACTORES PSICOLÓGICOS Y DEL COMPORTAMIENTO ASOCIADOS CON TRASTORNOS O ENFERMEDADES CLASIFICADOS EN OTRA PARTE" },
+  { code: "F55", description: "ABUSO DE SUSTANCIAS QUE NO PRODUCEN DEPENDENCIA" },
+  { code: "F59", description: "SÍNDROMES DEL COMPORTAMIENTO ASOCIADOS CON ALTERACIONES FISIOLÓGICAS Y FACTORES FÍSICOS, NO ESPECIFICADOS" },
+  { code: "F60", description: "TRASTORNOS ESPECÍFICOS DE LA PERSONALIDAD" },
+  { code: "F61", description: "TRASTORNOS MIXTOS Y OTROS TRASTORNOS DE LA PERSONALIDAD" },
+  { code: "F62", description: "CAMBIOS PERDURABLES DE LA PERSONALIDAD, NO ATRIBUIBLES A LESIÓN O A ENFERMEDAD CEREBRAL" },
+  { code: "F63", description: "TRASTORNOS DE LOS HÁBITOS Y DE LOS IMPULSOS" },
+  { code: "F64", description: "TRASTORNOS DE LA IDENTIDAD DE GÉNERO" },
+  { code: "F65", description: "TRASTORNOS DE LA PREFERENCIA SEXUAL" },
+  { code: "F66", description: "TRASTORNOS PSICOLÓGICOS Y DEL COMPORTAMIENTO ASOCIADOS CON EL DESARROLLO Y CON LA ORIENTACIÓN SEXUALES" },
+  { code: "F68", description: "OTROS TRASTORNOS DE LA PERSONALIDAD Y DEL COMPORTAMIENTO EN ADULTOS" },
+  { code: "F69", description: "TRASTORNO DE LA PERSONALIDAD Y DEL COMPORTAMIENTO EN ADULTOS, NO ESPECIFICADO" },
+  { code: "F70", description: "RETRASO MENTAL LEVE" },
+  { code: "F71", description: "RETRASO MENTAL MODERADO" },
+  { code: "F72", description: "RETRASO MENTAL GRAVE" },
+  { code: "F73", description: "RETRASO MENTAL PROFUNDO" },
+  { code: "F78", description: "OTROS TIPOS DE RETRASO MENTAL" },
+  { code: "F79", description: "RETRASO MENTAL, NO ESPECIFICADO" },
+  { code: "F80", description: "TRASTORNOS ESPECÍFICOS DEL DESARROLLO DEL HABLA Y DEL LENGUAJE" },
+  { code: "F81", description: "TRASTORNOS ESPECÍFICOS DEL DESARROLLO DE LAS HABILIDADES ESCOLARES" },
+  { code: "F82", description: "TRASTORNO ESPECÍFICO DEL DESARROLLO DE LA FUNCIÓN MOTRIZ" },
+  { code: "F83", description: "TRASTORNOS ESPECÍFICOS MIXTOS DEL DESARROLLO" },
+  { code: "F84", description: "TRASTORNOS GENERALIZADOS DEL DESARROLLO" },
+  { code: "F88", description: "OTROS TRASTORNOS DEL DESARROLLO PSICOLÓGICO" },
+  { code: "F89", description: "TRASTORNO DEL DESARROLLO PSICOLÓGICO, NO ESPECIFICADO" },
+  { code: "F90", description: "TRASTORNOS HIPERCINÉTICOS" },
+  { code: "F91", description: "TRASTORNOS DE LA CONDUCTA" },
+  { code: "F92", description: "TRASTORNOS MIXTOS DE LA CONDUCTA Y DE LAS EMOCIONES" },
+  { code: "F93", description: "TRASTORNOS EMOCIONALES DE COMIENZO ESPECÍFICO EN LA NIÑEZ" },
+  { code: "F94", description: "TRASTORNOS DEL COMPORTAMIENTO SOCIAL DE COMIENZO ESPECÍFICO EN LA NIÑEZ Y EN LA ADOLESCENCIA" },
+  { code: "F95", description: "TRASTORNOS POR TICS" },
+  { code: "F98", description: "OTROS TRASTORNOS EMOCIONALES Y DEL COMPORTAMIENTO QUE APARECEN HABITUALMENTE EN LA NIÑEZ Y EN LA ADOLESCENCIA" },
+  { code: "F99", description: "TRASTORNO MENTAL, NO ESPECIFICADO" },
+  { code: "G00", description: "MENINGITIS BACTERIANA, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "G01", description: "MENINGITIS EN ENFERMEDADES BACTERIANAS CLASIFICADAS EN OTRA PARTE" },
+  { code: "G02", description: "MENINGITIS EN OTRAS ENFERMEDADES INFECCIOSAS Y PARASITARIAS CLASIFICADAS EN OTRA PARTE" },
+  { code: "G03", description: "MENINGITIS DEBIDA A OTRAS CAUSAS Y A LAS NO ESPECIFICADAS" },
+  { code: "G04", description: "ENCEFALITIS, MIELITIS Y ENCEFALOMIELITIS" },
+  { code: "G05", description: "ENCEFALITIS, MIELITIS Y ENCEFALOMIELITIS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "G06", description: "ABSCESO Y GRANULOMA INTRACRANEAL E INTRARRAQUÍDEO" },
+  { code: "G07", description: "ABSCESO Y GRANULOMA INTRACRANEAL E INTRARRAQUÍDEO EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "G08", description: "FLEBITIS Y TROMBOFLEBITIS INTRACRANEAL E INTRARRAQUÍDEA" },
+  { code: "G09", description: "SECUELAS DE ENFERMEDADES INFLAMATORIAS DEL SISTEMA NERVIOSO CENTRAL" },
+  { code: "G10", description: "ENFERMEDAD DE HUNTINGTON" },
+  { code: "G11", description: "ATAXIA HEREDITARIA" },
+  { code: "G12", description: "ATROFIA MUSCULAR ESPINAL Y SÍNDROMES AFINES" },
+  { code: "G13", description: "ATROFIAS SISTÉMICAS QUE AFECTAN PRIMARIAMENTE EL SISTEMA NERVIOSO CENTRAL EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "G20", description: "ENFERMEDAD DE PARKINSON" },
+  { code: "G21", description: "PARKINSONISMO SECUNDARIO" },
+  { code: "G22", description: "PARKINSONISMO EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "G23", description: "OTRAS ENFERMEDADES DEGENERATIVAS DE LOS NÚCLEOS DE LA BASE" },
+  { code: "G24", description: "DISTONÍA" },
+  { code: "G25", description: "OTROS TRASTORNOS EXTRAPIRAMIDALES Y DEL MOVIMIENTO" },
+  { code: "G26", description: "TRASTORNOS EXTRAPIRAMIDALES Y DEL MOVIMIENTO EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "G30", description: "ENFERMEDAD DE ALZHEIMER" },
+  { code: "G31", description: "OTRAS ENFERMEDADES DEGENERATIVAS DEL SISTEMA NERVIOSO, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "G32", description: "OTROS TRASTORNOS DEGENERATIVOS DEL SISTEMA NERVIOSO EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "G35", description: "ESCLEROSIS MÚLTIPLE" },
+  { code: "G36", description: "OTRAS DESMIELINIZACIONES DISEMINADAS AGUDAS" },
+  { code: "G37", description: "OTRAS ENFERMEDADES DESMIELINIZANTES DEL SISTEMA NERVIOSO CENTRAL" },
+  { code: "G40", description: "EPILEPSIA" },
+  { code: "G41", description: "ESTADO DE MAL EPILÉPTICO" },
+  { code: "G43", description: "MIGRAÑA" },
+  { code: "G44", description: "OTROS SÍNDROMES DE CEFALEA" },
+  { code: "G45", description: "ATAQUES DE ISQUEMIA CEREBRAL TRANSITORIA Y SÍNDROMES AFINES" },
+  { code: "G46", description: "SÍNDROMES VASCULARES ENCEFÁLICOS EN ENFERMEDADES CEREBROVASCULARES (I60–I67†)" },
+  { code: "G47", description: "TRASTORNOS DEL SUEÑO" },
+  { code: "G50", description: "TRASTORNOS DEL NERVIO TRIGÉMINO" },
+  { code: "G51", description: "TRASTORNOS DEL NERVIO FACIAL" },
+  { code: "G52", description: "TRASTORNOS DE OTROS NERVIOS CRANEALES" },
+  { code: "G53", description: "TRASTORNOS DE LOS NERVIOS CRANEALES EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "G54", description: "TRASTORNOS DE LAS RAÍCES Y DE LOS PLEXOS NERVIOSOS" },
+  { code: "G55", description: "COMPRESIONES DE LAS RAÍCES Y DE LOS PLEXOS NERVIOSOS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "G56", description: "MONONEUROPATÍAS DEL MIEMBRO SUPERIOR" },
+  { code: "G57", description: "MONONEUROPATÍAS DEL MIEMBRO INFERIOR" },
+  { code: "G58", description: "OTRAS MONONEUROPATÍAS" },
+  { code: "G59", description: "MONONEUROPATÍA EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "G60", description: "NEUROPATÍA HEREDITARIA E IDIOPÁTICA" },
+  { code: "G61", description: "POLINEUROPATÍA INFLAMATORIA" },
+  { code: "G62", description: "OTRAS POLINEUROPATÍAS" },
+  { code: "G63", description: "POLINEUROPATÍAS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "G64", description: "OTROS TRASTORNOS DEL SISTEMA NERVIOSO PERIFÉRICO" },
+  { code: "G70", description: "MIASTENIA GRAVIS Y OTROS TRASTORNOS NEUROMUSCULARES" },
+  { code: "G71", description: "TRASTORNOS MUSCULARES PRIMARIOS" },
+  { code: "G72", description: "OTRAS MIOPATÍAS" },
+  { code: "G73", description: "TRASTORNOS DEL MÚSCULO Y DE LA UNIÓN NEUROMUSCULAR EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "G80", description: "PARÁLISIS CEREBRAL" },
+  { code: "G81", description: "HEMIPLEJÍA" },
+  { code: "G82", description: "PARAPLEJÍA Y CUADRIPLEJÍA" },
+  { code: "G83", description: "OTROS SÍNDROMES PARALÍTICOS" },
+  { code: "G90", description: "TRASTORNOS DEL SISTEMA NERVIOSO AUTÓNOMO" },
+  { code: "G91", description: "HIDROCÉFALO" },
+  { code: "G92", description: "ENCEFALOPATÍA TÓXICA" },
+  { code: "G93", description: "OTROS TRASTORNOS DEL ENCÉFALO" },
+  { code: "G94", description: "OTROS TRASTORNOS DEL ENCÉFALO EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "G95", description: "OTRAS ENFERMEDADES DE LA MÉDULA ESPINAL" },
+  { code: "G96", description: "OTROS TRASTORNOS DEL SISTEMA NERVIOSO CENTRAL" },
+  { code: "G97", description: "TRASTORNOS DEL SISTEMA NERVIOSO CONSECUTIVOS A PROCEDIMIENTOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "G98", description: "OTROS TRASTORNOS DEL SISTEMA NERVIOSO, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "G99", description: "OTROS TRASTORNOS DEL SISTEMA NERVIOSO EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H00", description: "ORZUELO Y CALACIO" },
+  { code: "H01", description: "OTRAS INFLAMACIONES DEL PÁRPADO" },
+  { code: "H02", description: "OTROS TRASTORNOS DE LOS PÁRPADOS" },
+  { code: "H03", description: "TRASTORNOS DEL PÁRPADO EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H04", description: "TRASTORNOS DEL APARATO LAGRIMAL" },
+  { code: "H05", description: "TRASTORNOS DE LA ÓRBITA" },
+  { code: "H06", description: "TRASTORNOS DEL APARATO LAGRIMAL Y DE LA ÓRBITA EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H10", description: "CONJUNTIVITIS" },
+  { code: "H11", description: "OTROS TRASTORNOS DE LA CONJUNTIVA" },
+  { code: "H13", description: "TRASTORNOS DE LA CONJUNTIVA EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H15", description: "TRASTORNOS DE LA ESCLERÓTICA" },
+  { code: "H16", description: "QUERATITIS" },
+  { code: "H17", description: "OPACIDADES Y CICATRICES CORNEALES" },
+  { code: "H18", description: "OTROS TRASTORNOS DE LA CÓRNEA" },
+  { code: "H19", description: "TRASTORNOS DE LA ESCLERÓTICA Y DE LA CÓRNEA EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H20", description: "IRIDOCICLITIS" },
+  { code: "H21", description: "OTROS TRASTORNOS DEL IRIS Y DEL CUERPO CILIAR" },
+  { code: "H22", description: "TRASTORNOS DEL IRIS Y DEL CUERPO CILIAR EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H25", description: "CATARATA SENIL" },
+  { code: "H26", description: "OTRAS CATARATAS" },
+  { code: "H27", description: "OTROS TRASTORNOS DEL CRISTALINO" },
+  { code: "H28", description: "CATARATA Y OTROS TRASTORNOS DEL CRISTALINO EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H30", description: "INFLAMACIÓN CORIORRETINIANA" },
+  { code: "H31", description: "OTROS TRASTORNOS DE LA COROIDES" },
+  { code: "H32", description: "TRASTORNOS CORIORRETINIANOS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H33", description: "DESPRENDIMIENTO Y DESGARRO DE LA RETINA" },
+  { code: "H34", description: "OCLUSIÓN VASCULAR DE LA RETINA" },
+  { code: "H35", description: "OTROS TRASTORNOS DE LA RETINA" },
+  { code: "H36", description: "TRASTORNOS DE LA RETINA EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H40", description: "GLAUCOMA" },
+  { code: "H42", description: "GLAUCOMA EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H43", description: "TRASTORNOS DEL CUERPO VÍTREO" },
+  { code: "H44", description: "TRASTORNOS DEL GLOBO OCULAR" },
+  { code: "H45", description: "TRASTORNOS DEL CUERPO VÍTREO Y DEL GLOBO OCULAR EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H46", description: "NEURITIS ÓPTICA" },
+  { code: "H47", description: "OTROS TRASTORNOS DEL NERVIO ÓPTICO [II PAR] Y DE LAS VÍAS ÓPTICAS" },
+  { code: "H48", description: "TRASTORNOS DEL NERVIO ÓPTICO [II PAR] Y DE LAS VÍAS ÓPTICAS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H49", description: "ESTRABISMO PARALÍTICO" },
+  { code: "H50", description: "OTROS ESTRABISMOS" },
+  { code: "H51", description: "OTROS TRASTORNOS DE LOS MOVIMIENTOS BINOCULARES" },
+  { code: "H52", description: "TRASTORNOS DE LA ACOMODACIÓN Y DE LA REFRACCIÓN" },
+  { code: "H53", description: "ALTERACIONES DE LA VISIÓN" },
+  { code: "H54", description: "CEGUERA Y DISMINUCIÓN DE LA AGUDEZA VISUAL" },
+  { code: "H55", description: "NISTAGMO Y OTROS MOVIMIENTOS OCULARES IRREGULARES" },
+  { code: "H57", description: "OTROS TRASTORNOS DEL OJO Y SUS ANEXOS" },
+  { code: "H58", description: "OTROS TRASTORNOS DEL OJO Y SUS ANEXOS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H59", description: "TRASTORNOS DEL OJO Y SUS ANEXOS CONSECUTIVOS A PROCEDIMIENTOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "H60", description: "OTITIS EXTERNA" },
+  { code: "H61", description: "OTROS TRASTORNOS DEL OÍDO EXTERNO" },
+  { code: "H62", description: "TRASTORNOS DEL OÍDO EXTERNO EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H65", description: "OTITIS MEDIA NO SUPURATIVA" },
+  { code: "H66", description: "OTITIS MEDIA SUPURATIVA Y LA NO ESPECIFICADA" },
+  { code: "H67", description: "OTITIS MEDIA EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H68", description: "INFLAMACIÓN Y OBSTRUCCIÓN DE LA TROMPA DE EUSTAQUIO" },
+  { code: "H69", description: "OTROS TRASTORNOS DE LA TROMPA DE EUSTAQUIO" },
+  { code: "H70", description: "MASTOIDITIS Y AFECCIONES RELACIONADAS" },
+  { code: "H71", description: "COLESTEATOMA DEL OÍDO MEDIO" },
+  { code: "H72", description: "PERFORACIÓN DE LA MEMBRANA TIMPÁNICA" },
+  { code: "H73", description: "OTROS TRASTORNOS DE LA MEMBRANA TIMPÁNICA" },
+  { code: "H74", description: "OTROS TRASTORNOS DEL OÍDO MEDIO Y DE LA APÓFISIS MASTOIDES" },
+  { code: "H75", description: "OTROS TRASTORNOS DEL OÍDO MEDIO Y DE LA APÓFISIS MASTOIDES EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H80", description: "OTOSCLEROSIS" },
+  { code: "H81", description: "TRASTORNOS DE LA FUNCIÓN VESTIBULAR" },
+  { code: "H82", description: "SÍNDROMES VERTIGINOSOS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H83", description: "OTROS TRASTORNOS DEL OÍDO INTERNO" },
+  { code: "H90", description: "HIPOACUSIA CONDUCTIVA Y NEUROSENSORIAL" },
+  { code: "H91", description: "OTRAS HIPOACUSIAS" },
+  { code: "H92", description: "OTALGIA Y SECRECIÓN DEL OÍDO" },
+  { code: "H93", description: "OTROS TRASTORNOS DEL OÍDO, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "H94", description: "OTROS TRASTORNOS DEL OÍDO EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "H95", description: "TRASTORNOS DEL OÍDO Y DE LA APÓFISIS MASTOIDES CONSECUTIVOS A PROCEDIMIENTOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "I00", description: "FIEBRE REUMÁTICA SIN MENCIÓN DE COMPLICACIÓN CARDÍACA" },
+  { code: "I01", description: "FIEBRE REUMÁTICA CON COMPLICACIÓN CARDÍACA" },
+  { code: "I02", description: "COREA REUMÁTICA" },
+  { code: "I05", description: "ENFERMEDADES REUMÁTICAS DE LA VÁLVULA MITRAL" },
+  { code: "I06", description: "ENFERMEDADES REUMÁTICAS DE LA VÁLVULA AÓRTICA" },
+  { code: "I07", description: "ENFERMEDADES REUMÁTICAS DE LA VÁLVULA TRICÚSPIDE" },
+  { code: "I08", description: "ENFERMEDADES VALVULARES MÚLTIPLES" },
+  { code: "I09", description: "OTRAS ENFERMEDADES REUMÁTICAS DEL CORAZÓN" },
+  { code: "I10", description: "HIPERTENSIÓN ESENCIAL (PRIMARIA)" },
+  { code: "I11", description: "ENFERMEDAD CARDÍACA HIPERTENSIVA" },
+  { code: "I12", description: "ENFERMEDAD RENAL HIPERTENSIVA" },
+  { code: "I13", description: "ENFERMEDAD CARDIORRENAL HIPERTENSIVA" },
+  { code: "I15", description: "HIPERTENSIÓN SECUNDARIA" },
+  { code: "I20", description: "ANGINA DE PECHO" },
+  { code: "I21", description: "INFARTO AGUDO DEL MIOCARDIO" },
+  { code: "I22", description: "INFARTO SUBSECUENTE DEL MIOCARDIO" },
+  { code: "I23", description: "CIERTAS COMPLICACIONES PRESENTES POSTERIORES AL INFARTO AGUDO DEL MIOCARDIO" },
+  { code: "I24", description: "OTRAS ENFERMEDADES ISQUÉMICAS AGUDAS DEL CORAZÓN" },
+  { code: "I25", description: "ENFERMEDAD ISQUÉMICA CRÓNICA DEL CORAZÓN" },
+  { code: "I26", description: "EMBOLIA PULMONAR" },
+  { code: "I27", description: "OTRAS ENFERMEDADES CARDIOPULMONARES" },
+  { code: "I28", description: "OTRAS ENFERMEDADES DE LOS VASOS PULMONARES" },
+  { code: "I30", description: "PERICARDITIS AGUDA" },
+  { code: "I31", description: "OTRAS ENFERMEDADES DEL PERICARDIO" },
+  { code: "I32", description: "PERICARDITIS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "I33", description: "ENDOCARDITIS AGUDA Y SUBAGUDA" },
+  { code: "I34", description: "TRASTORNOS NO REUMÁTICOS DE LA VÁLVULA MITRAL" },
+  { code: "I35", description: "TRASTORNOS NO REUMÁTICOS DE LA VÁLVULA AÓRTICA" },
+  { code: "I36", description: "TRASTORNOS NO REUMÁTICOS DE LA VÁLVULA TRICÚSPIDE" },
+  { code: "I37", description: "TRASTORNOS DE LA VÁLVULA PULMONAR" },
+  { code: "I38", description: "ENDOCARDITIS, VÁLVULA NO ESPECIFICADA" },
+  { code: "I39", description: "ENDOCARDITIS Y TRASTORNOS VALVULARES EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "I40", description: "MIOCARDITIS AGUDA" },
+  { code: "I41", description: "MIOCARDITIS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "I42", description: "CARDIOMIOPATÍA" },
+  { code: "I43", description: "CARDIOMIOPATÍA EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "I44", description: "BLOQUEO AURICULOVENTRICULAR Y DE RAMA IZQUIERDA DEL HAZ" },
+  { code: "I45", description: "OTROS TRASTORNOS DE LA CONDUCCIÓN" },
+  { code: "I46", description: "PARO CARDÍACO" },
+  { code: "I47", description: "TAQUICARDIA PAROXÍSTICA" },
+  { code: "I48", description: "FIBRILACIÓN Y ALETEO AURICULAR" },
+  { code: "I49", description: "OTRAS ARRITMIAS CARDÍACAS" },
+  { code: "I50", description: "INSUFICIENCIA CARDÍACA" },
+  { code: "I51", description: "COMPLICACIONES Y DESCRIPCIONES MAL DEFINIDAS DE ENFERMEDAD CARDÍACA" },
+  { code: "I52", description: "OTROS TRASTORNOS CARDÍACOS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "I60", description: "HEMORRAGIA SUBARACNOIDEA" },
+  { code: "I61", description: "HEMORRAGIA INTRAENCEFÁLICA" },
+  { code: "I62", description: "OTRAS HEMORRAGIAS INTRACRANEALES NO TRAUMÁTICAS" },
+  { code: "I63", description: "INFARTO CEREBRAL" },
+  { code: "I64", description: "ACCIDENTE VASCULAR ENCEFÁLICO AGUDO, NO ESPECIFICADO COMO HEMORRÁGICO O ISQUÉMICO" },
+  { code: "I65", description: "OCLUSIÓN Y ESTENOSIS DE LAS ARTERIAS PRECEREBRALES SIN OCASIONAR INFARTO CEREBRAL" },
+  { code: "I66", description: "OCLUSIÓN Y ESTENOSIS DE LAS ARTERIAS CEREBRALES SIN OCASIONAR INFARTO CEREBRAL" },
+  { code: "I67", description: "OTRAS ENFERMEDADES CEREBROVASCULARES" },
+  { code: "I68", description: "TRASTORNOS CEREBROVASCULARES EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "I69", description: "SECUELAS DE ENFERMEDAD CEREBROVASCULAR" },
+  { code: "I70", description: "ATEROSCLEROSIS" },
+  { code: "I71", description: "ANEURISMA Y DISECCIÓN AÓRTICOS" },
+  { code: "I72", description: "OTROS ANEURISMAS" },
+  { code: "I73", description: "OTRAS ENFERMEDADES VASCULARES PERIFÉRICAS" },
+  { code: "I74", description: "EMBOLIA Y TROMBOSIS ARTERIALES" },
+  { code: "I77", description: "OTROS TRASTORNOS ARTERIALES O ARTERIOLARES" },
+  { code: "I78", description: "ENFERMEDADES DE LOS VASOS CAPILARES" },
+  { code: "I79", description: "TRASTORNOS DE LAS ARTERIAS, DE LAS ARTERIOLAS Y DE LOS VASOS CAPILARES EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "I80", description: "FLEBITIS Y TROMBOFLEBITIS" },
+  { code: "I81", description: "TROMBOSIS DE LA VENA PORTA" },
+  { code: "I82", description: "OTRAS EMBOLIAS Y TROMBOSIS VENOSAS" },
+  { code: "I83", description: "VENAS VARICOSAS DE LOS MIEMBROS INFERIORES" },
+  { code: "I84", description: "HEMORROIDES" },
+  { code: "I85", description: "VÁRICES ESOFÁGICAS" },
+  { code: "I86", description: "VÁRICES DE OTROS SITIOS" },
+  { code: "I87", description: "OTROS TRASTORNOS DE LAS VENAS" },
+  { code: "I88", description: "LINFADENITIS INESPECÍFICA" },
+  { code: "I89", description: "OTROS TRASTORNOS NO INFECCIOSOS DE LOS VASOS Y GANGLIOS LINFÁTICOS" },
+  { code: "I95", description: "HIPOTENSIÓN" },
+  { code: "I97", description: "TRASTORNOS DEL SISTEMA CIRCULATORIO CONSECUTIVOS A PROCEDIMIENTOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "I98", description: "OTROS TRASTORNOS DEL SISTEMA CIRCULATORIO EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "I99", description: "OTROS TRASTORNOS Y LOS NO ESPECIFICADOS DEL SISTEMA CIRCULATORIO" },
+  { code: "J00", description: "RINOFARINGITIS AGUDA [RESFRIADO COMÚN]" },
+  { code: "J01", description: "SINUSITIS AGUDA" },
+  { code: "J02", description: "FARINGITIS AGUDA" },
+  { code: "J03", description: "AMIGDALITIS AGUDA" },
+  { code: "J04", description: "LARINGITIS Y TRAQUEÍTIS AGUDAS" },
+  { code: "J05", description: "LARINGITIS OBSTRUCTIVA AGUDA [CRUP] Y EPIGLOTITIS" },
+  { code: "J06", description: "INFECCIONES AGUDAS DE LAS VÍAS RESPIRATORIAS SUPERIORES, DE SITIOS MÚLTIPLES O NO ESPECIFICADOS" },
+  { code: "J09", description: "INFLUENZA DEBIDA A VIRUS DE LA INFLUENZA AVIAR IDENTIFICADO" },
+  { code: "J10", description: "INFLUENZA DEBIDA A OTRO VIRUS DE LA INFLUENZA IDENTIFICADO" },
+  { code: "J11", description: "INFLUENZA DEBIDA A VIRUS NO IDENTIFICADO" },
+  { code: "J12", description: "NEUMONÍA VIRAL, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "J13", description: "NEUMONÍA DEBIDA A STREPTOCOCCUS PNEUMONIAE" },
+  { code: "J14", description: "NEUMONÍA DEBIDA A HAEMOPHILUS INFLUENZAE" },
+  { code: "J15", description: "NEUMONÍA BACTERIANA, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "J16", description: "NEUMONÍA DEBIDA A OTROS MICROORGANISMOS INFECCIOSOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "J17", description: "NEUMONÍA EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "J18", description: "NEUMONÍA, ORGANISMO NO ESPECIFICADO" },
+  { code: "J20", description: "BRONQUITIS AGUDA" },
+  { code: "J21", description: "BRONQUIOLITIS AGUDA" },
+  { code: "J22", description: "INFECCIÓN AGUDA NO ESPECIFICADA DE LAS VÍAS RESPIRATORIAS INFERIORES" },
+  { code: "J30", description: "RINITIS ALÉRGICA Y VASOMOTORA" },
+  { code: "J31", description: "RINITIS, RINOFARINGITIS Y FARINGITIS CRÓNICAS" },
+  { code: "J32", description: "SINUSITIS CRÓNICA" },
+  { code: "J33", description: "PÓLIPO NASAL" },
+  { code: "J34", description: "OTROS TRASTORNOS DE LA NARIZ Y DE LOS SENOS PARANASALES" },
+  { code: "J35", description: "ENFERMEDADES CRÓNICAS DE LAS AMÍGDALAS Y DE LAS ADENOIDES" },
+  { code: "J36", description: "ABSCESO PERIAMIGDALINO" },
+  { code: "J37", description: "LARINGITIS Y LARINGOTRAQUEÍTIS CRÓNICAS" },
+  { code: "J38", description: "ENFERMEDADES DE LAS CUERDAS VOCALES Y DE LA LARINGE, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "J39", description: "OTRAS ENFERMEDADES DE LAS VÍAS RESPIRATORIAS SUPERIORES" },
+  { code: "J40", description: "BRONQUITIS, NO ESPECIFICADA COMO AGUDA O CRÓNICA" },
+  { code: "J41", description: "BRONQUITIS CRÓNICA SIMPLE Y MUCOPURULENTA" },
+  { code: "J42", description: "BRONQUITIS CRÓNICA NO ESPECIFICADA" },
+  { code: "J43", description: "ENFISEMA" },
+  { code: "J44", description: "OTRAS ENFERMEDADES PULMONARES OBSTRUCTIVAS CRÓNICAS" },
+  { code: "J45", description: "ASMA" },
+  { code: "J46", description: "ESTADO ASMÁTICO" },
+  { code: "J47", description: "BRONQUIECTASIA" },
+  { code: "J60", description: "NEUMOCONIOSIS DE LOS MINEROS DEL CARBÓN" },
+  { code: "J61", description: "NEUMOCONIOSIS DEBIDA AL ASBESTO Y A OTRAS FIBRAS MINERALES" },
+  { code: "J62", description: "NEUMOCONIOSIS DEBIDA A POLVO DE SÍLICE" },
+  { code: "J63", description: "NEUMOCONIOSIS DEBIDA A OTROS POLVOS INORGÁNICOS" },
+  { code: "J64", description: "NEUMOCONIOSIS, NO ESPECIFICADA" },
+  { code: "J65", description: "NEUMOCONIOSIS ASOCIADA CON TUBERCULOSIS" },
+  { code: "J66", description: "ENFERMEDADES DE LAS VÍAS AÉREAS DEBIDAS A POLVOS ORGÁNICOS ESPECÍFICOS" },
+  { code: "J67", description: "NEUMONITIS DEBIDA A HIPERSENSIBILIDAD AL POLVO ORGÁNICO" },
+  { code: "J68", description: "AFECCIONES RESPIRATORIAS DEBIDAS A INHALACIÓN DE GASES, HUMOS, VAPORES Y SUSTANCIAS QUÍMICAS" },
+  { code: "J69", description: "NEUMONITIS DEBIDA A SÓLIDOS Y LÍQUIDOS" },
+  { code: "J70", description: "AFECCIONES RESPIRATORIAS DEBIDAS A OTROS AGENTES EXTERNOS" },
+  { code: "J80", description: "SÍNDROME DE DIFICULTAD RESPIRATORIA DEL ADULTO" },
+  { code: "J81", description: "EDEMA PULMONAR" },
+  { code: "J82", description: "EOSINOFILIA PULMONAR, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "J84", description: "OTRAS ENFERMEDADES PULMONARES INTERSTICIALES" },
+  { code: "J85", description: "ABSCESO DEL PULMÓN Y DEL MEDIASTINO" },
+  { code: "J86", description: "PIOTÓRAX" },
+  { code: "J90", description: "DERRAME PLEURAL NO CLASIFICADO EN OTRA PARTE" },
+  { code: "J91", description: "DERRAME PLEURAL EN AFECCIONES CLASIFICADAS EN OTRA PARTE" },
+  { code: "J92", description: "PAQUIPLEURITIS" },
+  { code: "J93", description: "NEUMOTÓRAX" },
+  { code: "J94", description: "OTRAS AFECCIONES DE LA PLEURA" },
+  { code: "J95", description: "TRASTORNOS DEL SISTEMA RESPIRATORIO CONSECUTIVOS A PROCEDIMIENTOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "J96", description: "INSUFICIENCIA RESPIRATORIA, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "J98", description: "OTROS TRASTORNOS RESPIRATORIOS" },
+  { code: "J99", description: "TRASTORNOS RESPIRATORIOS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "K00", description: "TRASTORNOS DEL DESARROLLO Y DE LA ERUPCIÓN DE LOS DIENTES" },
+  { code: "K01", description: "DIENTES INCLUIDOS E IMPACTADOS" },
+  { code: "K02", description: "CARIES DENTAL" },
+  { code: "K03", description: "OTRAS ENFERMEDADES DE LOS TEJIDOS DUROS DE LOS DIENTES" },
+  { code: "K04", description: "ENFERMEDADES DE LA PULPA Y DE LOS TEJIDOS PERIAPICALES" },
+  { code: "K05", description: "GINGIVITIS Y ENFERMEDADES PERIODONTALES" },
+  { code: "K06", description: "OTROS TRASTORNOS DE LA ENCÍA Y DE LA ZONA EDÉNTULA" },
+  { code: "K07", description: "ANOMALÍAS DENTOFACIALES [INCLUSO LA MALOCLUSIÓN]" },
+  { code: "K08", description: "OTROS TRASTORNOS DE LOS DIENTES Y DE SUS ESTRUCTURAS DE SOSTÉN" },
+  { code: "K09", description: "QUISTES DE LA REGIÓN BUCAL, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "K10", description: "OTRAS ENFERMEDADES DE LOS MAXILARES" },
+  { code: "K11", description: "ENFERMEDADES DE LAS GLÁNDULAS SALIVALES" },
+  { code: "K12", description: "ESTOMATITIS Y LESIONES AFINES" },
+  { code: "K13", description: "OTRAS ENFERMEDADES DE LOS LABIOS Y DE LA MUCOSA BUCAL" },
+  { code: "K14", description: "ENFERMEDADES DE LA LENGUA" },
+  { code: "K20", description: "ESOFAGITIS" },
+  { code: "K21", description: "ENFERMEDAD DEL REFLUJO GASTROESOFÁGICO" },
+  { code: "K22", description: "OTRAS ENFERMEDADES DEL ESÓFAGO" },
+  { code: "K23", description: "TRASTORNOS DEL ESÓFAGO EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "K25", description: "ÚLCERA GÁSTRICA" },
+  { code: "K26", description: "ÚLCERA DUODENAL" },
+  { code: "K27", description: "ÚLCERA PÉPTICA, DE SITIO NO ESPECIFICADO" },
+  { code: "K28", description: "ÚLCERA GASTROYEYUNAL" },
+  { code: "K29", description: "GASTRITIS Y DUODENITIS" },
+  { code: "K30", description: "DISPEPSIA" },
+  { code: "K31", description: "OTRAS ENFERMEDADES DEL ESTÓMAGO Y DEL DUODENO" },
+  { code: "K35", description: "APENDICITIS AGUDA" },
+  { code: "K36", description: "OTROS TIPOS DE APENDICITIS" },
+  { code: "K37", description: "APENDICITIS, NO ESPECIFICADA" },
+  { code: "K38", description: "OTRAS ENFERMEDADES DEL APÉNDICE" },
+  { code: "K40", description: "HERNIA INGUINAL" },
+  { code: "K41", description: "HERNIA FEMORAL" },
+  { code: "K42", description: "HERNIA UMBILICAL" },
+  { code: "K43", description: "HERNIA VENTRAL" },
+  { code: "K44", description: "HERNIA DIAFRAGMÁTICA" },
+  { code: "K45", description: "OTRAS HERNIAS DE LA CAVIDAD ABDOMINAL" },
+  { code: "K46", description: "HERNIA NO ESPECIFICADA DE LA CAVIDAD ABDOMINAL" },
+  { code: "K50", description: "ENFERMEDAD DE CROHN [ENTERITIS REGIONAL]" },
+  { code: "K51", description: "COLITIS ULCERATIVA" },
+  { code: "K52", description: "OTRAS COLITIS Y GASTROENTERITIS NO INFECCIOSAS" },
+  { code: "K55", description: "TRASTORNOS VASCULARES DE LOS INTESTINOS" },
+  { code: "K56", description: "ÍLEO PARALÍTICO Y OBSTRUCCIÓN INTESTINAL SIN HERNIA" },
+  { code: "K57", description: "ENFERMEDAD DIVERTICULAR DEL INTESTINO" },
+  { code: "K58", description: "SÍNDROME DEL COLON IRRITABLE" },
+  { code: "K59", description: "OTROS TRASTORNOS FUNCIONALES DEL INTESTINO" },
+  { code: "K60", description: "FISURA Y FÍSTULA DE LAS REGIONES ANAL Y RECTAL" },
+  { code: "K61", description: "ABSCESO DE LAS REGIONES ANAL Y RECTAL" },
+  { code: "K62", description: "OTRAS ENFERMEDADES DEL ANO Y DEL RECTO" },
+  { code: "K63", description: "OTRAS ENFERMEDADES DE LOS INTESTINOS" },
+  { code: "K65", description: "PERITONITIS" },
+  { code: "K66", description: "OTROS TRASTORNOS DEL PERITONEO" },
+  { code: "K67", description: "TRASTORNOS DEL PERITONEO EN ENFERMEDADES INFECCIOSAS CLASIFICADAS EN OTRA PARTE" },
+  { code: "K70", description: "ENFERMEDAD ALCOHÓLICA DEL HÍGADO" },
+  { code: "K71", description: "ENFERMEDAD TÓXICA DEL HÍGADO" },
+  { code: "K72", description: "INSUFICIENCIA HEPÁTICA, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "K73", description: "HEPATITIS CRÓNICA, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "K74", description: "FIBROSIS Y CIRROSIS DEL HÍGADO" },
+  { code: "K75", description: "OTRAS ENFERMEDADES INFLAMATORIAS DEL HÍGADO" },
+  { code: "K76", description: "OTRAS ENFERMEDADES DEL HÍGADO" },
+  { code: "K77", description: "TRASTORNOS DEL HÍGADO EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "K80", description: "COLELITIASIS" },
+  { code: "K81", description: "COLECISTITIS" },
+  { code: "K82", description: "OTRAS ENFERMEDADES DE LA VESÍCULA BILIAR" },
+  { code: "K83", description: "OTRAS ENFERMEDADES DE LAS VÍAS BILIARES" },
+  { code: "K85", description: "PANCREATITIS AGUDA" },
+  { code: "K86", description: "OTRAS ENFERMEDADES DEL PÁNCREAS" },
+  { code: "K87", description: "TRASTORNOS DE LA VESÍCULA BILIAR, DE LAS VÍAS BILIARES Y DEL PÁNCREAS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "K90", description: "MALABSORCIÓN INTESTINAL" },
+  { code: "K91", description: "TRASTORNOS DEL SISTEMA DIGESTIVO CONSECUTIVOS A PROCEDIMIENTOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "K92", description: "OTRAS ENFERMEDADES DEL SISTEMA DIGESTIVO" },
+  { code: "K93", description: "TRASTORNOS DE OTROS ÓRGANOS DIGESTIVOS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "L00", description: "SÍNDROME ESTAFILOCÓCICO DE LA PIEL ESCALDADA" },
+  { code: "L01", description: "IMPÉTIGO" },
+  { code: "L02", description: "ABSCESO CUTÁNEO, FURÚNCULO Y CARBUNCO" },
+  { code: "L03", description: "CELULITIS" },
+  { code: "L04", description: "LINFADENITIS AGUDA" },
+  { code: "L05", description: "QUISTE PILONIDAL" },
+  { code: "L08", description: "OTRAS INFECCIONES LOCALES DE LA PIEL Y DEL TEJIDO SUBCUTÁNEO" },
+  { code: "L10", description: "PÉNFIGO" },
+  { code: "L11", description: "OTROS TRASTORNOS ACANTOLÍTICOS" },
+  { code: "L12", description: "PENFIGOIDE" },
+  { code: "L13", description: "OTROS TRASTORNOS FLICTENULARES" },
+  { code: "L14", description: "TRASTORNOS FLICTENULARES EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "L20", description: "DERMATITIS ATÓPICA" },
+  { code: "L21", description: "DERMATITIS SEBORREICA" },
+  { code: "L22", description: "DERMATITIS DEL PAÑAL" },
+  { code: "L23", description: "DERMATITIS ALÉRGICA DE CONTACTO" },
+  { code: "L24", description: "DERMATITIS DE CONTACTO POR IRRITANTES" },
+  { code: "L25", description: "DERMATITIS DE CONTACTO, FORMA NO ESPECIFICADA" },
+  { code: "L26", description: "DERMATITIS EXFOLIATIVA" },
+  { code: "L27", description: "DERMATITIS DEBIDA A SUSTANCIAS INGERIDAS" },
+  { code: "L28", description: "LIQUEN SIMPLE CRÓNICO Y PRURIGO" },
+  { code: "L29", description: "PRURITO" },
+  { code: "L30", description: "OTRAS DERMATITIS" },
+  { code: "L40", description: "PSORIASIS" },
+  { code: "L41", description: "PARAPSORIASIS" },
+  { code: "L42", description: "PITIRIASIS ROSADA" },
+  { code: "L43", description: "LIQUEN PLANO" },
+  { code: "L44", description: "OTROS TRASTORNOS PAPULOESCAMOSOS" },
+  { code: "L45", description: "TRASTORNOS PAPULOESCAMOSOS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "L50", description: "URTICARIA" },
+  { code: "L51", description: "ERITEMA MULTIFORME" },
+  { code: "L52", description: "ERITEMA NUDOSO" },
+  { code: "L53", description: "OTRAS AFECCIONES ERITEMATOSAS" },
+  { code: "L54", description: "ERITEMA EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "L55", description: "QUEMADURA SOLAR" },
+  { code: "L56", description: "OTROS CAMBIOS AGUDOS DE LA PIEL DEBIDOS A RADIACIÓN ULTRAVIOLETA" },
+  { code: "L57", description: "CAMBIOS DE LA PIEL DEBIDOS A EXPOSICIÓN CRÓNICA A RADIACIÓN NO IONIZANTE" },
+  { code: "L58", description: "RADIODERMATITIS" },
+  { code: "L59", description: "OTROS TRASTORNOS DE LA PIEL Y DEL TEJIDO SUBCUTÁNEO RELACIONADOS CON RADIACIÓN" },
+  { code: "L60", description: "TRASTORNOS DE LAS UÑAS" },
+  { code: "L62", description: "TRASTORNOS DE LAS UÑAS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "L63", description: "ALOPECIA AREATA" },
+  { code: "L64", description: "ALOPECIA ANDRÓGENA" },
+  { code: "L65", description: "OTRA PÉRDIDA NO CICATRICIAL DEL PELO" },
+  { code: "L66", description: "ALOPECIA CICATRICIAL [PÉRDIDA CICATRICIAL DEL PELO]" },
+  { code: "L67", description: "ANORMALIDADES DEL TALLO Y DEL COLOR DEL PELO" },
+  { code: "L68", description: "HIPERTRICOSIS" },
+  { code: "L70", description: "ACNÉ" },
+  { code: "L71", description: "ROSÁCEA" },
+  { code: "L72", description: "QUISTE FOLICULAR DE LA PIEL Y DEL TEJIDO SUBCUTÁNEO" },
+  { code: "L73", description: "OTROS TRASTORNOS FOLICULARES" },
+  { code: "L74", description: "TRASTORNOS SUDORÍPAROS ECRINOS" },
+  { code: "L75", description: "TRASTORNOS SUDORÍPAROS APOCRINOS" },
+  { code: "L80", description: "VITÍLIGO" },
+  { code: "L81", description: "OTROS TRASTORNOS DE LA PIGMENTACIÓN" },
+  { code: "L82", description: "QUERATOSIS SEBORREICA" },
+  { code: "L83", description: "ACANTOSIS NIGRICANS" },
+  { code: "L84", description: "CALLOS Y CALLOSIDADES" },
+  { code: "L85", description: "OTROS TIPOS DE ENGROSAMIENTO EPIDÉRMICO" },
+  { code: "L86", description: "QUERATODERMA EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "L87", description: "TRASTORNOS DE LA ELIMINACIÓN TRANSEPIDÉRMICA" },
+  { code: "L88", description: "PIODERMA GANGRENOSO" },
+  { code: "L89", description: "ÚLCERA DE DECÚBITO" },
+  { code: "L90", description: "TRASTORNOS ATRÓFICOS DE LA PIEL" },
+  { code: "L91", description: "TRASTORNOS HIPERTRÓFICOS DE LA PIEL" },
+  { code: "L92", description: "TRASTORNOS GRANULOMATOSOS DE LA PIEL Y DEL TEJIDO SUBCUTÁNEO" },
+  { code: "L93", description: "LUPUS ERITEMATOSO" },
+  { code: "L94", description: "OTROS TRASTORNOS LOCALIZADOS DEL TEJIDO CONJUNTIVO" },
+  { code: "L95", description: "VASCULITIS LIMITADA A LA PIEL, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "L97", description: "ÚLCERA DE MIEMBRO INFERIOR, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "L98", description: "OTROS TRASTORNOS DE LA PIEL Y DEL TEJIDO SUBCUTÁNEO, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "L99", description: "OTROS TRASTORNOS DE LA PIEL Y DEL TEJIDO SUBCUTÁNEO EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "M00", description: "ARTRITIS PIÓGENA" },
+  { code: "M01", description: "INFECCIONES DIRECTAS DE LA ARTICULACIÓN EN ENFERMEDADES INFECCIOSAS Y PARASITARIAS CLASIFICADAS EN OTRA PARTE" },
+  { code: "M02", description: "ARTROPATÍAS REACTIVAS" },
+  { code: "M03", description: "ARTROPATÍAS POSTINFECCIOSAS Y REACTIVAS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "M05", description: "ARTRITIS REUMATOIDE SEROPOSITIVA" },
+  { code: "M06", description: "OTRAS ARTRITIS REUMATOIDES" },
+  { code: "M07", description: "ARTROPATÍAS PSORIÁSICAS Y ENTEROPÁTICAS" },
+  { code: "M08", description: "ARTRITIS JUVENIL" },
+  { code: "M09", description: "ARTRITIS JUVENIL EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "M10", description: "GOTA" },
+  { code: "M11", description: "OTRAS ARTROPATÍAS POR CRISTALES" },
+  { code: "M12", description: "OTRAS ARTROPATÍAS ESPECÍFICAS" },
+  { code: "M13", description: "OTRAS ARTRITIS" },
+  { code: "M14", description: "ARTROPATÍA EN OTRAS ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "M15", description: "POLIARTROSIS" },
+  { code: "M16", description: "COXARTROSIS [ARTROSIS DE LA CADERA]" },
+  { code: "M17", description: "GONARTROSIS [ARTROSIS DE LA RODILLA]" },
+  { code: "M18", description: "ARTROSIS DE LA PRIMERA ARTICULACIÓN CARPOMETACARPIANA" },
+  { code: "M19", description: "OTRAS ARTROSIS" },
+  { code: "M20", description: "DEFORMIDADES ADQUIRIDAS DE LOS DEDOS DE LA MANO Y DEL PIE" },
+  { code: "M21", description: "OTRAS DEFORMIDADES ADQUIRIDAS DE LOS MIEMBROS" },
+  { code: "M22", description: "TRASTORNO DE LA RÓTULA" },
+  { code: "M23", description: "TRASTORNO INTERNO DE LA RODILLA" },
+  { code: "M24", description: "OTROS TRASTORNOS ARTICULARES ESPECÍFICOS" },
+  { code: "M25", description: "OTROS TRASTORNOS ARTICULARES, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "M30", description: "POLIARTERITIS NUDOSA Y AFECCIONES RELACIONADAS" },
+  { code: "M31", description: "OTRAS VASCULOPATÍAS NECROTIZANTES" },
+  { code: "M32", description: "LUPUS ERITEMATOSO SISTÉMICO" },
+  { code: "M33", description: "DERMATOPOLIMIOSITIS" },
+  { code: "M34", description: "ESCLEROSIS SISTÉMICA" },
+  { code: "M35", description: "OTRO COMPROMISO SISTÉMICO DEL TEJIDO CONJUNTIVO" },
+  { code: "M36", description: "TRASTORNOS SISTÉMICOS DEL TEJIDO CONJUNTIVO EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "M40", description: "CIFOSIS Y LORDOSIS" },
+  { code: "M41", description: "ESCOLIOSIS" },
+  { code: "M42", description: "OSTEOCONDROSIS DE LA COLUMNA VERTEBRAL" },
+  { code: "M43", description: "OTRAS DORSOPATÍAS DEFORMANTES" },
+  { code: "M45", description: "ESPONDILITIS ANQUILOSANTE" },
+  { code: "M46", description: "OTRAS ESPONDILOPATÍAS INFLAMATORIAS" },
+  { code: "M47", description: "ESPONDILOSIS" },
+  { code: "M48", description: "OTRAS ESPONDILOPATÍAS" },
+  { code: "M49", description: "ESPONDILOPATÍAS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "M50", description: "TRASTORNOS DE DISCO CERVICAL" },
+  { code: "M51", description: "OTROS TRASTORNOS DE LOS DISCOS INTERVERTEBRALES" },
+  { code: "M53", description: "OTRAS DORSOPATÍAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "M54", description: "DORSALGIA" },
+  { code: "M60", description: "MIOSITIS" },
+  { code: "M61", description: "CALCIFICACIÓN Y OSIFICACIÓN DEL MÚSCULO" },
+  { code: "M62", description: "OTROS TRASTORNOS DE LOS MÚSCULOS" },
+  { code: "M63", description: "TRASTORNOS DE LOS MÚSCULOS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "M65", description: "SINOVITIS Y TENOSINOVITIS" },
+  { code: "M66", description: "RUPTURA ESPONTÁNEA DE LA SINOVIA Y DEL TENDÓN" },
+  { code: "M67", description: "OTROS TRASTORNOS DE LA SINOVIA Y DEL TENDÓN" },
+  { code: "M68", description: "TRASTORNOS DE LOS TENDONES Y DE LA SINOVIA EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "M70", description: "TRASTORNOS DE LOS TEJIDOS BLANDOS RELACIONADOS CON EL USO, EL USO EXCESIVO Y LA PRESIÓN" },
+  { code: "M71", description: "OTRAS BURSOPATÍAS" },
+  { code: "M72", description: "TRASTORNOS FIBROBLÁSTICOS" },
+  { code: "M73", description: "TRASTORNOS DE LOS TEJIDOS BLANDOS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "M75", description: "LESIONES DEL HOMBRO" },
+  { code: "M76", description: "ENTESOPATÍAS DEL MIEMBRO INFERIOR, EXCLUIDO EL PIE" },
+  { code: "M77", description: "OTRAS ENTESOPATÍAS" },
+  { code: "M79", description: "OTROS TRASTORNOS DE LOS TEJIDOS BLANDOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "M80", description: "OSTEOPOROSIS CON FRACTURA PATOLÓGICA" },
+  { code: "M81", description: "OSTEOPOROSIS SIN FRACTURA PATOLÓGICA" },
+  { code: "M82", description: "OSTEOPOROSIS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "M83", description: "OSTEOMALACIA DEL ADULTO" },
+  { code: "M84", description: "TRASTORNOS DE LA CONTINUIDAD DEL HUESO" },
+  { code: "M85", description: "OTROS TRASTORNOS DE LA DENSIDAD Y DE LA ESTRUCTURA ÓSEAS" },
+  { code: "M86", description: "OSTEOMIELITIS" },
+  { code: "M87", description: "OSTEONECROSIS" },
+  { code: "M88", description: "ENFERMEDAD DE PAGET DE LOS HUESOS [OSTEÍTIS DEFORMANTE]" },
+  { code: "M89", description: "OTROS TRASTORNOS DEL HUESO" },
+  { code: "M90", description: "OSTEOPATÍAS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "M91", description: "OSTEOCONDROSIS JUVENIL DE LA CADERA Y DE LA PELVIS" },
+  { code: "M92", description: "OTRAS OSTEOCONDROSIS JUVENILES" },
+  { code: "M93", description: "OTRAS OSTEOCONDROPATÍAS" },
+  { code: "M94", description: "OTROS TRASTORNOS DEL CARTÍLAGO" },
+  { code: "M95", description: "OTRAS DEFORMIDADES ADQUIRIDAS DEL SISTEMA OSTEOMUSCULAR Y DEL TEJIDO CONJUNTIVO" },
+  { code: "M96", description: "TRASTORNOS OSTEOMUSCULARES CONSECUTIVOS A PROCEDIMIENTOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "M99", description: "LESIONES BIOMECÁNICAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "N00", description: "SÍNDROME NEFRÍTICO AGUDO" },
+  { code: "N01", description: "SÍNDROME NEFRÍTICO RÁPIDAMENTE PROGRESIVO" },
+  { code: "N02", description: "HEMATURIA RECURRENTE Y PERSISTENTE" },
+  { code: "N03", description: "SÍNDROME NEFRÍTICO CRÓNICO" },
+  { code: "N04", description: "SÍNDROME NEFRÓTICO" },
+  { code: "N05", description: "SÍNDROME NEFRÍTICO NO ESPECIFICADO" },
+  { code: "N06", description: "PROTEINURIA AISLADA CON LESIÓN MORFOLÓGICA ESPECIFICADA" },
+  { code: "N07", description: "NEFROPATÍA HEREDITARIA, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "N08", description: "TRASTORNOS GLOMERULARES EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "N10", description: "NEFRITIS TUBULOINTERSTICIAL AGUDA" },
+  { code: "N11", description: "NEFRITIS TUBULOINTERSTICIAL CRÓNICA" },
+  { code: "N12", description: "NEFRITIS TUBULOINTERSTICIAL, NO ESPECIFICADA COMO AGUDA O CRÓNICA" },
+  { code: "N13", description: "UROPATÍA OBSTRUCTIVA Y POR REFLUJO" },
+  { code: "N14", description: "AFECCIONES TUBULARES Y TUBULOINTERSTICIALES INDUCIDAS POR DROGAS Y POR METALES PESADOS" },
+  { code: "N15", description: "OTRAS ENFERMEDADES RENALES TUBULOINTERSTICIALES" },
+  { code: "N16", description: "TRASTORNOS RENALES TUBULOINTERSTICIALES EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "N17", description: "INSUFICIENCIA RENAL AGUDA" },
+  { code: "N18", description: "INSUFICIENCIA RENAL CRÓNICA" },
+  { code: "N19", description: "INSUFICIENCIA RENAL NO ESPECIFICADA" },
+  { code: "N20", description: "CÁLCULO DEL RIÑÓN Y DEL URÉTER" },
+  { code: "N21", description: "CÁLCULO DE LAS VÍAS URINARIAS INFERIORES" },
+  { code: "N22", description: "CÁLCULO DE LAS VÍAS URINARIAS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "N23", description: "CÓLICO RENAL, NO ESPECIFICADO" },
+  { code: "N25", description: "TRASTORNOS RESULTANTES DE LA FUNCIÓN TUBULAR RENAL ALTERADA" },
+  { code: "N26", description: "RIÑÓN CONTRAÍDO, NO ESPECIFICADO" },
+  { code: "N27", description: "RIÑÓN PEQUEÑO DE CAUSA DESCONOCIDA" },
+  { code: "N28", description: "OTROS TRASTORNOS DEL RIÑÓN Y DEL URÉTER, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "N29", description: "OTROS TRASTORNOS DEL RIÑÓN Y DEL URÉTER EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "N30", description: "CISTITIS" },
+  { code: "N31", description: "DISFUNCIÓN NEUROMUSCULAR DE LA VEJIGA, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "N32", description: "OTROS TRASTORNOS DE LA VEJIGA" },
+  { code: "N33", description: "TRASTORNOS DE LA VEJIGA EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "N34", description: "URETRITIS Y SÍNDROME URETRAL" },
+  { code: "N35", description: "ESTRECHEZ URETRAL" },
+  { code: "N36", description: "OTROS TRASTORNOS DE LA URETRA" },
+  { code: "N37", description: "TRASTORNOS DE LA URETRA EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "N39", description: "OTROS TRASTORNOS DEL SISTEMA URINARIO" },
+  { code: "N40", description: "HIPERPLASIA DE LA PRÓSTATA" },
+  { code: "N41", description: "ENFERMEDADES INFLAMATORIAS DE LA PRÓSTATA" },
+  { code: "N42", description: "OTROS TRASTORNOS DE LA PRÓSTATA" },
+  { code: "N43", description: "HIDROCELE Y ESPERMATOCELE" },
+  { code: "N44", description: "TORSIÓN DEL TESTÍCULO" },
+  { code: "N45", description: "ORQUITIS Y EPIDIDIMITIS" },
+  { code: "N46", description: "ESTERILIDAD EN EL VARÓN" },
+  { code: "N47", description: "PREPUCIO REDUNDANTE, FIMOSIS Y PARAFIMOSIS" },
+  { code: "N48", description: "OTROS TRASTORNOS DEL PENE" },
+  { code: "N49", description: "TRASTORNOS INFLAMATORIOS DE ÓRGANOS GENITALES MASCULINOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "N50", description: "OTROS TRASTORNOS DE LOS ÓRGANOS GENITALES MASCULINOS" },
+  { code: "N51", description: "TRASTORNOS DE LOS ÓRGANOS GENITALES MASCULINOS EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "N60", description: "DISPLASIA MAMARIA BENIGNA" },
+  { code: "N61", description: "TRASTORNOS INFLAMATORIOS DE LA MAMA" },
+  { code: "N62", description: "HIPERTROFIA DE LA MAMA" },
+  { code: "N63", description: "MASA NO ESPECIFICADA EN LA MAMA" },
+  { code: "N64", description: "OTROS TRASTORNOS DE LA MAMA" },
+  { code: "N70", description: "SALPINGITIS Y OOFORITIS" },
+  { code: "N71", description: "ENFERMEDAD INFLAMATORIA DEL ÚTERO, EXCEPTO DEL CUELLO UTERINO" },
+  { code: "N72", description: "ENFERMEDAD INFLAMATORIA DEL CUELLO UTERINO" },
+  { code: "N73", description: "OTRAS ENFERMEDADES PÉLVICAS INFLAMATORIAS FEMENINAS" },
+  { code: "N74", description: "TRASTORNOS INFLAMATORIOS DE LA PELVIS FEMENINA EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "N75", description: "ENFERMEDADES DE LA GLÁNDULA DE BARTHOLIN" },
+  { code: "N76", description: "OTRAS ENFERMEDADES INFLAMATORIAS DE LA VAGINA Y DE LA VULVA" },
+  { code: "N77", description: "ULCERACIÓN E INFLAMACIÓN VULVOVAGINAL EN ENFERMEDADES CLASIFICADAS EN OTRA PARTE" },
+  { code: "N80", description: "ENDOMETRIOSIS" },
+  { code: "N81", description: "PROLAPSO GENITAL FEMENINO" },
+  { code: "N82", description: "FÍSTULAS QUE AFECTAN EL TRACTO GENITAL FEMENINO" },
+  { code: "N83", description: "TRASTORNOS NO INFLAMATORIOS DEL OVARIO, DE LA TROMPA DE FALOPIO Y DEL LIGAMENTO ANCHO" },
+  { code: "N84", description: "PÓLIPO DEL TRACTO GENITAL FEMENINO" },
+  { code: "N85", description: "OTROS TRASTORNOS NO INFLAMATORIOS DEL ÚTERO, EXCEPTO DEL CUELLO" },
+  { code: "N86", description: "EROSIÓN Y ECTROPIÓN DEL CUELLO DEL ÚTERO" },
+  { code: "N87", description: "DISPLASIA DEL CUELLO UTERINO" },
+  { code: "N88", description: "OTROS TRASTORNOS NO INFLAMATORIOS DEL CUELLO DEL ÚTERO" },
+  { code: "N89", description: "OTROS TRASTORNOS NO INFLAMATORIOS DE LA VAGINA" },
+  { code: "N90", description: "OTROS TRASTORNOS NO INFLAMATORIOS DE LA VULVA Y DEL PERINEO" },
+  { code: "N91", description: "MENSTRUACIÓN AUSENTE, ESCASA O RARA" },
+  { code: "N92", description: "MENSTRUACIÓN EXCESIVA, FRECUENTE E IRREGULAR" },
+  { code: "N93", description: "OTRAS HEMORRAGIAS UTERINAS O VAGINALES ANORMALES" },
+  { code: "N94", description: "DOLOR Y OTRAS AFECCIONES RELACIONADAS CON LOS ÓRGANOS GENITALES FEMENINOS Y CON EL CICLO MENSTRUAL" },
+  { code: "N95", description: "OTROS TRASTORNOS MENOPÁUSICOS Y PERIMENOPÁUSICOS" },
+  { code: "N96", description: "ABORTADORA HABITUAL" },
+  { code: "N97", description: "INFERTILIDAD FEMENINA" },
+  { code: "N98", description: "COMPLICACIONES ASOCIADAS CON LA FECUNDACIÓN ARTIFICIAL" },
+  { code: "N99", description: "TRASTORNOS DEL SISTEMA GENITOURINARIO CONSECUTIVOS A PROCEDIMIENTOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "O00", description: "EMBARAZO ECTÓPICO" },
+  { code: "O01", description: "MOLA HIDATIFORME" },
+  { code: "O02", description: "OTROS PRODUCTOS ANORMALES DE LA CONCEPCIÓN" },
+  { code: "O03", description: "ABORTO ESPONTÁNEO" },
+  { code: "O04", description: "ABORTO MÉDICO" },
+  { code: "O05", description: "OTRO ABORTO" },
+  { code: "O06", description: "ABORTO NO ESPECIFICADO" },
+  { code: "O07", description: "INTENTO FALLIDO DE ABORTO" },
+  { code: "O08", description: "COMPLICACIONES CONSECUTIVAS AL ABORTO, AL EMBARAZO ECTÓPICO Y AL EMBARAZO MOLAR" },
+  { code: "O10", description: "HIPERTENSIÓN PREEXISTENTE QUE COMPLICA EL EMBARAZO, EL PARTO Y EL PUERPERIO" },
+  { code: "O11", description: "TRASTORNOS HIPERTENSIVOS PREEXISTENTES, CON PROTEINURIA AGREGADA" },
+  { code: "O12", description: "EDEMA Y PROTEINURIA GESTACIONALES [INDUCIDOS POR EL EMBARAZO] SIN HIPERTENSIÓN" },
+  { code: "O13", description: "HIPERTENSIÓN GESTACIONAL [INDUCIDA POR EL EMBARAZO] SIN PROTEINURIA SIGNIFICATIVA" },
+  { code: "O14", description: "HIPERTENSIÓN GESTACIONAL [INDUCIDA POR EL EMBARAZO] CON PROTEINURIA SIGNIFICATIVA" },
+  { code: "O15", description: "ECLAMPSIA" },
+  { code: "O16", description: "HIPERTENSIÓN MATERNA, NO ESPECIFICADA" },
+  { code: "O20", description: "HEMORRAGIA PRECOZ DEL EMBARAZO" },
+  { code: "O21", description: "VÓMITOS EXCESIVOS EN EL EMBARAZO" },
+  { code: "O22", description: "COMPLICACIONES VENOSAS EN EL EMBARAZO" },
+  { code: "O23", description: "INFECCIÓN DE LAS VÍAS GENITOURINARIAS EN EL EMBARAZO" },
+  { code: "O24", description: "DIABETES MELLITUS EN EL EMBARAZO" },
+  { code: "O25", description: "DESNUTRICIÓN EN EL EMBARAZO" },
+  { code: "O26", description: "ATENCIÓN A LA MADRE POR OTRAS COMPLICACIONES PRINCIPALMENTE RELACIONADAS CON EL EMBARAZO" },
+  { code: "O28", description: "HALLAZGOS ANORMALES EN EL EXAMEN PRENATAL DE LA MADRE" },
+  { code: "O29", description: "COMPLICACIONES DE LA ANESTESIA ADMINISTRADA DURANTE EL EMBARAZO" },
+  { code: "O30", description: "EMBARAZO MÚLTIPLE" },
+  { code: "O31", description: "COMPLICACIONES ESPECÍFICAS DEL EMBARAZO MÚLTIPLE" },
+  { code: "O32", description: "ATENCIÓN MATERNA POR PRESENTACIÓN ANORMAL DEL FETO, CONOCIDA O PRESUNTA" },
+  { code: "O33", description: "ATENCIÓN MATERNA POR DESPROPORCIÓN CONOCIDA O PRESUNTA" },
+  { code: "O34", description: "ATENCIÓN MATERNA POR ANORMALIDADES CONOCIDAS O PRESUNTAS DE LOS ÓRGANOS PELVIANOS DE LA MADRE" },
+  { code: "O35", description: "ATENCIÓN MATERNA POR ANORMALIDAD O LESIÓN FETAL, CONOCIDA O PRESUNTA" },
+  { code: "O36", description: "ATENCIÓN MATERNA POR OTROS PROBLEMAS FETALES CONOCIDOS O PRESUNTOS" },
+  { code: "O40", description: "POLIHIDRAMNIOS" },
+  { code: "O41", description: "OTROS TRASTORNOS DEL LÍQUIDO AMNIÓTICO Y DE LAS MEMBRANAS" },
+  { code: "O42", description: "RUPTURA PREMATURA DE LAS MEMBRANAS" },
+  { code: "O43", description: "TRASTORNOS PLACENTARIOS" },
+  { code: "O44", description: "PLACENTA PREVIA" },
+  { code: "O45", description: "DESPRENDIMIENTO PREMATURO DE LA PLACENTA [ABRUPTIO PLACENTAE]" },
+  { code: "O46", description: "HEMORRAGIA ANTEPARTO, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "O47", description: "FALSO TRABAJO DE PARTO" },
+  { code: "O48", description: "EMBARAZO PROLONGADO" },
+  { code: "O60", description: "TRABAJO DE PARTO PREMATURO" },
+  { code: "O61", description: "FRACASO DE LA INDUCCIÓN DEL TRABAJO DE PARTO" },
+  { code: "O62", description: "ANORMALIDADES DE LA DINÁMICA DEL TRABAJO DE PARTO" },
+  { code: "O63", description: "TRABAJO DE PARTO PROLONGADO" },
+  { code: "O64", description: "TRABAJO DE PARTO OBSTRUIDO DEBIDO A MALA POSICIÓN Y PRESENTACIÓN ANORMAL DEL FETO" },
+  { code: "O65", description: "TRABAJO DE PARTO OBSTRUIDO DEBIDO A ANORMALIDAD DE LA PELVIS MATERNA" },
+  { code: "O66", description: "OTRAS OBSTRUCCIONES DEL TRABAJO DE PARTO" },
+  { code: "O67", description: "TRABAJO DE PARTO Y PARTO COMPLICADOS POR HEMORRAGIA INTRAPARTO, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "O68", description: "TRABAJO DE PARTO Y PARTO COMPLICADOS POR SUFRIMIENTO FETAL" },
+  { code: "O69", description: "TRABAJO DE PARTO Y PARTO COMPLICADOS POR PROBLEMAS DEL CORDÓN UMBILICAL" },
+  { code: "O70", description: "DESGARRO PERINEAL DURANTE EL PARTO" },
+  { code: "O71", description: "OTRO TRAUMA OBSTÉTRICO" },
+  { code: "O72", description: "HEMORRAGIA POSTPARTO" },
+  { code: "O73", description: "RETENCIÓN DE LA PLACENTA O DE LAS MEMBRANAS, SIN HEMORRAGIA" },
+  { code: "O74", description: "COMPLICACIONES DE LA ANESTESIA ADMINISTRADA DURANTE EL TRABAJO DE PARTO Y EL PARTO" },
+  { code: "O75", description: "OTRAS COMPLICACIONES DEL TRABAJO DE PARTO Y DEL PARTO, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "O80", description: "PARTO ÚNICO ESPONTÁNEO" },
+  { code: "O81", description: "PARTO ÚNICO CON FÓRCEPS Y VENTOSA EXTRACTORA" },
+  { code: "O82", description: "PARTO ÚNICO POR CESÁREA" },
+  { code: "O83", description: "OTROS PARTOS ÚNICOS ASISTIDOS" },
+  { code: "O84", description: "PARTO MÚLTIPLE" },
+  { code: "O85", description: "SEPSIS PUERPERAL" },
+  { code: "O86", description: "OTRAS INFECCIONES PUERPERALES" },
+  { code: "O87", description: "COMPLICACIONES VENOSAS EN EL PUERPERIO" },
+  { code: "O88", description: "EMBOLIA OBSTÉTRICA" },
+  { code: "O89", description: "COMPLICACIONES DE LA ANESTESIA ADMINISTRADA DURANTE EL PUERPERIO" },
+  { code: "O90", description: "COMPLICACIONES DEL PUERPERIO, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "O91", description: "INFECCIONES DE LA MAMA ASOCIADAS CON EL PARTO" },
+  { code: "O92", description: "OTROS TRASTORNOS DE LA MAMA Y DE LA LACTANCIA ASOCIADOS CON EL PARTO" },
+  { code: "O94", description: "SECUELAS DE COMPLICACIONES DEL EMBARAZO, DEL PARTO Y DEL PUERPERIO" },
+  { code: "O95", description: "MUERTE OBSTÉTRICA DE CAUSA NO ESPECIFICADA" },
+  { code: "O96", description: "MUERTE MATERNA DEBIDA A CUALQUIER CAUSA OBSTÉTRICA QUE OCURRE DESPUÉS DE 42 DÍAS PERO ANTES DE UN AÑO DEL PARTO" },
+  { code: "O97", description: "MUERTE POR SECUELAS DE CAUSAS OBSTÉTRICAS DIRECTAS" },
+  { code: "O98", description: "ENFERMEDADES MATERNAS INFECCIOSAS Y PARASITARIAS CLASIFICABLES EN OTRA PARTE, PERO QUE COMPLICAN EL EMBARAZO, EL PARTO Y EL PUERPERIO" },
+  { code: "O99", description: "OTRAS ENFERMEDADES MATERNAS CLASIFICABLES EN OTRA PARTE, PERO QUE COMPLICAN EL EMBARAZO, EL PARTO Y EL PUERPERIO" },
+  { code: "P00", description: "FETO Y RECIÉN NACIDO AFECTADOS POR CONDICIONES DE LA MADRE NO NECESARIAMENTE RELACIONADAS CON EL EMBARAZO PRESENTE" },
+  { code: "P01", description: "FETO Y RECIÉN NACIDO AFECTADOS POR COMPLICACIONES MATERNAS DEL EMBARAZO" },
+  { code: "P02", description: "FETO Y RECIÉN NACIDO AFECTADOS POR COMPLICACIONES DE LA PLACENTA, DEL CORDÓN UMBILICAL Y DE LAS MEMBRANAS" },
+  { code: "P03", description: "FETO Y RECIÉN NACIDO AFECTADOS POR OTRAS COMPLICACIONES DEL TRABAJO DE PARTO Y DEL PARTO" },
+  { code: "P04", description: "FETO Y RECIÉN NACIDO AFECTADOS POR INFLUENCIAS NOCIVAS TRANSMITIDAS A TRAVÉS DE LA PLACENTA O DE LA LECHE MATERNA" },
+  { code: "P05", description: "RETARDO DEL CRECIMIENTO FETAL Y DESNUTRICIÓN FETAL" },
+  { code: "P07", description: "TRASTORNOS RELACIONADOS CON DURACIÓN CORTA DE LA GESTACIÓN Y CON BAJO PESO AL NACER, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "P08", description: "TRASTORNOS RELACIONADOS CON EL EMBARAZO PROLONGADO Y CON SOBREPESO AL NACER" },
+  { code: "P10", description: "HEMORRAGIA Y LACERACIÓN INTRACRANEAL DEBIDAS A TRAUMATISMO DEL NACIMIENTO" },
+  { code: "P11", description: "OTROS TRAUMATISMOS DEL NACIMIENTO EN EL SISTEMA NERVIOSO CENTRAL" },
+  { code: "P12", description: "TRAUMATISMO DEL NACIMIENTO EN EL CUERO CABELLUDO" },
+  { code: "P13", description: "TRAUMATISMO DEL ESQUELETO DURANTE EL NACIMIENTO" },
+  { code: "P14", description: "TRAUMATISMO DEL SISTEMA NERVIOSO PERIFÉRICO DURANTE EL NACIMIENTO" },
+  { code: "P15", description: "OTROS TRAUMATISMOS DEL NACIMIENTO" },
+  { code: "P20", description: "HIPOXIA INTRAUTERINA" },
+  { code: "P21", description: "ASFIXIA DEL NACIMIENTO" },
+  { code: "P22", description: "DIFICULTAD RESPIRATORIA DEL RECIÉN NACIDO" },
+  { code: "P23", description: "NEUMONÍA CONGÉNITA" },
+  { code: "P24", description: "SÍNDROMES DE ASPIRACIÓN NEONATAL" },
+  { code: "P25", description: "ENFISEMA INTERSTICIAL Y AFECCIONES RELACIONADAS, ORIGINADAS EN EL PERÍODO PERINATAL" },
+  { code: "P26", description: "HEMORRAGIA PULMONAR ORIGINADA EN EL PERÍODO PERINATAL" },
+  { code: "P27", description: "ENFERMEDAD RESPIRATORIA CRÓNICA ORIGINADA EN EL PERÍODO PERINATAL" },
+  { code: "P28", description: "OTROS PROBLEMAS RESPIRATORIOS DEL RECIÉN NACIDO, ORIGINADOS EN EL PERÍODO PERINATAL" },
+  { code: "P29", description: "TRASTORNOS CARDIOVASCULARES ORIGINADOS EN EL PERÍODO PERINATAL" },
+  { code: "P35", description: "ENFERMEDADES VIRALES CONGÉNITAS" },
+  { code: "P36", description: "SEPSIS BACTERIANA DEL RECIÉN NACIDO" },
+  { code: "P37", description: "OTRAS ENFERMEDADES INFECCIOSAS Y PARASITARIAS CONGÉNITAS" },
+  { code: "P38", description: "ONFALITIS DEL RECIÉN NACIDO CON O SIN HEMORRAGIA LEVE" },
+  { code: "P39", description: "OTRAS INFECCIONES ESPECÍFICAS DEL PERÍODO PERINATAL" },
+  { code: "P50", description: "PÉRDIDA DE SANGRE FETAL" },
+  { code: "P51", description: "HEMORRAGIA UMBILICAL DEL RECIÉN NACIDO" },
+  { code: "P52", description: "HEMORRAGIA INTRACRANEAL NO TRAUMÁTICA DEL FETO Y DEL RECIÉN NACIDO" },
+  { code: "P53", description: "ENFERMEDAD HEMORRÁGICA DEL FETO Y DEL RECIÉN NACIDO" },
+  { code: "P54", description: "OTRAS HEMORRAGIAS NEONATALES" },
+  { code: "P55", description: "ENFERMEDAD HEMOLÍTICA DEL FETO Y DEL RECIÉN NACIDO" },
+  { code: "P56", description: "HIDROPESÍA FETAL DEBIDA A ENFERMEDAD HEMOLÍTICA" },
+  { code: "P57", description: "KERNICTERUS" },
+  { code: "P58", description: "ICTERICIA NEONATAL DEBIDA A OTRAS HEMÓLISIS EXCESSIVE" },
+  { code: "P59", description: "ICTERICIA NEONATAL POR OTRAS CAUSAS Y POR LAS NO ESPECIFICADAS" },
+  { code: "P60", description: "COAGULACIÓN INTRAVASCULAR DISEMINADA EN EL FETO Y EL RECIÉN NACIDO" },
+  { code: "P61", description: "OTROS TRASTORNOS HEMATOLÓGICOS PERINATALES" },
+  { code: "P70", description: "TRASTORNOS TRANSITORIOS DEL METABOLISMO DE LOS CARBOHIDRATOS ESPECÍFICOS DEL FETO Y DEL RECIÉN NACIDO" },
+  { code: "P71", description: "TRASTORNOS NEONATALES TRANSITORIOS DEL METABOLISMO DEL CALCIO Y DEL MAGNESIO" },
+  { code: "P72", description: "OTROS TRASTORNOS ENDOCRINOS NEONATALES TRANSITORIOS" },
+  { code: "P74", description: "OTRAS ALTERACIONES METABÓLICAS Y ELECTROLÍTICAS NEONATALES TRANSITORIAS" },
+  { code: "P75", description: "ÍLEO MECONIAL" },
+  { code: "P76", description: "OTRAS OBSTRUCCIONES INTESTINALES DEL RECIÉN NACIDO" },
+  { code: "P77", description: "ENTEROCOLITIS NECROTIZANTE DEL FETO Y DEL RECIÉN NACIDO" },
+  { code: "P78", description: "OTROS TRASTORNOS PERINATALES DEL SISTEMA DIGESTIVO" },
+  { code: "P80", description: "HIPOTERMIA DEL RECIÉN NACIDO" },
+  { code: "P81", description: "OTRAS ALTERACIONES DE LA REGULACIÓN DE LA TEMPERATURA EN EL RECIÉN NACIDO" },
+  { code: "P83", description: "OTRAS AFECCIONES DE LA PIEL ESPECÍFICAS DEL FETO Y DEL RECIÉN NACIDO" },
+  { code: "P90", description: "CONVULSIONES DEL RECIÉN NACIDO" },
+  { code: "P91", description: "OTRAS ALTERACIONES CEREBRALES DEL RECIÉN NACIDO" },
+  { code: "P92", description: "PROBLEMAS DE LA INGESTIÓN DE ALIMENTOS DEL RECIÉN NACIDO" },
+  { code: "P93", description: "REACCIONES E INTOXICACIONES DEBIDAS A DROGAS ADMINISTRADAS AL FETO Y AL RECIÉN NACIDO" },
+  { code: "P94", description: "TRASTORNOS DEL TONO MUSCULAR EN EL RECIÉN NACIDO" },
+  { code: "P95", description: "MUERTE FETAL DE CAUSA NO ESPECIFICADA" },
+  { code: "P96", description: "OTRAS AFECCIONES ORIGINADAS EN EL PERÍODO PERINATAL" },
+  { code: "Q00", description: "ANENCEFALIA Y MALFORMACIONES CONGÉNITAS SIMILARES" },
+  { code: "Q01", description: "ENCEFALOCELE" },
+  { code: "Q02", description: "MICROCEFALIA" },
+  { code: "Q03", description: "HIDROCÉFALO CONGÉNITO" },
+  { code: "Q04", description: "OTRAS MALFORMACIONES CONGÉNITAS DEL ENCÉFALO" },
+  { code: "Q05", description: "ESPINA BÍFIDA" },
+  { code: "Q06", description: "OTRAS MALFORMACIONES CONGÉNITAS DE LA MÉDULA ESPINAL" },
+  { code: "Q07", description: "OTRAS MALFORMACIONES CONGÉNITAS DEL SISTEMA NERVIOSO" },
+  { code: "Q10", description: "MALFORMACIONES CONGÉNITAS DE LOS PÁRPADOS, DEL APARATO LAGRIMAL Y DE LA ÓRBITA" },
+  { code: "Q11", description: "ANOFTALMÍA, MICROFTALMÍA Y MACROFTALMÍA" },
+  { code: "Q12", description: "MALFORMACIONES CONGÉNITAS DEL CRISTALINO" },
+  { code: "Q13", description: "MALFORMACIONES CONGÉNITAS DEL SEGMENTO ANTERIOR DEL OJO" },
+  { code: "Q14", description: "MALFORMACIONES CONGÉNITAS DEL SEGMENTO POSTERIOR DEL OJO" },
+  { code: "Q15", description: "OTRAS MALFORMACIONES CONGÉNITAS DEL OJO" },
+  { code: "Q16", description: "MALFORMACIONES CONGÉNITAS DEL OÍDO QUE CAUSAN ALTERACIÓN DE LA AUDICIÓN" },
+  { code: "Q17", description: "OTRAS MALFORMACIONES CONGÉNITAS DEL OÍDO" },
+  { code: "Q18", description: "OTRAS MALFORMACIONES CONGÉNITAS DE LA CARA Y DEL CUELLO" },
+  { code: "Q20", description: "MALFORMACIONES CONGÉNITAS DE LAS CÁMARAS CARDÍACAS Y SUS CONEXIONES" },
+  { code: "Q21", description: "MALFORMACIONES CONGÉNITAS DE LOS TABIQUES CARDÍACOS" },
+  { code: "Q22", description: "MALFORMACIONES CONGÉNITAS DE LAS VÁLVULAS PULMONAR Y TRICÚSPIDE" },
+  { code: "Q23", description: "MALFORMACIONES CONGÉNITAS DE LAS VÁLVULAS AÓRTICA Y MITRAL" },
+  { code: "Q24", description: "OTRAS MALFORMACIONES CONGÉNITAS DEL CORAZÓN" },
+  { code: "Q25", description: "MALFORMACIONES CONGÉNITAS DE LAS GRANDES ARTERIAS" },
+  { code: "Q26", description: "MALFORMACIONES CONGÉNITAS DE LAS GRANDES VENAS" },
+  { code: "Q27", description: "OTRAS MALFORMACIONES CONGÉNITAS DEL SISTEMA VASCULAR PERIFÉRICO" },
+  { code: "Q28", description: "OTRAS MALFORMACIONES CONGÉNITAS DEL SISTEMA CIRCULATORIO" },
+  { code: "Q30", description: "MALFORMACIONES CONGÉNITAS DE LA NARIZ" },
+  { code: "Q31", description: "MALFORMACIONES CONGÉNITAS DE LA LARINGE" },
+  { code: "Q32", description: "MALFORMACIONES CONGÉNITAS DE LA TRÁQUEA Y DE LOS BRONQUIOS" },
+  { code: "Q33", description: "MALFORMACIONES CONGÉNITAS DEL PULMÓN" },
+  { code: "Q34", description: "OTRAS MALFORMACIONES CONGÉNITAS DEL SISTEMA RESPIRATORIO" },
+  { code: "Q35", description: "FISURA DEL PALADAR" },
+  { code: "Q36", description: "LABIO LEPORINO" },
+  { code: "Q37", description: "FISURA DEL PALADAR CON LABIO LEPORINO" },
+  { code: "Q38", description: "OTRAS MALFORMACIONES CONGÉNITAS DE LA LENGUA, DE LA BOCA Y DE LA FARINGE" },
+  { code: "Q39", description: "MALFORMACIONES CONGÉNITAS DEL ESÓFAGO" },
+  { code: "Q40", description: "OTRAS MALFORMACIONES CONGÉNITAS DE LA PARTE SUPERIOR DEL TUBO DIGESTIVO" },
+  { code: "Q41", description: "AUSENCIA, ATRESIA Y ESTENOSIS CONGÉNITA DEL INTESTINO DELGADO" },
+  { code: "Q42", description: "AUSENCIA, ATRESIA Y ESTENOSIS CONGÉNITA DEL INTESTINO GRUESO" },
+  { code: "Q43", description: "OTRAS MALFORMACIONES CONGÉNITAS DEL INTESTINO" },
+  { code: "Q44", description: "MALFORMACIONES CONGÉNITAS DE LA VESÍCULA BILIAR, DE LOS CONDUCTOS BILIARES Y DEL HÍGADO" },
+  { code: "Q45", description: "OTRAS MALFORMACIONES CONGÉNITAS DEL SISTEMA DIGESTIVO" },
+  { code: "Q50", description: "MALFORMACIONES CONGÉNITAS DE LOS OVARIOS, DE LAS TROMPAS DE FALOPIO Y DE LOS LIGAMENTOS ANCHOS" },
+  { code: "Q51", description: "MALFORMACIONES CONGÉNITAS DEL ÚTERO Y DEL CUELLO UTERINO" },
+  { code: "Q52", description: "OTRAS MALFORMACIONES CONGÉNITAS DE LOS ÓRGANOS GENITALES FEMENINOS" },
+  { code: "Q53", description: "TESTÍCULO NO DESCENDIDO" },
+  { code: "Q54", description: "HIPOSPADIAS" },
+  { code: "Q55", description: "OTRAS MALFORMACIONES CONGÉNITAS DE LOS ÓRGANOS GENITALES MASCULINOS" },
+  { code: "Q56", description: "SEXO INDETERMINADO Y SEUDOHERMAFRODITISMO" },
+  { code: "Q60", description: "AGENESIA RENAL Y OTRAS MALFORMACIONES HIPOPLÁSICAS DEL RIÑÓN" },
+  { code: "Q61", description: "ENFERMEDAD QUÍSTICA DEL RIÑÓN" },
+  { code: "Q62", description: "DEFECTOS OBSTRUCTIVOS CONGÉNITOS DE LA PELVIS RENAL Y MALFORMACIONES CONGÉNITAS DEL URÉTER" },
+  { code: "Q63", description: "OTRAS MALFORMACIONES CONGÉNITAS DEL RIÑÓN" },
+  { code: "Q64", description: "OTRAS MALFORMACIONES CONGÉNITAS DEL SISTEMA URINARIO" },
+  { code: "Q65", description: "DEFORMIDADES CONGÉNITAS DE LA CADERA" },
+  { code: "Q66", description: "DEFORMIDADES CONGÉNITAS DE LOS PIES" },
+  { code: "Q67", description: "DEFORMIDADES OSTEOMUSCULARES CONGÉNITAS DE LA CABEZA, DE LA CARA, DE LA COLUMNA VERTEBRAL Y DEL TÓRAX" },
+  { code: "Q68", description: "OTRAS DEFORMIDADES OSTEOMUSCULARES CONGÉNITAS" },
+  { code: "Q69", description: "POLIDACTILIA" },
+  { code: "Q70", description: "SINDACTILIA" },
+  { code: "Q71", description: "DEFECTOS POR REDUCCIÓN DEL MIEMBRO SUPERIOR" },
+  { code: "Q72", description: "DEFECTOS POR REDUCCIÓN DEL MIEMBRO INFERIOR" },
+  { code: "Q73", description: "DEFECTOS POR REDUCCIÓN DE MIEMBRO NO ESPECIFICADO" },
+  { code: "Q74", description: "OTRAS ANOMALÍAS CONGÉNITAS DEL (DE LOS) MIEMBRO(S)" },
+  { code: "Q75", description: "OTRAS MALFORMACIONES CONGÉNITAS DE LOS HUESOS DEL CRÁNEO Y DE LA CARA" },
+  { code: "Q76", description: "MALFORMACIONES CONGÉNITAS DE LA COLUMNA VERTEBRAL Y TÓRAX ÓSEO" },
+  { code: "Q77", description: "OSTEOCONDRODISPLASIA CON DEFECTO DEL CRECIMIENTO DE LOS HUESOS LARGOS Y DE LA COLUMNA VERTEBRAL" },
+  { code: "Q78", description: "OTRAS OSTEOCONDRODISPLASIAS" },
+  { code: "Q79", description: "MALFORMACIONES CONGÉNITAS DEL SISTEMA OSTEOMUSCULAR, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "Q80", description: "ICTIOSIS CONGÉNITA" },
+  { code: "Q81", description: "EPIDERMÓLISIS BULLOSA" },
+  { code: "Q82", description: "OTRAS MALFORMACIONES CONGÉNITAS DE LA PIEL" },
+  { code: "Q83", description: "MALFORMACIONES CONGÉNITAS DE LA MAMA" },
+  { code: "Q84", description: "OTRAS MALFORMACIONES CONGÉNITAS DE LAS FANERAS" },
+  { code: "Q85", description: "FACOMATOSIS, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "Q86", description: "SÍNDROMES DE MALFORMACIONES CONGÉNITAS DEBIDOS A CAUSAS EXÓGENAS CONOCIDAS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "Q87", description: "OTROS SÍNDROMES DE MALFORMACIONES CONGÉNITAS ESPECIFICADOS QUE AFECTAN MÚLTIPLES SISTEMAS" },
+  { code: "Q89", description: "OTRAS MALFORMACIONES CONGÉNITAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "Q90", description: "SÍNDROME DE DOWN" },
+  { code: "Q91", description: "SÍNDROME DE EDWARDS Y SÍNDROME DE PATAU" },
+  { code: "Q92", description: "OTRAS TRISOMÍAS Y TRISOMÍAS PARCIALES DE LOS AUTOSOMAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "Q93", description: "MONOSOMÍAS Y SUPRESIONES DE LOS AUTOSOMAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "Q95", description: "REORDENAMIENTOS EQUILIBRADOS Y MARCADORES ESTRUCTURALES, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "Q96", description: "SÍNDROME DE TURNER" },
+  { code: "Q97", description: "OTRAS ANOMALÍAS DE LOS CROMOSOMAS SEXUALES, CON FENOTIPO FEMENINO, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "Q98", description: "OTRAS ANOMALÍAS DE LOS CROMOSOMAS SEXUALES, CON FENOTIPO MASCULINO, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "Q99", description: "OTRAS ANOMALÍAS CROMOSÓMICAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "R00", description: "ANORMALIDADES DEL LATIDO CARDÍACO" },
+  { code: "R01", description: "SOPLOS Y OTROS SONIDOS CARDÍACOS" },
+  { code: "R02", description: "GANGRENA, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "R03", description: "LECTURA DE PRESIÓN SANGUÍNEA ANORMAL, SIN DIAGNÓSTICO" },
+  { code: "R04", description: "HEMORRAGIAS DE LAS VÍAS RESPIRATORIAS" },
+  { code: "R05", description: "TOS" },
+  { code: "R06", description: "ANORMALIDADES DE LA RESPIRACIÓN" },
+  { code: "R07", description: "DOLOR DE GARGANTA Y EN EL PECHO" },
+  { code: "R09", description: "OTROS SÍNTOMAS Y SIGNOS QUE INVOLUCRAN LOS SISTEMAS CIRCULATORIO Y RESPIRATORIO" },
+  { code: "R10", description: "DOLOR ABDOMINAL Y PÉLVICO" },
+  { code: "R11", description: "NÁUSEA Y VÓMITO" },
+  { code: "R12", description: "ACIDEZ" },
+  { code: "R13", description: "DISFAGIA" },
+  { code: "R14", description: "FLATULENCIA Y AFECCIONES AFINES" },
+  { code: "R15", description: "INCONTINENCIA FECAL" },
+  { code: "R16", description: "HEPATOMEGALIA Y ESPLENOMEGALIA, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "R17", description: "ICTERICIA NO ESPECIFICADA" },
+  { code: "R18", description: "ASCITIS" },
+  { code: "R19", description: "OTROS SÍNTOMAS Y SIGNOS QUE INVOLUCRAN EL SISTEMA DIGESTIVO Y EL ABDOMEN" },
+  { code: "R20", description: "ALTERACIONES DE LA SENSIBILIDAD CUTÁNEA" },
+  { code: "R21", description: "SALPULLIDO Y OTRAS ERUPCIONES CUTÁNEAS NO ESPECIFICADAS" },
+  { code: "R22", description: "TUMEFACCIÓN, MASA O PROMINENCIA DE LA PIEL Y DEL TEJIDO SUBCUTÁNEO LOCALIZADAS" },
+  { code: "R23", description: "OTROS CAMBIOS EN LA PIEL" },
+  { code: "R25", description: "MOVIMIENTOS INVOLUNTARIOS ANORMALES" },
+  { code: "R26", description: "ANORMALIDADES DE LA MARCHA Y DE LA MOVILIDAD" },
+  { code: "R27", description: "OTRAS FALLAS DE COORDINACIÓN" },
+  { code: "R29", description: "OTROS SÍNTOMAS Y SIGNOS QUE INVOLUCRAN LOS SISTEMAS NERVIOSO Y OSTEOMUSCULAR" },
+  { code: "R30", description: "DOLOR ASOCIADO CON LA MICCIÓN" },
+  { code: "R31", description: "HEMATURIA, NO ESPECIFICADA" },
+  { code: "R32", description: "INCONTINENCIA URINARIA, NO ESPECIFICADA" },
+  { code: "R33", description: "RETENCIÓN DE ORINA" },
+  { code: "R34", description: "ANURIA Y OLIGURIA" },
+  { code: "R35", description: "POLIURIA" },
+  { code: "R36", description: "DESCARGA URETRAL" },
+  { code: "R39", description: "OTROS SÍNTOMAS Y SIGNOS QUE INVOLUCRAN EL SISTEMA URINARIO" },
+  { code: "R40", description: "SOMNOLENCIA, ESTUPOR Y COMA" },
+  { code: "R41", description: "OTROS SÍNTOMAS Y SIGNOS QUE INVOLUCRAN LA FUNCIÓN COGNOSCITIVA Y LA CONCIENCIA" },
+  { code: "R42", description: "MAREO Y DESVANECIMIENTO" },
+  { code: "R43", description: "TRASTORNOS DEL OLFATO Y DEL GUSTO" },
+  { code: "R44", description: "OTROS SÍNTOMAS Y SIGNOS QUE INVOLUCRAN LAS SENSACIONES Y PERCEPCIONES GENERALES" },
+  { code: "R45", description: "SÍNTOMAS Y SIGNOS QUE INVOLUCRAN EL ESTADO EMOCIONAL" },
+  { code: "R46", description: "SÍNTOMAS Y SIGNOS QUE INVOLUCRAN LA APARIENCIA Y EL COMPORTAMIENTO" },
+  { code: "R47", description: "ALTERACIONES DEL HABLA, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "R48", description: "DISLEXIA Y OTRAS DISFUNCIONES SIMBÓLICAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "R49", description: "ALTERACIONES DE LA VOZ" },
+  { code: "R50", description: "FIEBRE DE OTRO ORIGEN Y DE ORIGEN DESCONOCIDO" },
+  { code: "R51", description: "CEFALEA" },
+  { code: "R52", description: "DOLOR, NO CLASIFICADO EN OTRA PARTE" },
+  { code: "R53", description: "MALESTAR Y FATIGA" },
+  { code: "R54", description: "SENILIDAD" },
+  { code: "R55", description: "SÍNCOPE Y COLAPSO" },
+  { code: "R56", description: "CONVULSIONES, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "R57", description: "CHOQUE, NO CLASIFICADO EN OTRA PARTE" },
+  { code: "R58", description: "HEMORRAGIA, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "R59", description: "ADENOMEGALIA" },
+  { code: "R60", description: "EDEMA, NO CLASIFICADO EN OTRA PARTE" },
+  { code: "R61", description: "HIPERHIDROSIS" },
+  { code: "R62", description: "FALTA DEL DESARROLLO FISIOLÓGICO NORMAL ESPERADO" },
+  { code: "R63", description: "SÍNTOMAS Y SIGNOS CONCERNIENTES A LA ALIMENTACIÓN Y A LA INGESTIÓN DE LÍQUIDOS" },
+  { code: "R64", description: "CAQUEXIA" },
+  { code: "R68", description: "OTROS SÍNTOMAS Y SIGNOS GENERALES" },
+  { code: "R69", description: "CAUSAS DE MORBILIDAD DESCONOCIDAS Y NO ESPECIFICADAS" },
+  { code: "R70", description: "VELOCIDAD DE ERITROSEDIMENTACIÓN ELEVADA Y OTRAS ANORMALIDADES DE LA VISCOSIDAD DEL PLASMA" },
+  { code: "R71", description: "ANORMALIDAD DE LOS ERITROCITOS" },
+  { code: "R72", description: "ANORMALIDADES DE LOS LEUCOCITOS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "R73", description: "NIVEL ELEVADO DE GLUCOSA EN SANGRE" },
+  { code: "R74", description: "NIVEL ANORMAL DE ENZIMAS EN SUERO" },
+  { code: "R75", description: "EVIDENCIAS DE LABORATORIO DEL VIRUS DE LA INMUNODEFICIENCIA HUMANA [VIH]" },
+  { code: "R76", description: "OTROS HALLAZGOS INMUNOLÓGICOS ANORMALES EN SUERO" },
+  { code: "R77", description: "OTRAS ANORMALIDADES DE LAS PROTEÍNAS PLASMÁTICAS" },
+  { code: "R78", description: "HALLAZGO DE DROGAS Y OTRAS SUSTANCIAS QUE NORMALMENTE NO SE ENCUENTRAN EN LA SANGRE" },
+  { code: "R79", description: "OTROS HALLAZGOS ANORMALES EN LA QUÍMICA SANGUÍNEA" },
+  { code: "R80", description: "PROTEINURIA AISLADA" },
+  { code: "R81", description: "GLUCOSURIA" },
+  { code: "R82", description: "OTROS HALLAZGOS ANORMALES EN LA ORINA" },
+  { code: "R83", description: "HALLAZGOS ANORMALES EN EL LÍQUIDO CEFALORRAQUÍDEO" },
+  { code: "R84", description: "HALLAZGOS ANORMALES EN MUESTRAS TOMADAS DE ÓRGANOS RESPIRATORIOS Y TORÁCICOS" },
+  { code: "R85", description: "HALLAZGOS ANORMALES EN MUESTRAS TOMADAS DE ÓRGANOS DIGESTIVOS Y DE LA CAVIDAD ABDOMINAL" },
+  { code: "R86", description: "HALLAZGOS ANORMALES EN MUESTRAS TOMADAS DE ÓRGANOS GENITALES MASCULINOS" },
+  { code: "R87", description: "HALLAZGOS ANORMALES EN MUESTRAS TOMADAS DE ÓRGANOS GENITALES FEMENINOS" },
+  { code: "R89", description: "HALLAZGOS ANORMALES EN MUESTRAS TOMADAS DE OTROS ÓRGANOS, SISTEMAS Y TEJIDOS" },
+  { code: "R90", description: "HALLAZGOS ANORMALES EN DIAGNÓSTICO POR IMAGEN DEL SISTEMA NERVIOSO CENTRAL" },
+  { code: "R91", description: "HALLAZGOS ANORMALES EN DIAGNÓSTICO POR IMAGEN DEL PULMÓN" },
+  { code: "R92", description: "HALLAZGOS ANORMALES EN DIAGNÓSTICO POR IMAGEN DE LA MAMA" },
+  { code: "R93", description: "HALLAZGOS ANORMALES EN DIAGNÓSTICO POR IMAGEN DE OTRAS ESTRUCTURAS DEL CUERPO" },
+  { code: "R94", description: "RESULTADOS ANORMALES DE ESTUDIOS FUNCIONALES" },
+  { code: "R95", description: "SÍNDROME DE LA MUERTE SÚBITAS INFANTIL" },
+  { code: "R96", description: "OTRAS MUERTES SÚBITAS DE CAUSA DESCONOCIDA" },
+  { code: "R98", description: "MUERTE SIN ASISTENCIA" },
+  { code: "R99", description: "OTRAS CAUSAS MAL DEFINIDAS Y LAS NO ESPECIFICADAS DE MORTALIDAD" },
+  { code: "S00", description: "TRAUMATISMO SUPERFICIAL DE LA CABEZA" },
+  { code: "S01", description: "HERIDA DE LA CABEZA" },
+  { code: "S02", description: "FRACTURA DE HUESOS DEL CRÁNEO Y DE LA CARA" },
+  { code: "S03", description: "LUXACIÓN, ESGUINCE Y TORCEDURA DE ARTICULACIONES Y DE LIGAMENTOS DE LA CABEZA" },
+  { code: "S04", description: "TRAUMATISMO DE NERVIOS CRANEALES" },
+  { code: "S05", description: "TRAUMATISMO DEL OJO Y DE LA ÓRBITA" },
+  { code: "S06", description: "TRAUMATISMO INTRACRANEAL" },
+  { code: "S07", description: "TRAUMATISMO POR APLASTAMIENTO DE LA CABEZA" },
+  { code: "S08", description: "AMPUTACIÓN TRAUMÁTICA DE PARTE DE LA CABEZA" },
+  { code: "S09", description: "OTROS TRAUMATISMOS Y LOS NO ESPECIFICADOS DE LA CABEZA" },
+  { code: "S10", description: "TRAUMATISMO SUPERFICIAL DEL CUELLO" },
+  { code: "S11", description: "HERIDA DEL CUELLO" },
+  { code: "S12", description: "FRACTURA DEL CUELLO" },
+  { code: "S13", description: "LUXACIÓN, ESGUINCE Y TORCEDURA DE ARTICULACIONES Y LIGAMENTOS DEL CUELLO" },
+  { code: "S14", description: "TRAUMATISMO DE LA MÉDULA ESPINAL Y DE NERVIOS A NIVEL DEL CUELLO" },
+  { code: "S15", description: "TRAUMATISMO DE VASOS SANGUÍNEOS A NIVEL DEL CUELLO" },
+  { code: "S16", description: "TRAUMATISMO DE TENDÓN Y MÚSCULOS A NIVEL DEL CUELLO" },
+  { code: "S17", description: "TRAUMATISMO POR APLASTAMIENTO DEL CUELLO" },
+  { code: "S18", description: "AMPUTACIÓN TRAUMÁTICA A NIVEL DEL CUELLO" },
+  { code: "S19", description: "OTROS TRAUMATISMOS Y LOS NO ESPECIFICADOS DEL CUELLO" },
+  { code: "S20", description: "TRAUMATISMO SUPERFICIAL DEL TÓRAX" },
+  { code: "S21", description: "HERIDA DEL TÓRAX" },
+  { code: "S22", description: "FRACTURA DE LAS COSTILLAS, DEL ESTERNÓN Y DE LA COLUMNA TORÁCICA [DORSAL]" },
+  { code: "S23", description: "LUXACIÓN, ESGUINCE Y TORCEDURA DE ARTICULACIONES Y LIGAMENTOS DEL TÓRAX" },
+  { code: "S24", description: "TRAUMATISMO DE NERVIOS Y DE LA MÉDULA ESPINAL A NIVEL DEL TÓRAX" },
+  { code: "S25", description: "TRAUMATISMO DE VASOS SANGUÍNEOS DEL TÓRAX" },
+  { code: "S26", description: "TRAUMATISMO DEL CORAZÓN" },
+  { code: "S27", description: "TRAUMATISMO DE OTROS ÓRGANOS INTRATORÁCICOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "S28", description: "TRAUMATISMO POR APLASTAMIENTO DEL TÓRAX Y AMPUTACIÓN TRAUMÁTICA DE PARTE DEL TÓRAX" },
+  { code: "S29", description: "OTROS TRAUMATISMOS Y LOS NO ESPECIFICADOS DEL TÓRAX" },
+  { code: "S30", description: "TRAUMATISMO SUPERFICIAL DEL ABDOMEN, DE LA REGIÓN LUMBOSACRA Y DE LA PELVIS" },
+  { code: "S31", description: "HERIDA DEL ABDOMEN, DE LA REGIÓN LUMBOSACRA Y DE LA PELVIS" },
+  { code: "S32", description: "FRACTURA DE LA COLUMNA LUMBAR Y DE LA PELVIS" },
+  { code: "S33", description: "LUXACIÓN, ESGUINCE Y TORCEDURA DE ARTICULACIONES Y LIGAMENTOS DE LA COLUMNA LUMBAR Y DE LA PELVIS" },
+  { code: "S34", description: "TRAUMATISMO DE LOS NERVIOS Y DE LA MÉDULA ESPINAL LUMBAR, A NIVEL DEL ABDOMEN, DE LA REGIÓN LUMBOSACRA Y DE LA PELVIS" },
+  { code: "S35", description: "TRAUMATISMO DE VASOS SANGUÍNEOS A NIVEL DEL ABDOMEN, DE LA REGIÓN LUMBOSACRA Y DE LA PELVIS" },
+  { code: "S36", description: "TRAUMATISMO DE ÓRGANOS INTRAABDOMINALES" },
+  { code: "S37", description: "TRAUMATISMO DE ÓRGANOS PÉLVICOS" },
+  { code: "S38", description: "TRAUMATISMO POR APLASTAMIENTO Y AMPUTACIÓN TRAUMÁTICA DE PARTE DEL ABDOMEN, DE LA REGIÓN LUMBOSACRA Y DE LA PELVIS" },
+  { code: "S39", description: "OTROS TRAUMATISMOS Y LOS NO ESPECIFICADOS DEL ABDOMEN, DE LA REGIÓN LUMBOSACRA Y DE LA PELVIS" },
+  { code: "S40", description: "TRAUMATISMO SUPERFICIAL DEL HOMBRO Y DEL BRAZO" },
+  { code: "S41", description: "HERIDA DEL HOMBRO Y DEL BRAZO" },
+  { code: "S42", description: "FRACTURA DEL HOMBRO Y DEL BRAZO" },
+  { code: "S43", description: "LUXACIÓN, ESGUINCE Y TORCEDURA DE ARTICULACIONES Y LIGAMENTOS DE LA CINTURA ESCAPULAR" },
+  { code: "S44", description: "TRAUMATISMO DE NERVIOS A NIVEL DEL HOMBRO Y DEL BRAZO" },
+  { code: "S45", description: "TRAUMATISMO DE VASOS SANGUÍNEOS A NIVEL DEL HOMBRO Y DEL BRAZO" },
+  { code: "S46", description: "TRAUMATISMO DE TENDÓN Y MÚSCULO A NIVEL DEL HOMBRO Y DEL BRAZO" },
+  { code: "S47", description: "TRAUMATISMO POR APLASTAMIENTO DEL HOMBRO Y DEL BRAZO" },
+  { code: "S48", description: "AMPUTACIÓN TRAUMÁTICA DEL HOMBRO Y DEL BRAZO" },
+  { code: "S49", description: "OTROS TRAUMATISMOS Y LOS NO ESPECIFICADOS DEL HOMBRO Y DEL BRAZO" },
+  { code: "S50", description: "TRAUMATISMO SUPERFICIAL DEL ANTEBRAZO Y DEL CODO" },
+  { code: "S51", description: "HERIDA DEL ANTEBRAZO Y DEL CODO" },
+  { code: "S52", description: "FRACTURA DEL ANTEBRAZO" },
+  { code: "S53", description: "LUXACIÓN, ESGUINCE Y TORCEDURA DE ARTICULACIONES Y LIGAMENTOS DEL CODO" },
+  { code: "S54", description: "TRAUMATISMO DE NERVIOS A NIVEL DEL ANTEBRAZO" },
+  { code: "S55", description: "TRAUMATISMO DE LOS VASOS SANGUÍNEOS A NIVEL DEL ANTEBRAZO" },
+  { code: "S56", description: "TRAUMATISMO DE TENDÓN Y MÚSCULO A NIVEL DEL ANTEBRAZO" },
+  { code: "S57", description: "TRAUMATISMO POR APLASTAMIENTO DEL ANTEBRAZO" },
+  { code: "S58", description: "AMPUTACIÓN TRAUMÁTICA DEL ANTEBRAZO" },
+  { code: "S59", description: "OTROS TRAUMATISMOS Y LOS NO ESPECIFICADOS DEL ANTEBRAZO" },
+  { code: "S60", description: "TRAUMATISMO SUPERFICIAL DE LA MUÑECA Y DE LA MANO" },
+  { code: "S61", description: "HERIDA DE LA MUÑECA Y DE LA MANO" },
+  { code: "S62", description: "FRACTURA A NIVEL DE LA MUÑECA Y DE LA MANO" },
+  { code: "S63", description: "LUXACIÓN, ESGUINCE Y TORCEDURA DE ARTICULACIONES Y LIGAMENTOS A NIVEL DE LA MUÑECA Y DE LA MANO" },
+  { code: "S64", description: "TRAUMATISMO DE NERVIOS A NIVEL DE LA MUÑECA Y DE LA MANO" },
+  { code: "S65", description: "TRAUMATISMO DE VASOS SANGUÍNEOS A NIVEL DE LA MUÑECA Y DE LA MANO" },
+  { code: "S66", description: "TRAUMATISMO DE TENDÓN Y MÚSCULO A NIVEL DE LA MUÑECA Y DE LA MANO" },
+  { code: "S67", description: "TRAUMATISMO POR APLASTAMIENTO DE LA MUÑECA Y DE LA MANO" },
+  { code: "S68", description: "AMPUTACIÓN TRAUMÁTICA DE LA MUÑECA Y DE LA MANO" },
+  { code: "S69", description: "OTROS TRAUMATISMOS Y LOS NO ESPECIFICADOS DE LA MUÑECA Y DE LA MANO" },
+  { code: "S70", description: "TRAUMATISMO SUPERFICIAL DE LA CADERA Y DEL MUSLO" },
+  { code: "S71", description: "HERIDA DE LA CADERA Y DEL MUSLO" },
+  { code: "S72", description: "FRACTURA DEL FÉMUR" },
+  { code: "S73", description: "LUXACIÓN, ESGUINCE Y TORCEDURA DE LA ARTICULACIÓN Y DE LOS LIGAMENTOS DE LA CADERA" },
+  { code: "S74", description: "TRAUMATISMO DE NERVIOS A NIVEL DE LA CADERA Y DEL MUSLO" },
+  { code: "S75", description: "TRAUMATISMO DE VASOS SANGUÍNEOS A NIVEL DE LA CADERA Y DEL MUSLO" },
+  { code: "S76", description: "TRAUMATISMO DE TENDÓN Y MÚSCULO A NIVEL DE LA CADERA Y DEL MUSLO" },
+  { code: "S77", description: "TRAUMATISMO POR APLASTAMIENTO DE LA CADERA Y DEL MUSLO" },
+  { code: "S78", description: "AMPUTACIÓN TRAUMÁTICA DE LA CADERA Y DEL MUSLO" },
+  { code: "S79", description: "OTROS TRAUMATISMOS Y LOS NO ESPECIFICADOS DE LA CADERA Y DEL MUSLO" },
+  { code: "S80", description: "TRAUMATISMO SUPERFICIAL DE LA PIERNA" },
+  { code: "S81", description: "HERIDA DE LA PIERNA" },
+  { code: "S82", description: "FRACTURA DE LA PIERNA, INCLUSIVE EL TOBILLO" },
+  { code: "S83", description: "LUXACIÓN, ESGUINCE Y TORCEDURA DE ARTICULACIONES Y LIGAMENTOS DE LA RODILLA" },
+  { code: "S84", description: "TRAUMATISMO DE NERVIOS A NIVEL DE LA PIERNA" },
+  { code: "S85", description: "TRAUMATISMO DE VASOS SANGUÍNEOS A NIVEL DE LA PIERNA" },
+  { code: "S86", description: "TRAUMATISMO DE TENDÓN Y MÚSCULO A NIVEL DE LA PIERNA" },
+  { code: "S87", description: "TRAUMATISMO POR APLASTAMIENTO DE LA PIERNA" },
+  { code: "S88", description: "AMPUTACIÓN TRAUMÁTICA DE LA PIERNA" },
+  { code: "S89", description: "OTROS TRAUMATISMOS Y LOS NO ESPECIFICADOS DE LA PIERNA" },
+  { code: "S90", description: "TRAUMATISMO SUPERFICIAL DEL TOBILLO Y DEL PIE" },
+  { code: "S91", description: "HERIDA DEL TOBILLO Y DEL PIE" },
+  { code: "S92", description: "FRACTURA DEL PIE, EXCEPTO DEL TOBILLO" },
+  { code: "S93", description: "LUXACIÓN, ESGUINCE Y TORCEDURA DE ARTICULACIONES Y LIGAMENTOS DEL TOBILLO Y DEL PIE" },
+  { code: "S94", description: "TRAUMATISMO DE NERVIOS A NIVEL DEL PIE Y DEL TOBILLO" },
+  { code: "S95", description: "TRAUMATISMO DE VASOS SANGUÍNEOS A NIVEL DEL PIE Y DEL TOBILLO" },
+  { code: "S96", description: "TRAUMATISMO DE TENDÓN Y MÚSCULO A NIVEL DEL PIE Y DEL TOBILLO" },
+  { code: "S97", description: "TRAUMATISMO POR APLASTAMIENTO DEL PIE Y DEL TOBILLO" },
+  { code: "S98", description: "AMPUTACIÓN TRAUMÁTICA DEL PIE Y DEL TOBILLO" },
+  { code: "S99", description: "OTROS TRAUMATISMOS Y LOS NO ESPECIFICADOS DEL PIE Y DEL TOBILLO" },
+  { code: "T00", description: "TRAUMATISMOS SUPERFICIALES QUE AFECTAN MÚLTIPLES REGIONES DEL CUERPO" },
+  { code: "T01", description: "HERIDAS QUE AFECTAN MÚLTIPLES REGIONES DEL CUERPO" },
+  { code: "T02", description: "FRACTURAS QUE AFECTAN MÚLTIPLES REGIONES DEL CUERPO" },
+  { code: "T03", description: "LUXACIONES, TORCEDURAS Y ESGUINCES QUE AFECTAN MÚLTIPLES REGIONES DEL CUERPO" },
+  { code: "T04", description: "TRAUMATISMOS POR APLASTAMIENTO QUE AFECTAN MÚLTIPLES REGIONES DEL CUERPO" },
+  { code: "T05", description: "AMPUTACIONES TRAUMÁTICAS QUE AFECTAN MÚLTIPLES REGIONES DEL CUERPO" },
+  { code: "T06", description: "OTROS TRAUMATISMOS QUE AFECTAN MÚLTIPLES REGIONES DEL CUERPO, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "T07", description: "TRAUMATISMOS MÚLTIPLES, NO ESPECIFICADOS" },
+  { code: "T08", description: "FRACTURA DE LA COLUMNA VERTEBRAL, NIVEL NO ESPECIFICADO" },
+  { code: "T09", description: "OTROS TRAUMATISMOS DE LA COLUMNA VERTEBRAL Y DEL TRONCO, NIVEL NO ESPECIFICADO" },
+  { code: "T10", description: "FRACTURA DE MIEMBRO SUPERIOR, NIVEL NO ESPECIFICADO" },
+  { code: "T11", description: "OTROS TRAUMATISMOS DE MIEMBRO SUPERIOR, NIVEL NO ESPECIFICADO" },
+  { code: "T12", description: "FRACTURA DE MIEMBRO INFERIOR, NIVEL NO ESPECIFICADO" },
+  { code: "T13", description: "OTROS TRAUMATISMOS DE MIEMBRO INFERIOR, NIVEL NO ESPECIFICADO" },
+  { code: "T14", description: "TRAUMATISMO DE REGIONES NO ESPECIFICADAS DEL CUERPO" },
+  { code: "T15", description: "CUERPO EXTRAÑO EN PARTE EXTERNA DEL OJO" },
+  { code: "T16", description: "CUERPO EXTRAÑO EN EL OÍDO" },
+  { code: "T17", description: "CUERPO EXTRAÑO EN LAS VÍAS RESPIRATORIAS" },
+  { code: "T18", description: "CUERPO EXTRAÑO EN EL TUBO DIGESTIVO" },
+  { code: "T19", description: "CUERPO EXTRAÑO EN LAS VÍAS GENITOURINARIAS" },
+  { code: "T20", description: "QUEMADURA Y CORROSIÓN DE LA CABEZA Y DEL CUELLO" },
+  { code: "T21", description: "QUEMADURA Y CORROSIÓN DEL TRONCO" },
+  { code: "T22", description: "QUEMADURA Y CORROSIÓN DEL HOMBRO Y MIEMBRO SUPERIOR, EXCEPTO DE LA MUÑECA Y DE LA MANO" },
+  { code: "T23", description: "QUEMADURA Y CORROSIÓN DE LA MUÑECA Y DE LA MANO" },
+  { code: "T24", description: "QUEMADURA Y CORROSIÓN DE LA CADERA Y MIEMBRO INFERIOR, EXCEPTO TOBILLO Y PIE" },
+  { code: "T25", description: "QUEMADURA Y CORROSIÓN DEL TOBILLO Y DEL PIE" },
+  { code: "T26", description: "QUEMADURA Y CORROSIÓN LIMITADA AL OJO Y SUS ANEXOS" },
+  { code: "T27", description: "QUEMADURA Y CORROSIÓN DE LAS VÍAS RESPIRATORIAS" },
+  { code: "T28", description: "QUEMADURA Y CORROSIÓN DE OTROS ÓRGANOS INTERNOS" },
+  { code: "T29", description: "QUEMADURAS Y CORROSIONES DE MÚLTIPLES REGIONES DEL CUERPO" },
+  { code: "T30", description: "QUEMADURA Y CORROSIÓN, REGIÓN DEL CUERPO NO ESPECIFICADA" },
+  { code: "T31", description: "QUEMADURAS CLASIFICADAS SEGÚN LA EXTENSIÓN DE LA SUPERFICIE DEL CUERPO AFECTADA" },
+  { code: "T32", description: "CORROSIONES CLASIFICADAS SEGÚN LA EXTENSIÓN DE LA SUPERFICIE DEL CUERPO AFECTADA" },
+  { code: "T33", description: "CONGELAMIENTO SUPERFICIAL" },
+  { code: "T34", description: "CONGELAMIENTO CON NECROSIS TISULAR" },
+  { code: "T35", description: "CONGELAMIENTO QUE AFECTA MÚLTIPLES REGIONES DEL CUERPO Y CONGELAMIENTO NO ESPECIFICADO" },
+  { code: "T36", description: "ENVENENAMIENTO POR ANTIBIÓTICOS SISTÉMICOS" },
+  { code: "T37", description: "ENVENENAMIENTO POR OTROS ANTIINFECCIOSOS Y ANTIPARASITARIOS SISTÉMICOS" },
+  { code: "T38", description: "ENVENENAMIENTO POR HORMONAS Y SUS SUSTITUTOS Y ANTAGONISTAS SINTÉTICOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "T39", description: "ENVENENAMIENTO POR ANALGÉSICOS NO NARCÓTICOS, ANTIPIRÉTICOS Y ANTIRREUMÁTICOS" },
+  { code: "T40", description: "ENVENENAMIENTO POR NARCÓTICOS Y PSICODISLÉPTICOS [ALUCINÓGENOS]" },
+  { code: "T41", description: "ENVENENAMIENTO POR ANESTÉSICOS Y GASES TERAPÉUTICOS" },
+  { code: "T42", description: "ENVENENAMIENTO POR ANTIEPILÉPTICOS, HIPNÓTICOS-SEDANTES Y DROGAS ANTIPARKINSONIANAS" },
+  { code: "T43", description: "ENVENENAMIENTO POR PSICOTRÓPICOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "T44", description: "ENVENENAMIENTO POR DROGAS QUE AFECTAN PRINCIPALMENTE EL SISTEMA NERVIOSO AUTÓNOMO" },
+  { code: "T45", description: "ENVENENAMIENTO POR AGENTES PRINCIPALMENTE SISTÉMICOS Y HEMATOLÓGICOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "T46", description: "ENVENENAMIENTO POR AGENTES QUE AFECTAN PRINCIPALMENTE EL SISTEMA CARDIOVASCULAR" },
+  { code: "T47", description: "ENVENENAMIENTO POR AGENTES QUE AFECTAN PRINCIPALMENTE EL SISTEMA GASTROINTESTINAL" },
+  { code: "T48", description: "ENVENENAMIENTO POR AGENTES CON ACCIÓN PRINCIPAL SOBRE LOS MÚSCULOS LISOS Y ESQUELÉTICOS Y SOBRE EL SISTEMA RESPIRATORIO" },
+  { code: "T49", description: "ENVENENAMIENTO POR AGENTES TÓPICOS QUE AFECTAN PRINCIPALMENTE LA PIEL Y LAS MEMBRANAS MUCOSAS Y POR DROGAS OFTALMOLÓGICAS, OTORRINOLARINGOLÓGICAS Y DENTALES" },
+  { code: "T50", description: "ENVENENAMIENTO POR DIURÉTICOS Y OTRAS DROGAS, MEDICAMENTOS Y SUSTANCIAS BIOLÓGICAS NO ESPECIFICADAS" },
+  { code: "T51", description: "EFECTO TÓXICO DEL ALCOHOL" },
+  { code: "T52", description: "EFECTO TÓXICO DE DISOLVENTES ORGÁNICOS" },
+  { code: "T53", description: "EFECTO TÓXICO DE LOS DERIVADOS HALOGENADOS DE LOS HIDROCARBUROS ALIFÁTICOS Y AROMÁTICOS" },
+  { code: "T54", description: "EFECTO TÓXICO DE SUSTANCIAS CORROSIVAS" },
+  { code: "T55", description: "EFECTO TÓXICO DE DETERGENTES Y JABONES" },
+  { code: "T56", description: "EFECTO TÓXICO DE METALES" },
+  { code: "T57", description: "EFECTO TÓXICO DE OTRAS SUSTANCIAS INORGÁNICAS" },
+  { code: "T58", description: "EFECTO TÓXICO DEL MONÓXIDO DE CARBONO" },
+  { code: "T59", description: "EFECTO TÓXICO DE OTROS GASES, HUMOS Y VAPORES" },
+  { code: "T60", description: "EFECTO TÓXICO DE PLAGUICIDAS [PESTICIDAS]" },
+  { code: "T61", description: "EFECTO TÓXICO DE SUSTANCIAS NOCIVAS INGERIDAS COMO ALIMENTOS MARINOS" },
+  { code: "T62", description: "EFECTO TÓXICO DE OTRAS SUSTANCIAS NOCIVAS INGERIDAS COMO ALIMENTO" },
+  { code: "T63", description: "EFECTO TÓXICO DEL CONTACTO CON ANIMALES VENENOSOS" },
+  { code: "T64", description: "EFECTO TÓXICO DE AFLATOXINA Y OTRAS MICOTOXINAS CONTAMINANTES DE ALIMENTOS" },
+  { code: "T65", description: "EFECTO TÓXICO DE OTRAS SUSTANCIAS Y LAS NO ESPECIFICADAS" },
+  { code: "T66", description: "EFECTOS NO ESPECIFICADOS DE LA RADIACIÓN" },
+  { code: "T67", description: "EFECTOS DEL CALOR Y DE LA LUZ" },
+  { code: "T68", description: "HIPOTERMIA" },
+  { code: "T69", description: "OTROS EFECTOS DE LA REDUCCIÓN DE LA TEMPERATURA" },
+  { code: "T70", description: "EFECTOS DE LA PRESIÓN DEL AIRE Y DE LA PRESIÓN DEL AGUA" },
+  { code: "T71", description: "ASFIXIA" },
+  { code: "T73", description: "EFECTOS DE OTRAS PRIVACIONES" },
+  { code: "T74", description: "SÍNDROMES DEL MALTRATO" },
+  { code: "T75", description: "EFECTOS DE OTRAS CAUSAS EXTERNAS" },
+  { code: "T78", description: "EFECTOS ADVERSOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "T79", description: "ALGUNAS COMPLICACIONES PRECOCES DE TRAUMATISMOS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "T80", description: "COMPLICACIONES CONSECUTIVAS A INFUSIÓN, TRANSFUSIÓN E INYECCIÓN TERAPÉUTICA" },
+  { code: "T81", description: "COMPLICACIONES DE PROCEDIMIENTOS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "T82", description: "COMPLICACIONES DE DISPOSITIVOS PROTÉSICOS, IMPLANTES E INJERTOS CARDIOVASCULARES" },
+  { code: "T83", description: "COMPLICACIONES DE DISPOSITIVOS, IMPLANTES E INJERTOS GENITOURINARIOS" },
+  { code: "T84", description: "COMPLICACIONES DE DISPOSITIVOS PROTÉSICOS, IMPLANTES E INJERTOS ORTOPÉDICOS INTERNOS" },
+  { code: "T85", description: "COMPLICACIONES DE OTROS DISPOSITIVOS PROTÉSICOS, IMPLANTES E INJERTOS INTERNOS" },
+  { code: "T86", description: "FALLA Y RECHAZO DEL TRASPLANTE DE ÓRGANOS Y TEJIDOS" },
+  { code: "T87", description: "COMPLICACIONES PECULIARES DE LA REINSERCIÓN Y AMPUTACIÓN" },
+  { code: "T88", description: "OTRAS COMPLICACIONES DE LA ATENCIÓN MÉDICA Y QUIRÚRGICA, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "T90", description: "SECUELAS DE TRAUMATISMOS DE LA CABEZA" },
+  { code: "T91", description: "SECUELAS DE TRAUMATISMOS DEL CUELLO Y DEL TRONCO" },
+  { code: "T92", description: "SECUELAS DE TRAUMATISMOS DE MIEMBRO SUPERIOR" },
+  { code: "T93", description: "SECUELAS DE TRAUMATISMOS DE MIEMBRO INFERIOR" },
+  { code: "T94", description: "SECUELAS DE TRAUMATISMOS QUE AFECTAN MÚLTIPLES REGIONES DEL CUERPO Y LAS NO ESPECIFICADAS" },
+  { code: "T95", description: "SECUELAS DE QUEMADURAS, CORROSIONES Y CONGELAMIENTOS" },
+  { code: "T96", description: "SECUELAS DE ENVENENAMIENTOS POR DROGAS, MEDICAMENTOS Y SUSTANCIAS BIOLÓGICAS" },
+  { code: "T97", description: "SECUELAS DE EFECTOS TÓXICOS DE SUSTANCIAS DE PROCEDENCIA PRINCIPALMENTE NO MEDICINAL" },
+  { code: "T98", description: "SECUELAS DE OTROS EFECTOS Y LOS NO ESPECIFICADOS DE CAUSAS EXTERNAS" },
+  { code: "V01", description: "PEATÓN LESIONADO POR COLISIÓN CON VEHÍCULO DE PEDAL" },
+  { code: "V02", description: "PEATÓN LESIONADO POR COLISIÓN CON VEHÍCULO DE MOTOR DE DOS O TRES RUEDAS" },
+  { code: "V03", description: "PEATÓN LESIONADO POR COLISIÓN CON AUTOMÓVIL, CAMIONETA O FURGONETA" },
+  { code: "V04", description: "PEATÓN LESIONADO POR COLISIÓN CON VEHÍCULO DE TRANSPORTE PESADO O AUTOBÚS" },
+  { code: "V05", description: "PEATÓN LESIONADO POR COLISIÓN CON TREN O VEHÍCULO DE RIELES" },
+  { code: "V06", description: "PEATÓN LESIONADO POR COLISIÓN CON OTROS VEHÍCULOS SIN MOTOR" },
+  { code: "V09", description: "PEATÓN LESIONADO EN OTROS ACCIDENTES DE TRANSPORTE, Y EN LOS NO ESPECIFICADOS" },
+  { code: "V10", description: "CICLISTA LESIONADO POR COLISIÓN CON PEATÓN O ANIMAL" },
+  { code: "V11", description: "CICLISTA LESIONADO POR COLISIÓN CON OTRO CICLISTA" },
+  { code: "V12", description: "CICLISTA LESIONADO POR COLISIÓN CON VEHÍCULO DE MOTOR DE DOS O TRES RUEDAS" },
+  { code: "V13", description: "CICLISTA LESIONADO POR COLISIÓN CON AUTOMÓVIL, CAMIONETA O FURGONETA" },
+  { code: "V14", description: "CICLISTA LESIONADO POR COLISIÓN CON VEHÍCULO DE TRANSPORTE PESADO O AUTOBÚS" },
+  { code: "V15", description: "CICLISTA LESIONADO POR COLISIÓN CON TREN O VEHÍCULO DE RIELES" },
+  { code: "V16", description: "CICLISTA LESIONADO POR COLISIÓN CON OTROS VEHÍCULOS SIN MOTOR" },
+  { code: "V17", description: "CICLISTA LESIONADO POR COLISIÓN CON OBJETO ESTACIONADO O FIJO" },
+  { code: "V18", description: "CICLISTA LESIONADO EN ACCIDENTE DE TRANSPORTE SIN COLISIÓN" },
+  { code: "V19", description: "CICLISTA LESIONADO EN OTROS ACCIDENTES DE TRANSPORTE, Y EN LOS NO ESPECIFICADOS" },
+  { code: "V20", description: "MOTOCICLISTA LESIONADO POR COLISIÓN CON PEATÓN O ANIMAL" },
+  { code: "V21", description: "MOTOCICLISTA LESIONADO POR COLISIÓN CON VEHÍCULO DE PEDAL" },
+  { code: "V22", description: "MOTOCICLISTA LESIONADO POR COLISIÓN CON VEHÍCULO DE MOTOR DE DOS O TRES RUEDAS" },
+  { code: "V23", description: "MOTOCICLISTA LESIONADO POR COLISIÓN CON AUTOMÓVIL, CAMIONETA O FURGONETA" },
+  { code: "V24", description: "MOTOCICLISTA LESIONADO POR COLISIÓN CON VEHÍCULO DE TRANSPORTE PESADO O AUTOBÚS" },
+  { code: "V25", description: "MOTOCICLISTA LESIONADO POR COLISIÓN CON TREN O VEHÍCULO DE RIELES" },
+  { code: "V26", description: "MOTOCICLISTA LESIONADO POR COLISIÓN CON OTROS VEHÍCULOS SIN MOTOR" },
+  { code: "V27", description: "MOTOCICLISTA LESIONADO POR COLISIÓN CON OBJETO FIJO O ESTACIONADO" },
+  { code: "V28", description: "MOTOCICLISTA LESIONADO EN ACCIDENTE DE TRANSPORTE SIN COLISIÓN" },
+  { code: "V29", description: "MOTOCICLISTA LESIONADO EN OTROS ACCIDENTES DE TRANSPORTE, Y EN LOS NO ESPECIFICADOS" },
+  { code: "V30", description: "OCUPANTE DE VEHÍCULO DE MOTOR DE TRES RUEDAS LESIONADO POR COLISIÓN CON PEATÓN O ANIMAL" },
+  { code: "V31", description: "OCUPANTE DE VEHÍCULO DE MOTOR DE TRES RUEDAS LESIONADO POR COLISIÓN CON VEHÍCULO DE PEDAL" },
+  { code: "V32", description: "OCUPANTE DE VEHÍCULO DE MOTOR DE TRES RUEDAS LESIONADO POR COLISIÓN CON OTRO VEHÍCULO DE MOTOR DE DOS O TRES RUEDAS" },
+  { code: "V33", description: "OCUPANTE DE VEHÍCULO DE MOTOR DE TRES RUEDAS LESIONADO POR COLISIÓN CON AUTOMÓVIL, CAMIONETA O FURGONETA" },
+  { code: "V34", description: "OCUPANTE DE VEHÍCULO DE MOTOR DE TRES RUEDAS LESIONADO POR COLISIÓN CON VEHÍCULO DE TRANSPORTE PESADO O AUTOBÚS" },
+  { code: "V35", description: "OCUPANTE DE VEHÍCULO DE MOTOR DE TRES RUEDAS LESIONADO POR COLISIÓN CON TREN O VEHÍCULO DE RIELES" },
+  { code: "V36", description: "OCUPANTE DE VEHÍCULO DE MOTOR DE TRES RUEDAS LESIONADO POR COLISIÓN CON OTROS VEHÍCULOS SIN MOTOR" },
+  { code: "V37", description: "OCUPANTE DE VEHÍCULO DE MOTOR DE TRES RUEDAS LESIONADO POR COLISIÓN CON OBJETO FIJO O ESTACIONADO" },
+  { code: "V38", description: "OCUPANTE DE VEHÍCULO DE MOTOR DE TRES RUEDAS LESIONADO EN ACCIDENTE DE TRANSPORTE SIN COLISIÓN" },
+  { code: "V39", description: "OCUPANTE DE VEHÍCULO DE MOTOR DE TRES RUEDAS LESIONADO EN OTROS ACCIDENTES DE TRANSPORTE, Y EN LOS NO ESPECIFICADOS" },
+  { code: "V40", description: "OCUPANTE DE AUTOMÓVIL LESIONADO POR COLISIÓN CON PEATÓN O ANIMAL" },
+  { code: "V41", description: "OCUPANTE DE AUTOMÓVIL LESIONADO POR COLISIÓN CON VEHÍCULO DE PEDAL" },
+  { code: "V42", description: "OCUPANTE DE AUTOMÓVIL LESIONADO POR COLISIÓN CON VEHÍCULO DE MOTOR DE DOS O TRES RUEDAS" },
+  { code: "V43", description: "OCUPANTE DE AUTOMÓVIL LESIONADO POR COLISIÓN CON OTRO AUTOMÓVIL, CAMIONETA O FURGONETA" },
+  { code: "V44", description: "OCUPANTE DE AUTOMÓVIL LESIONADO POR COLISIÓN CON VEHÍCULO DE TRANSPORTE PESADO O AUTOBÚS" },
+  { code: "V45", description: "OCUPANTE DE AUTOMÓVIL LESIONADO POR COLISIÓN CON TREN O VEHÍCULO DE RIELES" },
+  { code: "V46", description: "OCUPANTE DE AUTOMÓVIL LESIONADO POR COLISIÓN CON OTROS VEHÍCULOS SIN MOTOR" },
+  { code: "V47", description: "OCUPANTE DE AUTOMÓVIL LESIONADO POR COLISIÓN CON OBJETO FIJO O ESTACIONADO" },
+  { code: "V48", description: "OCUPANTE DE AUTOMÓVIL LESIONADO EN ACCIDENTE DE TRANSPORTE SIN COLISIÓN" },
+  { code: "V49", description: "OCUPANTE DE AUTOMÓVIL LESIONADO EN OTROS ACCIDENTES DE TRANSPORTE, Y EN LOS NO ESPECIFICADOS" },
+  { code: "V50", description: "OCUPANTE DE CAMIONETA O FURGONETA LESIONADO POR COLISIÓN CON PEATÓN O ANIMAL" },
+  { code: "V51", description: "OCUPANTE DE CAMIONETA O FURGONETA LESIONADO POR COLISIÓN CON VEHÍCULO DE PEDAL" },
+  { code: "V52", description: "OCUPANTE DE CAMIONETA O FURGONETA LESIONADO POR COLISIÓN CON VEHÍCULO DE MOTOR DE DOS O TRES RUEDAS" },
+  { code: "V53", description: "OCUPANTE DE CAMIONETA O FURGONETA LESIONADO POR COLISIÓN CON AUTOMÓVIL, CAMIONETA O FURGONETA" },
+  { code: "V54", description: "OCUPANTE DE CAMIONETA O FURGONETA LESIONADO POR COLISIÓN CON VEHÍCULO DE TRANSPORTE PESADO O AUTOBÚS" },
+  { code: "V55", description: "OCUPANTE DE CAMIONETA O FURGONETA LESIONADO POR COLISIÓN CON TREN O VEHÍCULO DE RIELES" },
+  { code: "V56", description: "OCUPANTE DE CAMIONETA O FURGONETA LESIONADO POR COLISIÓN CON OTROS VEHÍCULOS SIN MOTOR" },
+  { code: "V57", description: "OCUPANTE DE CAMIONETA O FURGONETA LESIONADO POR COLISIÓN CON OBJETO FIJO O ESTACIONADO" },
+  { code: "V58", description: "OCUPANTE DE CAMIONETA O FURGONETA LESIONADO EN ACCIDENTE DE TRANSPORTE SIN COLISIÓN" },
+  { code: "V59", description: "OCUPANTE DE CAMIONETA O FURGONETA LESIONADO EN OTROS ACCIDENTES DE TRANSPORTE, Y EN LOS NO ESPECIFICADOS" },
+  { code: "V60", description: "OCUPANTE DE VEHÍCULO DE TRANSPORTE PESADO LESIONADO POR COLISIÓN CON PEATÓN O ANIMAL" },
+  { code: "V61", description: "OCUPANTE DE VEHÍCULO DE TRANSPORTE PESADO LESIONADO POR COLISIÓN CON VEHÍCULO DE PEDAL" },
+  { code: "V62", description: "OCUPANTE DE VEHÍCULO DE TRANSPORTE PESADO LESIONADO POR COLISIÓN CON VEHÍCULO DE MOTOR DE DOS O TRES RUEDAS" },
+  { code: "V63", description: "OCUPANTE DE VEHÍCULO DE TRANSPORTE PESADO LESIONADO POR COLISIÓN CON AUTOMÓVIL, CAMIONETA O FURGONETA" },
+  { code: "V64", description: "OCUPANTE DE VEHÍCULO DE TRANSPORTE PESADO LESIONADO POR COLISIÓN CON OTRO VEHÍCULO DE TRANSPORTE PESADO O AUTOBÚS" },
+  { code: "V65", description: "OCUPANTE DE VEHÍCULO DE TRANSPORTE PESADO LESIONADO POR COLISIÓN CON TREN O VEHÍCULO DE RIELES" },
+  { code: "V66", description: "OCUPANTE DE VEHÍCULO DE TRANSPORTE PESADO LESIONADO POR COLISIÓN CON OTROS VEHÍCULOS SIN MOTOR" },
+  { code: "V67", description: "OCUPANTE DE VEHÍCULO DE TRANSPORTE PESADO LESIONADO POR COLISIÓN CON OBJETO FIJO O ESTACIONADO" },
+  { code: "V68", description: "OCUPANTE DE VEHÍCULO DE TRANSPORTE PESADO LESIONADO EN ACCIDENTE DE TRANSPORTE SIN COLISIÓN" },
+  { code: "V69", description: "OCUPANTE DE VEHÍCULO DE TRANSPORTE PESADO LESIONADO EN OTROS ACCIDENTES DE TRANSPORTE, Y EN LOS NO ESPECIFICADOS" },
+  { code: "V70", description: "OCUPANTE DE AUTOBÚS LESIONADO POR COLISIÓN CON PEATÓN O ANIMAL" },
+  { code: "V71", description: "OCUPANTE DE AUTOBÚS LESIONADO POR COLISIÓN CON VEHÍCULO DE PEDAL" },
+  { code: "V72", description: "OCUPANTE DE AUTOBÚS LESIONADO POR COLISIÓN CON VEHÍCULO DE MOTOR DE DOS O TRES RUEDAS" },
+  { code: "V73", description: "OCUPANTE DE AUTOBÚS LESIONADO POR COLISIÓN CON AUTOMÓVIL, CAMIONETA O FURGONETA" },
+  { code: "V74", description: "OCUPANTE DE AUTOBÚS LESIONADO POR COLISIÓN CON VEHÍCULO DE TRANSPORTE PESADO O AUTOBÚS" },
+  { code: "V75", description: "OCUPANTE DE AUTOBÚS LESIONADO POR COLISIÓN CON TREN O VEHÍCULO DE RIELES" },
+  { code: "V76", description: "OCUPANTE DE AUTOBÚS LESIONADO POR COLISIÓN CON OTROS VEHÍCULOS SIN MOTOR" },
+  { code: "V77", description: "OCUPANTE DE AUTOBÚS LESIONADO POR COLISIÓN CON OBJETO FIJO O ESTACIONADO" },
+  { code: "V78", description: "OCUPANTE DE AUTOBÚS LESIONADO EN ACCIDENTE DE TRANSPORTE SIN COLISIÓN" },
+  { code: "V79", description: "OCUPANTE DE AUTOBÚS LESIONADO EN OTROS ACCIDENTES DE TRANSPORTE, Y EN LOS NO ESPECIFICADOS" },
+  { code: "V80", description: "JINETE U OCUPANTE DE VEHÍCULO DE TRACCIÓN ANIMAL LESIONADO EN ACCIDENTE DE TRANSPORTE" },
+  { code: "V81", description: "OCUPANTE DE TREN O VEHÍCULO DE RIELES LESIONADO EN ACCIDENTE DE TRANSPORTE" },
+  { code: "V82", description: "OCUPANTE DE TRANVÍA LESIONADO EN ACCIDENTE DE TRANSPORTE" },
+  { code: "V83", description: "OCUPANTE DE VEHÍCULO ESPECIAL (DE MOTOR) PARA USO PRINCIPALMENTE EN PLANTAS INDUSTRIALES LESIONADO EN ACCIDENTE DE TRANSPORTE" },
+  { code: "V84", description: "OCUPANTE DE VEHÍCULO ESPECIAL (DE MOTOR) PARA USO PRINCIPALMENTE EN AGRICULTURA LESIONADO EN ACCIDENTE DE TRANSPORTE" },
+  { code: "V85", description: "OCUPANTE DE VEHÍCULO ESPECIAL (DE MOTOR) PARA CONSTRUCCIÓN LESIONADO EN ACCIDENTE DE TRANSPORTE" },
+  { code: "V86", description: "OCUPANTE DE VEHÍCULO ESPECIAL PARA TODO TERRENO O DE OTRO VEHÍCULO DE MOTOR PARA USO FUERA DE LA CARRETERA LESIONADO EN ACCIDENTE DE TRANSPORTE" },
+  { code: "V87", description: "ACCIDENTE DE TRÁNSITO DE TIPO ESPECIFICADO, PERO DONDE SE DESCONOCE EL MODO DE TRANSPORTE DE LA VÍCTIMA" },
+  { code: "V88", description: "ACCIDENTE NO DE TRÁNSITO DE TIPO ESPECIFICADO, PERO DONDE SE DESCONOCE EL MODO DE TRANSPORTE DE LA VÍCTIMA" },
+  { code: "V89", description: "ACCIDENTE DE VEHÍCULO DE MOTOR O SIN MOTOR, TIPO DE VEHÍCULO NO ESPECIFICADO" },
+  { code: "V90", description: "ACCIDENTE DE EMBARCACIÓN QUE CAUSA AHOGAMIENTO Y SUMERSIÓN" },
+  { code: "V91", description: "ACCIDENTE DE EMBARCACIÓN QUE CAUSA OTROS TIPOS DE TRAUMATISMO" },
+  { code: "V92", description: "AHOGAMIENTO Y SUMERSIÓN RELACIONADOS CON TRANSPORTE POR AGUA, SIN ACCIDENTE A LA EMBARCACIÓN" },
+  { code: "V93", description: "ACCIDENTE EN UNA EMBARCACIÓN, SIN ACCIDENTE A LA EMBARCACIÓN, QUE NO CAUSA AHOGAMIENTO O SUMERSIÓN" },
+  { code: "V94", description: "OTROS ACCIDENTES DE TRANSPORTE POR AGUA, Y LOS NO ESPECIFICADOS" },
+  { code: "V95", description: "ACCIDENTE DE AERONAVE DE MOTOR, CON OCUPANTE LESIONADO" },
+  { code: "V96", description: "ACCIDENTE DE AERONAVE SIN MOTOR, CON OCUPANTE LESIONADO" },
+  { code: "V97", description: "OTROS ACCIDENTES DE TRANSPORTE AÉREO ESPECIFICADOS" },
+  { code: "V98", description: "OTROS ACCIDENTES DE TRANSPORTE ESPECIFICADOS" },
+  { code: "V99", description: "ACCIDENTE DE TRANSPORTE NO ESPECIFICADO" },
+  { code: "W00", description: "CAÍDA EN EL MISMO NIVEL POR HIELO O NIEVE" },
+  { code: "W01", description: "CAÍDA EN EL MISMO NIVEL POR DESLIZAMIENTO, TROPEZÓN Y TRASPIÉ" },
+  { code: "W02", description: "CAÍDA POR PATINES PARA HIELO, ESQUÍS, PATINES DE RUEDAS O PATINETA" },
+  { code: "W03", description: "OTRAS CAÍDAS EN EL MISMO NIVEL POR COLISIÓN CON O POR EMPUJÓN DE OTRA PERSONA" },
+  { code: "W04", description: "CAÍDA AL SER TRASLADADO O SOSTENIDO POR OTRAS PERSONAS" },
+  { code: "W05", description: "CAÍDA QUE IMPLICA SILLA DE RUEDAS" },
+  { code: "W06", description: "CAÍDA QUE IMPLICA CAMA" },
+  { code: "W07", description: "CAÍDA QUE IMPLICA SILLA" },
+  { code: "W08", description: "CAÍDA QUE IMPLICA OTRO MUEBLE" },
+  { code: "W09", description: "CAÍDA QUE IMPLICA EQUIPOS PARA JUEGOS INFANTILES" },
+  { code: "W10", description: "CAÍDA EN O DESDE ESCALERA Y ESCALONES" },
+  { code: "W11", description: "CAÍDA EN O DESDE ESCALERAS MANUALES" },
+  { code: "W12", description: "CAÍDA EN O DESDE ANDAMIO" },
+  { code: "W13", description: "CAÍDA DESDE, FUERA O A TRAVÉS DE UN EDIFICIO U OTRA CONSTRUCCIÓN" },
+  { code: "W14", description: "CAÍDA DESDE UN ÁRBOL" },
+  { code: "W15", description: "CAÍDA DESDE PEÑASCO" },
+  { code: "W16", description: "SALTO O ZAMBULLIDA DENTRO DEL AGUA QUE CAUSA OTRO TRAUMATISMO SIN SUMERSIÓN O AHOGAMIENTO" },
+  { code: "W17", description: "OTRAS CAÍDAS DE UN NIVEL A OTRO" },
+  { code: "W18", description: "OTRAS CAÍDAS EN EL MISMO NIVEL" },
+  { code: "W19", description: "CAÍDA NO ESPECIFICADA" },
+  { code: "W20", description: "GOLPE POR OBJETO ARROJADO, PROYECTADO O QUE CAE" },
+  { code: "W21", description: "GOLPE CONTRA O GOLPEADO POR EQUIPO PARA DEPORTES" },
+  { code: "W22", description: "GOLPE CONTRA O GOLPEADO POR OTROS OBJETOS" },
+  { code: "W23", description: "ATRAPADO, APLASTADO, TRABADO O APRETADO EN O ENTRE OBJETOS" },
+  { code: "W24", description: "CONTACTO TRAUMÁTICO CON DISPOSITIVOS DE ELEVACIÓN Y TRANSMISIÓN, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "W25", description: "CONTACTO TRAUMÁTICO CON VIDRIO CORTANTE" },
+  { code: "W26", description: "CONTACTO TRAUMÁTICO CON CUCHILLO, ESPADA, DAGA O PUÑAL" },
+  { code: "W27", description: "CONTACTO TRAUMÁTICO CON HERRAMIENTAS MANUALES SIN MOTOR" },
+  { code: "W28", description: "CONTACTO TRAUMÁTICO CON CORTADORA DE CÉSPED, CON MOTOR" },
+  { code: "W29", description: "CONTACTO TRAUMÁTICO CON OTRAS HERRAMIENTAS MANUALES Y ARTEFACTOS DEL HOGAR, CON MOTOR" },
+  { code: "W30", description: "CONTACTO TRAUMÁTICO CON MAQUINARIA AGRÍCOLA" },
+  { code: "W31", description: "CONTACTO TRAUMÁTICO CON OTRAS MAQUINARIAS, Y LAS NO ESPECIFICADAS" },
+  { code: "W32", description: "DISPARO DE ARMA CORTA" },
+  { code: "W33", description: "DISPARO DE RIFLE, ESCOPETA Y ARMA LARGA" },
+  { code: "W34", description: "DISPARO DE OTRAS ARMAS DE FUEGO, Y LAS NO ESPECIFICADAS" },
+  { code: "W35", description: "EXPLOSIÓN Y ROTURA DE CALDERA" },
+  { code: "W36", description: "EXPLOSIÓN Y ROTURA DE CILINDRO CON GAS" },
+  { code: "W37", description: "EXPLOSIÓN Y ROTURA DE NEUMÁTICO, TUBO O MANGUERA DE GOMA PRESURIZADA" },
+  { code: "W38", description: "EXPLOSIÓN Y ROTURA DE OTROS DISPOSITIVOS PRESURIZADOS ESPECIFICADOS" },
+  { code: "W39", description: "EXPLOSIÓN DE FUEGOS ARTIFICIALES" },
+  { code: "W40", description: "EXPLOSIÓN DE OTROS MATERIALES" },
+  { code: "W41", description: "EXPOSICIÓN A CHORRO DE ALTA PRESIÓN" },
+  { code: "W42", description: "EXPOSICIÓN AL RUIDO" },
+  { code: "W43", description: "EXPOSICIÓN A VIBRACIONES" },
+  { code: "W44", description: "CUERPO EXTRAÑO QUE PENETRA POR EL OJO U ORIFICIO NATURAL" },
+  { code: "W45", description: "CUERPO EXTRAÑO QUE PENETRA A TRAVÉS DE LA PIEL" },
+  { code: "W46", description: "CONTACTO TRAUMÁTICO CON AGUJA HIPODÉRMICA" },
+  { code: "W49", description: "EXPOSICIÓN A OTRAS FUERZAS MECÁNICAS INANIMADAS, Y LAS NO ESPECIFICADAS" },
+  { code: "W50", description: "APORREO, GOLPE, MORDEDURA, PATADA, RASGUÑO O TORCEDURA INFLIGIDOS POR OTRA PERSONA" },
+  { code: "W51", description: "CHOQUE O EMPELLÓN CONTRA OTRA PERSONA" },
+  { code: "W52", description: "PERSONA APLASTADA, EMPUJADA O PISOTEADA POR UNA MULTITUD O ESTAMPIDA HUMANA" },
+  { code: "W53", description: "MORDEDURA DE RATA" },
+  { code: "W54", description: "MORDEDURA O ATAQUE DE PERRO" },
+  { code: "W55", description: "MORDEDURA O ATAQUE DE OTROS MAMÍFEROS" },
+  { code: "W56", description: "CONTACTO TRAUMÁTICO CON ANIMALES MARINOS" },
+  { code: "W57", description: "MORDEDURA O PICADURA DE INSECTOS Y OTROS ARTRÓPODOS NO VENENOSOS" },
+  { code: "W58", description: "MORDEDURA O ATAQUE DE COCODRILO O CAIMÁN" },
+  { code: "W59", description: "MORDEDURA O APLASTAMIENTO POR OTROS REPTILES" },
+  { code: "W60", description: "CONTACTO TRAUMÁTICO CON AGUIJONES, ESPINAS U HOJAS CORTANTES DE PLANTAS" },
+  { code: "W64", description: "EXPOSICIÓN A OTRAS FUERZAS MECÁNICAS ANIMADAS, Y LAS NO ESPECIFICADAS" },
+  { code: "W65", description: "AHOGAMIENTO Y SUMERSIÓN MIENTRAS SE ESTÁ EN LA BAÑERA" },
+  { code: "W66", description: "AHOGAMIENTO Y SUMERSIÓN CONSECUTIVOS A CAÍDA EN LA BAÑERA" },
+  { code: "W67", description: "AHOGAMIENTO Y SUMERSIÓN MIENTRAS SE ESTÁ EN UNA PISCINA" },
+  { code: "W68", description: "AHOGAMIENTO Y SUMERSIÓN CONSECUTIVOS A CAÍDA EN UNA PISCINA" },
+  { code: "W69", description: "AHOGAMIENTO Y SUMERSIÓN MIENTRAS SE ESTÁ EN AGUAS NATURALES" },
+  { code: "W70", description: "AHOGAMIENTO Y SUMERSIÓN POSTERIOR A CAÍDA EN AGUAS NATURALES" },
+  { code: "W73", description: "OTROS AHOGAMIENTOS Y SUMERSIONES ESPECIFICADOS" },
+  { code: "W74", description: "AHOGAMIENTO Y SUMERSIÓN NO ESPECIFICADOS" },
+  { code: "W75", description: "SOFOCACIÓN Y ESTRANGULAMIENTO ACCIDENTAL EN LA CAMA" },
+  { code: "W76", description: "OTROS ESTRANGULAMIENTOS Y AHORCAMIENTOS ACCIDENTALES" },
+  { code: "W77", description: "OBSTRUCCIÓN DE LA RESPIRACIÓN DEBIDA A HUNDIMIENTO, CAÍDA DE TIERRA U OTRAS SUSTANCIAS" },
+  { code: "W78", description: "INHALACIÓN DE CONTENIDOS GÁSTRICOS" },
+  { code: "W79", description: "INHALACIÓN E INGESTIÓN DE ALIMENTO QUE CAUSA OBSTRUCCIÓN DE LAS VÍAS RESPIRATORIAS" },
+  { code: "W80", description: "INHALACIÓN E INGESTIÓN DE OTROS OBJETOS QUE CAUSAN OBSTRUCCIÓN DE LAS VÍAS RESPIRATORIAS" },
+  { code: "W81", description: "CONFINADO O ATRAPADO EN UN AMBIENTE CON BAJO CONTENIDO DE OXÍGENO" },
+  { code: "W83", description: "OTRAS OBSTRUCCIONES ESPECIFICADAS DE LA RESPIRACIÓN" },
+  { code: "W84", description: "OBSTRUCCIÓN NO ESPECIFICADA DE LA RESPIRACIÓN" },
+  { code: "W85", description: "EXPOSICIÓN A LÍNEAS DE TRANSMISIÓN ELÉCTRICA" },
+  { code: "W86", description: "EXPOSICIÓN A OTRAS CORRIENTES ELÉCTRICAS ESPECIFICADAS" },
+  { code: "W87", description: "EXPOSICIÓN A CORRIENTE ELÉCTRICA NO ESPECIFICADA" },
+  { code: "W88", description: "EXPOSICIÓN A RADIACIÓN IONIZANTE" },
+  { code: "W89", description: "EXPOSICIÓN A FUENTE DE LUZ VISIBLE Y ULTRAVIOLETA, DE ORIGEN ARTIFICIAL" },
+  { code: "W90", description: "EXPOSICIÓN A OTROS TIPOS DE RADIACIÓN NO IONIZANTE" },
+  { code: "W91", description: "EXPOSICIÓN A RADIACIÓN DE TIPO NO ESPECIFICADO" },
+  { code: "W92", description: "EXPOSICIÓN A CALOR EXCESIVO DE ORIGEN ARTIFICIAL" },
+  { code: "W93", description: "EXPOSICIÓN A FRÍO EXCESIVO DE ORIGEN ARTIFICIAL" },
+  { code: "W94", description: "EXPOSICIÓN A PRESIÓN DE AIRE ALTA Y BAJA Y A CAMBIOS EN LA PRESIÓN DEL AIRE" },
+  { code: "W99", description: "EXPOSICIÓN A OTROS FACTORES AMBIENTALES Y A LOS NO ESPECIFICADOS, DE ORIGEN ARTIFICIAL" },
+  { code: "X00", description: "EXPOSICIÓN A FUEGO NO CONTROLADO EN EDIFICIO U OTRA CONSTRUCCIÓN" },
+  { code: "X01", description: "EXPOSICIÓN A FUEGO NO CONTROLADO EN LUGAR QUE NO ES EDIFICIO U OTRA CONSTRUCCIÓN" },
+  { code: "X02", description: "EXPOSICIÓN A FUEGO CONTROLADO EN EDIFICIO U OTRA CONSTRUCCIÓN" },
+  { code: "X03", description: "EXPOSICIÓN A FUEGO CONTROLADO EN LUGAR QUE NO ES EDIFICIO U OTRA CONSTRUCCIÓN" },
+  { code: "X04", description: "EXPOSICIÓN A IGNICIÓN DE MATERIAL ALTAMENTE INFLAMABLE" },
+  { code: "X05", description: "EXPOSICIÓN A IGNICIÓN O FUSIÓN DE ROPAS DE DORMIR" },
+  { code: "X06", description: "EXPOSICIÓN A IGNICIÓN O FUSIÓN DE OTRAS ROPAS Y ACCESORIOS" },
+  { code: "X08", description: "EXPOSICIÓN A OTROS HUMOS, FUEGOS O LLAMAS ESPECIFICADOS" },
+  { code: "X09", description: "EXPOSICIÓN A HUMOS, FUEGOS O LLAMAS NO ESPECIFICADOS" },
+  { code: "X10", description: "CONTACTO CON BEBIDAS, ALIMENTOS, GRASAS Y ACEITES PARA COCINAR, CALIENTES" },
+  { code: "X11", description: "CONTACTO CON AGUA CALIENTE CORRIENTE" },
+  { code: "X12", description: "CONTACTO CON OTROS LÍQUIDOS CALIENTES" },
+  { code: "X13", description: "CONTACTO CON VAPOR DE AGUA Y OTROS VAPORES CALIENTES" },
+  { code: "X14", description: "CONTACTO CON AIRE Y GASES CALIENTES" },
+  { code: "X15", description: "CONTACTO CON UTENSILIOS DOMÉSTICOS CALIENTES" },
+  { code: "X16", description: "CONTACTO CON RADIADORES, CAÑERÍAS Y ARTEFACTOS PARA CALEFACCIÓN, CALIENTES" },
+  { code: "X17", description: "CONTACTO CON MÁQUINAS, MOTORES Y HERRAMIENTAS CALIENTES" },
+  { code: "X18", description: "CONTACTO CON OTROS METALES CALIENTES" },
+  { code: "X19", description: "CONTACTO CON OTRAS SUSTANCIAS CALIENTES, Y LAS NO ESPECIFICADAS" },
+  { code: "X20", description: "CONTACTO TRAUMÁTICO CON SERPIENTES Y LAGARTOS VENENOSOS" },
+  { code: "X21", description: "CONTACTO TRAUMÁTICO CON ARAÑAS VENENOSAS" },
+  { code: "X22", description: "CONTACTO TRAUMÁTICO CON ESCORPIÓN" },
+  { code: "X23", description: "CONTACTO TRAUMÁTICO CON AVISPONES, AVISPAS Y ABEJAS" },
+  { code: "X24", description: "CONTACTO TRAUMÁTICO CON CENTÍPODOS Y MIRIÁPODOS VENENOSOS (TROPICALES)" },
+  { code: "X25", description: "CONTACTO TRAUMÁTICO CON OTROS ARTRÓPODOS VENENOSOS" },
+  { code: "X26", description: "CONTACTO TRAUMÁTICO CON ANIMALES Y PLANTAS MARINAS VENENOSOS" },
+  { code: "X27", description: "CONTACTO TRAUMÁTICO CON OTROS ANIMALES VENENOSOS ESPECIFICADOS" },
+  { code: "X28", description: "CONTACTO TRAUMÁTICO CON OTRAS PLANTAS VENENOSAS ESPECIFICADAS" },
+  { code: "X29", description: "CONTACTO TRAUMÁTICO CON ANIMALES Y PLANTAS VENENOSOS NO ESPECIFICADOS" },
+  { code: "X30", description: "EXPOSICIÓN AL CALOR NATURAL EXCESIVO" },
+  { code: "X31", description: "EXPOSICIÓN AL FRÍO NATURAL EXCESIVO" },
+  { code: "X32", description: "EXPOSICIÓN A RAYOS SOLARES" },
+  { code: "X33", description: "VÍCTIMA DE RAYO" },
+  { code: "X34", description: "VÍCTIMA DE TERREMOTO" },
+  { code: "X35", description: "VÍCTIMA DE ERUPCIÓN VOLCÁNICA" },
+  { code: "X36", description: "VÍCTIMA DE AVALANCHA, DERRUMBE Y OTROS MOVIMIENTOS DE TIERRA" },
+  { code: "X37", description: "VÍCTIMA DE TORMENTA CATACLÍSMICA" },
+  { code: "X38", description: "VÍCTIMA DE INUNDACIÓN" },
+  { code: "X39", description: "EXPOSICIÓN A OTRAS FUERZAS DE LA NATURALEZA, Y LAS NO ESPECIFICADAS" },
+  { code: "X40", description: "ENVENENAMIENTO ACCIDENTAL POR, Y EXPOSICIÓN A ANALGÉSICOS NO NARCÓTICOS, ANTIPIRÉTICOS Y ANTIRREUMÁTICOS" },
+  { code: "X41", description: "ENVENENAMIENTO ACCIDENTAL POR, Y EXPOSICIÓN A DROGAS ANTIEPILÉPTICAS, SEDANTES, HIPNÓTICAS, ANTIPARKINSONIANAS Y PSICOTRÓPICAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "X42", description: "ENVENENAMIENTO ACCIDENTAL POR, Y EXPOSICIÓN A NARCÓTICOS Y PSICODISLÉPTICOS [ALUCINÓGENOS], NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "X43", description: "ENVENENAMIENTO ACCIDENTAL POR, Y EXPOSICIÓN A OTRAS DROGAS QUE ACTÚAN SOBRE EL SISTEMA NERVIOSO AUTÓNOMO" },
+  { code: "X44", description: "ENVENENAMIENTO ACCIDENTAL POR, Y EXPOSICIÓN A OTRAS DROGAS, MEDICAMENTOS Y SUSTANCIAS BIOLÓGICAS, Y LOS NO ESPECIFICADOS" },
+  { code: "X45", description: "ENVENENAMIENTO ACCIDENTAL POR, Y EXPOSICIÓN AL ALCOHOL" },
+  { code: "X46", description: "ENVENENAMIENTO ACCIDENTAL POR, Y EXPOSICIÓN A DISOLVENTES ORGÁNICOS E HIDROCARBUROS HALOGENADOS Y SUS VAPORES" },
+  { code: "X47", description: "ENVENENAMIENTO ACCIDENTAL POR, Y EXPOSICIÓN A OTROS GASES Y VAPORES" },
+  { code: "X48", description: "ENVENENAMIENTO ACCIDENTAL POR, Y EXPOSICIÓN A PLAGUICIDAS" },
+  { code: "X49", description: "ENVENENAMIENTO ACCIDENTAL POR, Y EXPOSICIÓN A OTROS PRODUCTOS QUÍMICOS Y SUSTANCIAS NOCIVAS, Y LOS NO ESPECIFICADOS" },
+  { code: "X50", description: "EXCESO DE ESFUERZO Y MOVIMIENTOS EXTENUANTES Y REPETITIVOS" },
+  { code: "X51", description: "VIAJES Y DESPLAZAMIENTOS" },
+  { code: "X52", description: "PERMANENCIA PROLONGADA EN AMBIENTE SIN GRAVEDAD" },
+  { code: "X53", description: "PRIVACIÓN DE ALIMENTOS" },
+  { code: "X54", description: "PRIVACIÓN DE AGUA" },
+  { code: "X57", description: "PRIVACIÓN NO ESPECIFICADA" },
+  { code: "X58", description: "EXPOSICIÓN A OTROS FACTORES ESPECIFICADOS" },
+  { code: "X59", description: "EXPOSICIÓN A FACTORES NO ESPECIFICADOS" },
+  { code: "X60", description: "ENVENENAMIENTO AUTOINFLIGIDO INTENCIONALMENTE POR, Y EXPOSICIÓN A ANALGÉSICOS NO NARCÓTICOS, ANTIPIRÉTICOS Y ANTIRREUMÁTICOS" },
+  { code: "X61", description: "ENVENENAMIENTO AUTOINFLIGIDO INTENCIONALMENTE POR, Y EXPOSICIÓN A DROGAS ANTIEPILÉPTICAS, SEDANTES, HIPNÓTICAS, ANTIPARKINSONIANAS Y PSICOTRÓPICAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "X62", description: "ENVENENAMIENTO AUTOINFLIGIDO INTENCIONALMENTE POR, Y EXPOSICIÓN A NARCÓTICOS Y PSICODISLÉPTICOS [ALUCINÓGENOS], NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "X63", description: "ENVENENAMIENTO AUTOINFLIGIDO INTENCIONALMENTE POR, Y EXPOSICIÓN A OTRAS DROGAS QUE ACTÚAN SOBRE EL SISTEMA NERVIOSO AUTÓNOMO" },
+  { code: "X64", description: "ENVENENAMIENTO AUTOINFLIGIDO INTENCIONALMENTE POR, Y EXPOSICIÓN A OTRAS DROGAS, MEDICAMENTOS Y SUSTANCIAS BIOLÓGICAS, Y LOS NO ESPECIFICADOS" },
+  { code: "X65", description: "ENVENENAMIENTO AUTOINFLIGIDO INTENCIONALMENTE POR, Y EXPOSICIÓN AL ALCOHOL" },
+  { code: "X66", description: "ENVENENAMIENTO AUTOINFLIGIDO INTENCIONALMENTE POR, Y EXPOSICIÓN A DISOLVENTES ORGÁNICOS E HIDROCARBUROS HALOGENADOS Y SUS VAPORES" },
+  { code: "X67", description: "ENVENENAMIENTO AUTOINFLIGIDO INTENCIONALMENTE POR, Y EXPOSICIÓN A OTROS GASES Y VAPORES" },
+  { code: "X68", description: "ENVENENAMIENTO AUTOINFLIGIDO INTENCIONALMENTE POR, Y EXPOSICIÓN A PLAGUICIDAS" },
+  { code: "X69", description: "ENVENENAMIENTO AUTOINFLIGIDO INTENCIONALMENTE POR, Y EXPOSICIÓN A OTROS PRODUCTOS QUÍMICOS Y SUSTANCIAS NOCIVAS, Y LOS NO ESPECIFICADOS" },
+  { code: "X70", description: "LESIÓN AUTOINFLIGIDA INTENCIONALMENTE POR AHORCAMIENTO, ESTRANGULAMIENTO O SOFOCACIÓN" },
+  { code: "X71", description: "LESIÓN AUTOINFLIGIDA INTENCIONALMENTE POR AHOGAMIENTO Y SUMERSIÓN" },
+  { code: "X72", description: "LESIÓN AUTOINFLIGIDA INTENCIONALMENTE POR DISPARO DE ARMA CORTA" },
+  { code: "X73", description: "LESIÓN AUTOINFLIGIDA INTENCIONALMENTE POR DISPARO DE RIFLE, ESCOPETA Y ARMA LARGA" },
+  { code: "X74", description: "LESIÓN AUTOINFLIGIDA INTENCIONALMENTE POR DISPARO DE OTRAS ARMAS DE FUEGO, Y LAS NO ESPECIFICADAS" },
+  { code: "X75", description: "LESIÓN AUTOINFLIGIDA INTENCIONALMENTE POR MATERIAL EXPLOSIVO" },
+  { code: "X76", description: "LESIÓN AUTOINFLIGIDA INTENCIONALMENTE POR HUMO, FUEGO Y LLAMAS" },
+  { code: "X77", description: "LESIÓN AUTOINFLIGIDA INTENCIONALMENTE POR VAPOR DE AGUA, VAPORES Y OBJETOS CALIENTES" },
+  { code: "X78", description: "LESIÓN AUTOINFLIGIDA INTENCIONALMENTE POR OBJETO CORTANTE" },
+  { code: "X79", description: "LESIÓN AUTOINFLIGIDA INTENCIONALMENTE POR OBJETO ROMO O SIN FILO" },
+  { code: "X80", description: "LESIÓN AUTOINFLIGIDA INTENCIONALMENTE AL SALTAR DESDE UN LUGAR ELEVADO" },
+  { code: "X81", description: "LESIÓN AUTOINFLIGIDA INTENCIONALMENTE POR ARROJARSE O COLOCARSE DELANTE DE OBJETO EN MOVIMIENTO" },
+  { code: "X82", description: "LESIÓN AUTOINFLIGIDA INTENCIONALMENTE POR COLISIÓN DE VEHÍCULO DE MOTOR" },
+  { code: "X83", description: "LESIÓN AUTOINFLIGIDA INTENCIONALMENTE POR OTROS MEDIOS ESPECIFICADOS" },
+  { code: "X84", description: "LESIÓN AUTOINFLIGIDA INTENCIONALMENTE POR MEDIOS NO ESPECIFICADOS" },
+  { code: "X85", description: "AGRESIÓN CON DROGAS, MEDICAMENTOS Y SUSTANCIAS BIOLÓGICAS" },
+  { code: "X86", description: "AGRESIÓN CON SUSTANCIA CORROSIVA" },
+  { code: "X87", description: "AGRESIÓN CON PLAGUICIDAS" },
+  { code: "X88", description: "AGRESIÓN CON GASES Y VAPORES" },
+  { code: "X89", description: "AGRESIÓN CON OTROS PRODUCTOS QUÍMICOS Y SUSTANCIAS NOCIVAS ESPECIFICADAS" },
+  { code: "X90", description: "AGRESIÓN CON PRODUCTOS QUÍMICOS Y SUSTANCIAS NOCIVAS NO ESPECIFICADAS" },
+  { code: "X91", description: "AGRESIÓN POR AHORCAMIENTO, ESTRANGULAMIENTO Y SOFOCACIÓN" },
+  { code: "X92", description: "AGRESIÓN POR AHOGAMIENTO Y SUMERSIÓN" },
+  { code: "X93", description: "AGRESIÓN CON DISPARO DE ARMA CORTA" },
+  { code: "X94", description: "AGRESIÓN CON DISPARO DE RIFLE, ESCOPETA Y ARMA LARGA" },
+  { code: "X95", description: "AGRESIÓN CON DISPARO DE OTRAS ARMAS DE FUEGO, Y LAS NO ESPECIFICADAS" },
+  { code: "X96", description: "AGRESIÓN CON MATERIAL EXPLOSIVO" },
+  { code: "X97", description: "AGRESIÓN CON HUMO, FUEGO Y LLAMAS" },
+  { code: "X98", description: "AGRESIÓN CON VAPOR DE AGUA, VAPORES Y OBJETOS CALIENTES" },
+  { code: "X99", description: "AGRESIÓN CON OBJETO CORTANTE" },
+  { code: "Y00", description: "AGRESIÓN CON OBJETO ROMO O SIN FILO" },
+  { code: "Y01", description: "AGRESIÓN POR EMPUJÓN DESDE UN LUGAR ELEVADO" },
+  { code: "Y02", description: "AGRESIÓN POR EMPUJAR O COLOCAR A LA VÍCTIMA DELANTE DE OBJETO EN MOVIMIENTO" },
+  { code: "Y03", description: "AGRESIÓN POR COLISIÓN DE VEHÍCULO DE MOTOR" },
+  { code: "Y04", description: "AGRESIÓN CON FUERZA CORPORAL" },
+  { code: "Y05", description: "AGRESIÓN SEXUAL CON FUERZA CORPORAL" },
+  { code: "Y06", description: "NEGLIGENCIA Y ABANDONO" },
+  { code: "Y07", description: "OTROS SÍNDROMES DE MALTRATO" },
+  { code: "Y08", description: "AGRESIÓN POR OTROS MEDIOS ESPECIFICADOS" },
+  { code: "Y09", description: "AGRESIÓN POR MEDIOS NO ESPECIFICADOS" },
+  { code: "Y10", description: "ENVENENAMIENTO POR, Y EXPOSICIÓN A ANALGÉSICOS NO NARCÓTICOS, ANTIPIRÉTICOS Y ANTIRREUMÁTICOS, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y11", description: "ENVENENAMIENTO POR, Y EXPOSICIÓN A DROGAS ANTIEPILÉPTICAS, SEDANTES, HIPNÓTICAS, ANTIPARKINSONIANAS Y PSICOTRÓPICAS, NO CLASIFICADAS EN OTRA PARTE, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y12", description: "ENVENENAMIENTO POR, Y EXPOSICIÓN A NARCÓTICOS Y PSICODISLÉPTICOS [ALUCINÓGENOS], NO CLASIFICADOS EN OTRA PARTE, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y13", description: "ENVENENAMIENTO POR, Y EXPOSICIÓN A OTRAS DROGAS QUE ACTÚAN SOBRE EL SISTEMA NERVIOSO AUTÓNOMO, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y14", description: "ENVENENAMIENTO POR, Y EXPOSICIÓN A OTRAS DROGAS, MEDICAMENTOS Y SUSTANCIAS BIOLÓGICAS, Y LAS NO ESPECIFICADAS, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y15", description: "ENVENENAMIENTO POR, Y EXPOSICIÓN AL ALCOHOL, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y16", description: "ENVENENAMIENTO POR, Y EXPOSICIÓN A DISOLVENTES ORGÁNICOS E HIDROCARBUROS HALOGENADOS Y SUS VAPORES, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y17", description: "ENVENENAMIENTO POR, Y EXPOSICIÓN A OTROS GASES Y VAPORES, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y18", description: "ENVENENAMIENTO POR, Y EXPOSICIÓN A PLAGUICIDAS, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y19", description: "ENVENENAMIENTO POR, Y EXPOSICIÓN A OTROS PRODUCTOS QUÍMICOS Y SUSTANCIAS NOCIVAS, Y LOS NO ESPECIFICADOS, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y20", description: "AHORCAMIENTO, ESTRANGULAMIENTO Y SOFOCACIÓN, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y21", description: "AHOGAMIENTO Y SUMERSIÓN, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y22", description: "DISPARO DE ARMA CORTA, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y23", description: "DISPARO DE RIFLE, ESCOPETA Y ARMA LARGA, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y24", description: "DISPARO DE OTRAS ARMAS DE FUEGO, Y LAS NO ESPECIFICADAS, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y25", description: "CONTACTO TRAUMÁTICO CON MATERIAL EXPLOSIVO, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y26", description: "EXPOSICIÓN AL HUMO, FUEGO Y LLAMAS, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y27", description: "CONTACTO CON VAPOR DE AGUA, VAPORES Y OBJETOS CALIENTES, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y28", description: "CONTACTO TRAUMÁTICO CON OBJETO CORTANTE, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y29", description: "CONTACTO TRAUMÁTICO CON OBJETO ROMO O SIN FILO, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y30", description: "CAÍDA, SALTO O EMPUJÓN DESDE LUGAR ELEVADO, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y31", description: "CAÍDA, PERMANENCIA O CARRERA DELANTE O HACIA OBJETO EN MOVIMIENTO, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y32", description: "COLISIÓN DE VEHÍCULO DE MOTOR, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y33", description: "OTROS EVENTOS ESPECIFICADOS, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y34", description: "EVENTO NO ESPECIFICADO, DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y35", description: "INTERVENCIÓN LEGAL" },
+  { code: "Y36", description: "OPERACIONES DE GUERRA" },
+  { code: "Y40", description: "EFECTOS ADVERSOS DE ANTIBIÓTICOS SISTÉMICOS" },
+  { code: "Y41", description: "EFECTOS ADVERSOS DE OTROS ANTIINFECCIOSOS Y ANTIPARASITARIOS SISTÉMICOS" },
+  { code: "Y42", description: "EFECTOS ADVERSOS DE HORMONAS Y SUS SUSTITUTOS SINTÉTICOS Y ANTAGONISTAS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "Y43", description: "EFECTOS ADVERSOS DE AGENTES SISTÉMICOS PRIMARIOS" },
+  { code: "Y44", description: "EFECTOS ADVERSOS DE AGENTES QUE AFECTAN PRIMARIAMENTE LOS CONSTITUYENTES DE LA SANGRE" },
+  { code: "Y45", description: "EFECTOS ADVERSOS DE DROGAS ANALGÉSICAS, ANTIPIRÉTICAS Y ANTIINFLAMATORIAS" },
+  { code: "Y46", description: "EFECTOS ADVERSOS DE DROGAS ANTIEPILÉPTICAS Y ANTIPARKINSONIANAS" },
+  { code: "Y47", description: "EFECTOS ADVERSOS DE DROGAS SEDANTES, HIPNÓTICAS Y ANSIOLÍTICAS" },
+  { code: "Y48", description: "EFECTOS ADVERSOS DE GASES ANESTÉSICOS Y TERAPÉUTICOS" },
+  { code: "Y49", description: "EFECTOS ADVERSOS DE DROGAS PSICOTRÓPICAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "Y50", description: "EFECTOS ADVERSOS DE ESTIMULANTES DEL SISTEMA NERVIOSO CENTRAL, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "Y51", description: "EFECTOS ADVERSOS DE DROGAS QUE AFECTAN PRIMARIAMENTE EL SISTEMA NERVIOSO AUTÓNOMO" },
+  { code: "Y52", description: "EFECTOS ADVERSOS DE AGENTES QUE AFECTAN PRIMARIAMENTE EL SISTEMA CARDIOVASCULAR" },
+  { code: "Y53", description: "EFECTOS ADVERSOS DE AGENTES QUE AFECTAN PRIMARIAMENTE EL SISTEMA GASTROINTESTINAL" },
+  { code: "Y54", description: "EFECTOS ADVERSOS DE AGENTES QUE AFECTAN PRIMARIAMENTE EL EQUILIBRIO HÍDRICO Y EL METABOLISMO MINERAL Y DEL ÁCIDO ÚRICO" },
+  { code: "Y55", description: "EFECTOS ADVERSOS DE AGENTES QUE ACTÚAN PRIMARIAMENTE SOBRE LOS MÚSCULOS LISOS Y ESTRIADOS Y SOBRE EL SISTEMA RESPIRATORIO" },
+  { code: "Y56", description: "EFECTOS ADVERSOS DE AGENTES TÓPICOS QUE AFECTAN PRIMARIAMENTE LA PIEL Y LAS MEMBRANAS MUCOSAS, Y DROGAS OFTALMOLÓGICAS, OTORRINOLARINGOLÓGICAS Y DENTALES" },
+  { code: "Y57", description: "EFECTOS ADVERSOS DE OTRAS DROGAS Y MEDICAMENTOS, Y LOS NO ESPECIFICADOS" },
+  { code: "Y58", description: "EFECTOS ADVERSOS DE VACUNAS BACTERIANAS" },
+  { code: "Y59", description: "EFECTOS ADVERSOS DE OTRAS VACUNAS Y SUSTANCIAS BIOLÓGICAS, Y LAS NO ESPECIFICADAS" },
+  { code: "Y60", description: "CORTE, PUNCIÓN, PERFORACIÓN O HEMORRAGIA NO INTENCIONAL DURANTE LA ATENCIÓN MÉDICA Y QUIRÚRGICA" },
+  { code: "Y61", description: "OBJETO EXTRAÑO DEJADO ACCIDENTALMENTE EN EL CUERPO DURANTE LA ATENCIÓN MÉDICA Y QUIRÚRGICA" },
+  { code: "Y62", description: "FALLAS EN LA ESTERILIZACIÓN DURANTE LA ATENCIÓN MÉDICA Y QUIRÚRGICA" },
+  { code: "Y63", description: "FALLA EN LA DOSIFICACIÓN DURANTE LA ATENCIÓN MÉDICA Y QUIRÚRGICA" },
+  { code: "Y64", description: "MEDICAMENTOS O SUSTANCIAS BIOLÓGICAS CONTAMINADOS" },
+  { code: "Y65", description: "OTROS INCIDENTES DURANTE LA ATENCIÓN MÉDICA Y QUIRÚRGICA" },
+  { code: "Y66", description: "NO ADMINISTRACIÓN DE LA ATENCIÓN MÉDICA Y QUIRÚRGICA" },
+  { code: "Y69", description: "INCIDENTES NO ESPECIFICADOS DURANTE LA ATENCIÓN MÉDICA Y QUIRÚRGICA" },
+  { code: "Y70", description: "DISPOSITIVOS DE ANESTESIOLOGÍA ASOCIADOS CON INCIDENTES ADVERSOS" },
+  { code: "Y71", description: "DISPOSITIVOS CARDIOVASCULARES ASOCIADOS CON INCIDENTES ADVERSOS" },
+  { code: "Y72", description: "DISPOSITIVOS OTORRINOLARINGOLÓGICOS ASOCIADOS CON INCIDENTES ADVERSOS" },
+  { code: "Y73", description: "DISPOSITIVOS DE GASTROENTEROLOGÍA Y UROLOGÍA ASOCIADOS CON INCIDENTES ADVERSOS" },
+  { code: "Y74", description: "DISPOSITIVOS PARA USO HOSPITALARIO GENERAL Y PERSONAL ASOCIADOS CON INCIDENTES ADVERSOS" },
+  { code: "Y75", description: "DISPOSITIVOS NEUROLÓGICOS ASOCIADOS CON INCIDENTES ADVERSOS" },
+  { code: "Y76", description: "DISPOSITIVOS GINECOLÓGICOS Y OBSTÉTRICOS ASOCIADOS CON INCIDENTES ADVERSOS" },
+  { code: "Y77", description: "DISPOSITIVOS OFTÁLMICOS ASOCIADOS CON INCIDENTES ADVERSOS" },
+  { code: "Y78", description: "APARATOS RADIOLÓGICOS ASOCIADOS CON INCIDENTES ADVERSOS" },
+  { code: "Y79", description: "DISPOSITIVOS ORTOPÉDICOS ASOCIADOS CON INCIDENTES ADVERSOS" },
+  { code: "Y80", description: "APARATOS DE MEDICINA FÍSICA ASOCIADOS CON INCIDENTES ADVERSOS" },
+  { code: "Y81", description: "DISPOSITIVOS DE CIRUGÍA GENERAL Y PLÁSTICA ASOCIADOS CON INCIDENTES ADVERSOS" },
+  { code: "Y82", description: "OTROS DISPOSITIVOS MÉDICOS, Y LOS NO ESPECIFICADOS, ASOCIADOS CON INCIDENTES ADVERSOS" },
+  { code: "Y83", description: "CIRUGÍA Y OTROS PROCEDIMIENTOS QUIRÚRGICOS COMO LA CAUSA DE REACCIÓN ANORMAL DEL PACIENTE O DE COMPLICACIÓN POSTERIOR, SIN MENCIÓN DE INCIDENTE EN EL MOMENTO DE EFECTUAR EL PROCEDIMIENTO" },
+  { code: "Y84", description: "OTROS PROCEDIMIENTOS MÉDICOS COMO LA CAUSA DE REACCIÓN ANORMAL DEL PACIENTE O DE COMPLICACIÓN POSTERIOR, SIN MENCIÓN DE INCIDENTE EN EL MOMENTO DE EFECTUAR EL PROCEDIMIENTO" },
+  { code: "Y85", description: "SECUELAS DE ACCIDENTES DE TRANSPORTE" },
+  { code: "Y86", description: "SECUELAS DE OTROS ACCIDENTES" },
+  { code: "Y87", description: "SECUELAS DE LESIONES AUTOINFLIGIDAS INTENCIONALMENTE, AGRESIONES Y EVENTOS DE INTENCIÓN NO DETERMINADA" },
+  { code: "Y88", description: "SECUELAS CON ATENCIÓN MÉDICA Y QUIRÚRGICA COMO CAUSA EXTERNA" },
+  { code: "Y89", description: "SECUELAS DE OTRAS CAUSAS EXTERNAS" },
+  { code: "Y90", description: "EVIDENCIA DE ALCOHOLISMO DETERMINADA POR EL NIVEL DE ALCOHOL EN LA SANGRE" },
+  { code: "Y91", description: "EVIDENCIA DE ALCOHOLISMO DETERMINADA POR EL NIVEL DE INTOXICACIÓN" },
+  { code: "Y95", description: "AFECCIÓN NOSOCOMIAL" },
+  { code: "Y96", description: "AFECCIÓN RELACIONADA CON EL TRABAJO" },
+  { code: "Y97", description: "AFECCIÓN RELACIONADA CON LA CONTAMINACIÓN AMBIENTAL" },
+  { code: "Y98", description: "AFECCIÓN RELACIONADA CON EL ESTILO DE VIDA" },
+  { code: "Z00", description: "EXAMEN GENERAL E INVESTIGACIÓN DE PERSONAS SIN QUEJAS O SIN DIAGNÓSTICO INFORMADO" },
+  { code: "Z01", description: "OTROS EXÁMENES ESPECIALES E INVESTIGACIONES EN PERSONAS SIN QUEJAS O SIN DIAGNÓSTICO INFORMADO" },
+  { code: "Z02", description: "EXÁMENES Y CONTACTOS PARA FINES ADMINISTRATIVOS" },
+  { code: "Z03", description: "OBSERVACIÓN Y EVALUACIÓN MÉDICAS POR SOSPECHA DE ENFERMEDADES Y AFECCIONES" },
+  { code: "Z04", description: "EXAMEN Y OBSERVACIÓN POR OTRAS RAZONES" },
+  { code: "Z08", description: "EXAMEN DE SEGUIMIENTO CONSECUTIVO AL TRATAMIENTO POR TUMOR MALIGNO" },
+  { code: "Z09", description: "EXAMEN DE SEGUIMIENTO CONSECUTIVO A TRATAMIENTO POR OTRAS AFECCIONES DIFERENTES A TUMORES MALIGNOS" },
+  { code: "Z10", description: "CONTROL GENERAL DE SALUD DE RUTINA DE SUBPOBLACIONES DEFINIDAS" },
+  { code: "Z11", description: "EXAMEN DE PESQUISA ESPECIAL PARA ENFERMEDADES INFECCIOSAS Y PARASITARIAS" },
+  { code: "Z12", description: "EXAMEN DE PESQUISA ESPECIAL PARA TUMORES" },
+  { code: "Z13", description: "EXAMEN DE PESQUISA ESPECIAL PARA OTRAS ENFERMEDADES Y TRASTORNOS" },
+  { code: "Z20", description: "CONTACTO CON Y EXPOSICIÓN A ENFERMEDADES TRANSMISIBLES" },
+  { code: "Z21", description: "ESTADO DE INFECCIÓN ASINTOMÁTICA POR EL VIRUS DE LA INMUNODEFICIENCIA HUMANA [VIH]" },
+  { code: "Z22", description: "PORTADOR DE ENFERMEDAD INFECCIOSA" },
+  { code: "Z23", description: "NECESIDAD DE INMUNIZACIÓN CONTRA ENFERMEDAD BACTERIANA ÚNICA" },
+  { code: "Z24", description: "NECESIDAD DE INMUNIZACIÓN CONTRA CIERTAS ENFERMEDADES VIRALES" },
+  { code: "Z25", description: "NECESIDAD DE INMUNIZACIÓN CONTRA OTRAS ENFERMEDADES VIRALES ÚNICAS" },
+  { code: "Z26", description: "NECESIDAD DE INMUNIZACIÓN CONTRA OTRAS ENFERMEDADES INFECCIOSAS ÚNICAS" },
+  { code: "Z27", description: "NECESIDAD DE INMUNIZACIÓN CONTRA COMBINACIONES DE ENFERMEDADES INFECCIOSAS" },
+  { code: "Z28", description: "INMUNIZACIÓN NO REALIZADA" },
+  { code: "Z29", description: "NECESIDAD DE OTRAS MEDIDAS PROFILÁCTICAS" },
+  { code: "Z30", description: "ATENCIÓN PARA LA ANTICONCEPCIÓN" },
+  { code: "Z31", description: "ATENCIÓN PARA LA PROCREACIÓN" },
+  { code: "Z32", description: "EXAMEN Y PRUEBA DEL EMBARAZO" },
+  { code: "Z33", description: "ESTADO DE EMBARAZO, INCIDENTAL" },
+  { code: "Z34", description: "SUPERVISIÓN DE EMBARAZO NORMAL" },
+  { code: "Z35", description: "SUPERVISIÓN DE EMBARAZO DE ALTO RIESGO" },
+  { code: "Z36", description: "PESQUISAS PRENATALES" },
+  { code: "Z37", description: "PRODUCTO DEL PARTO" },
+  { code: "Z38", description: "NACIDOS VIVOS SEGÚN LUGAR DE NACIMIENTO" },
+  { code: "Z39", description: "EXAMEN Y ATENCIÓN DEL POSTPARTO" },
+  { code: "Z40", description: "CIRUGÍA PROFILÁCTICA" },
+  { code: "Z41", description: "PROCEDIMIENTOS PARA OTROS PROPÓSITOS QUE NO SEAN LOS DE MEJORAR EL ESTADO DE SALUD" },
+  { code: "Z42", description: "CUIDADOS POSTERIORES A LA CIRUGÍA PLÁSTICA" },
+  { code: "Z43", description: "ATENCIÓN DE ORIFICIOS ARTIFICIALES" },
+  { code: "Z44", description: "PRUEBA Y AJUSTE DE DISPOSITIVOS PROTÉSICOS EXTERNOS" },
+  { code: "Z45", description: "ASISTENCIA Y AJUSTE DE DISPOSITIVOS IMPLANTADOS" },
+  { code: "Z46", description: "PRUEBA Y AJUSTE DE OTROS DISPOSITIVOS" },
+  { code: "Z47", description: "OTROS CUIDADOS POSTERIORES A LA ORTOPEDIA" },
+  { code: "Z48", description: "OTROS CUIDADOS POSTERIORES A LA CIRUGÍA" },
+  { code: "Z49", description: "CUIDADOS RELATIVOS AL PROCEDIMIENTO DE DIÁLISIS" },
+  { code: "Z50", description: "ATENCIÓN POR EL USO DE PROCEDIMIENTOS DE REHABILITACIÓN" },
+  { code: "Z51", description: "OTRA ATENCIÓN MÉDICA" },
+  { code: "Z52", description: "DONANTES DE ÓRGANOS Y TEJIDOS" },
+  { code: "Z53", description: "PERSONA EN CONTACTO CON LOS SERVICIOS DE SALUD PARA PROCEDIMIENTOS ESPECÍFICOS NO REALIZADOS" },
+  { code: "Z54", description: "CONVALECENCIA" },
+  { code: "Z55", description: "PROBLEMAS RELACIONADOS CON LA EDUCACIÓN Y LA ALFABETIZACIÓN" },
+  { code: "Z56", description: "PROBLEMAS RELACIONADOS CON EL EMPLEO Y EL DESEMPLEO" },
+  { code: "Z57", description: "EXPOSICIÓN A FACTORES DE RIESGO OCUPACIONAL" },
+  { code: "Z58", description: "PROBLEMAS RELACIONADOS CON EL AMBIENTE FÍSICO" },
+  { code: "Z59", description: "PROBLEMAS RELACIONADOS CON LA VIVIENDA Y LAS CIRCUNSTANCIAS ECONÓMICAS" },
+  { code: "Z60", description: "PROBLEMAS RELACIONADOS CON EL AMBIENTE SOCIAL" },
+  { code: "Z61", description: "PROBLEMAS RELACIONADOS CON HECHOS NEGATIVOS EN LA NIÑEZ" },
+  { code: "Z62", description: "OTROS PROBLEMAS RELACIONADOS CON LA CRIANZA DEL NIÑO" },
+  { code: "Z63", description: "OTROS PROBLEMAS RELACIONADOS CON EL GRUPO PRIMARIO DE APOYO, INCLUSIVE CIRCUNSTANCIAS FAMILIARES" },
+  { code: "Z64", description: "PROBLEMAS RELACIONADOS CON CIERTAS CIRCUNSTANCIAS PSICOSOCIALES" },
+  { code: "Z65", description: "PROBLEMAS RELACIONADOS CON OTRAS CIRCUNSTANCIAS PSICOSOCIALES" },
+  { code: "Z70", description: "CONSULTA RELACIONADA CON ACTITUD, CONDUCTA U ORIENTACIÓN SEXUAL" },
+  { code: "Z71", description: "PERSONAS EN CONTACTO CON LOS SERVICIOS DE SALUD POR OTRAS CONSULTAS Y CONSEJOS MÉDICOS, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "Z72", description: "PROBLEMAS RELACIONADOS CON EL ESTILO DE VIDA" },
+  { code: "Z73", description: "PROBLEMAS RELACIONADOS CON DIFICULTADES CON EL MODO DE VIDA" },
+  { code: "Z74", description: "PROBLEMAS RELACIONADOS CON DEPENDENCIA DEL PRESTADOR DE SERVICIOS" },
+  { code: "Z75", description: "PROBLEMAS RELACIONADOS CON FACILIDADES DE ATENCIÓN MÉDICA U OTROS SERVICIOS DE SALUD" },
+  { code: "Z76", description: "PERSONAS EN CONTACTO CON LOS SERVICIOS DE SALUD POR OTRAS CIRCUNSTANCIAS" },
+  { code: "Z80", description: "HISTORIA FAMILIAR DE TUMOR MALIGNO" },
+  { code: "Z81", description: "HISTORIA FAMILIAR DE TRASTORNOS MENTALES Y DEL COMPORTAMIENTO" },
+  { code: "Z82", description: "HISTORIA FAMILIAR DE CIERTAS DISCAPACIDADES Y ENFERMEDADES CRÓNICAS INCAPACITANTES" },
+  { code: "Z83", description: "HISTORIA FAMILIAR DE OTROS TRASTORNOS ESPECÍFICOS" },
+  { code: "Z84", description: "HISTORIA FAMILIAR DE OTRAS AFECCIONES" },
+  { code: "Z85", description: "HISTORIA PERSONAL DE TUMOR MALIGNO" },
+  { code: "Z86", description: "HISTORIA PERSONAL DE ALGUNAS OTRAS ENFERMEDADES" },
+  { code: "Z87", description: "HISTORIA PERSONAL DE OTRAS ENFERMEDADES Y AFECCIONES" },
+  { code: "Z88", description: "HISTORIA PERSONAL DE ALERGIA A DROGAS, MEDICAMENTOS Y SUSTANCIAS BIOLÓGICAS" },
+  { code: "Z89", description: "AUSENCIA ADQUIRIDA DE MIEMBROS" },
+  { code: "Z90", description: "AUSENCIA ADQUIRIDA DE ÓRGANOS, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "Z91", description: "HISTORIA PERSONAL DE FACTORES DE RIESGO, NO CLASIFICADOS EN OTRA PARTE" },
+  { code: "Z92", description: "HISTORIA PERSONAL DE TRATAMIENTO MÉDICO" },
+  { code: "Z93", description: "ABERTURAS ARTIFICIALES" },
+  { code: "Z94", description: "ÓRGANOS Y TEJIDOS TRASPLANTADOS" },
+  { code: "Z95", description: "PRESENCIA DE IMPLANTES E INJERTOS CARDIOVASCULARES" },
+  { code: "Z96", description: "PRESENCIA DE OTROS IMPLANTES FUNCIONALES" },
+  { code: "Z97", description: "PRESENCIA DE OTROS DISPOSITIVOS" },
+  { code: "Z98", description: "OTROS ESTADOS POSTQUIRÚRGICOS" },
+  { code: "Z99", description: "DEPENDENCIA DE MÁQUINAS Y DISPOSITIVOS CAPACITANTES, NO CLASIFICADA EN OTRA PARTE" },
+  { code: "U04", description: "SÍNDROME RESPIRATORIO AGUDO GRAVE [SRAG]" },
+  { code: "U80", description: "AGENTE BACTERIANO RESISTENTE A PENICILINA Y ANTIBIÓTICOS SIMILARES" },
+  { code: "U81", description: "AGENTE BACTERIANO RESISTENTE A VANCOMICINA Y ANTIBIÓTICOS SIMILARES" },
+  { code: "U88", description: "AGENTE BACTERIANO RESISTENTE A MÚLTIPLES ANTIBIÓTICOS" },
+  { code: "U89", description: "AGENTE BACTERIANO RESISTENTE A OTROS ANTIBIÓTICOS Y A LOS ANTIBIÓTICOS NO ESPECIFICADOS" }
+  { code: "A00.0", description: "CÓLERA DEBIDO A VIBRIO CHOLERAE O1, BIOTIPO CHOLERAE" },
+  { code: "A00.1", description: "CÓLERA DEBIDO A VIBRIO CHOLERAE O1, BIOTIPO EL TOR" },
+  { code: "A00.9", description: "CÓLERA, NO ESPECIFICADO" },
+  { code: "A01.0", description: "FIEBRE TIFOIDEA" },
+  { code: "A01.1", description: "FIEBRE PARATIFOIDEA A" },
+  { code: "A01.2", description: "FIEBRE PARATIFOIDEA B" },
+  { code: "A01.3", description: "FIEBRE PARATIFOIDEA C" },
+  { code: "A01.4", description: "FIEBRE PARATIFOIDEA, NO ESPECIFICADA" },
+  { code: "A02.0", description: "ENTERITIS DEBIDA A SALMONELLA" },
+  { code: "A02.1", description: "SEPTICEMIA DEBIDA A SALMONELLA" },
+  { code: "A02.2", description: "INFECCIONES LOCALIZADAS DEBIDAS A SALMONELLA" },
+  { code: "A02.8", description: "OTRAS INFECCIONES ESPECIFICADAS COMO DEBIDAS A SALMONELLA" },
+  { code: "A02.9", description: "INFECCIÓN DEBIDA A SALMONELLA, NO ESPECIFICADA" },
+  { code: "A03.0", description: "SHIGELOSIS DEBIDA A SHIGELLA DYSENTERIAE" },
+  { code: "A03.1", description: "SHIGELOSIS DEBIDA A SHIGELLA FLEXNERI" },
+  { code: "A03.2", description: "SHIGELOSIS DEBIDA A SHIGELLA BOYDII" },
+  { code: "A03.3", description: "SHIGELOSIS DEBIDA A SHIGELLA SONNEI" },
+  { code: "A03.8", description: "OTRAS SHIGELOSIS" },
+  { code: "A03.9", description: "SHIGELOSIS DE TIPO NO ESPECIFICADO" },
+  { code: "A04.0", description: "INFECCIÓN DEBIDA A ESCHERICHIA COLI ENTEROPATÓGENA" },
+  { code: "A04.1", description: "INFECCIÓN DEBIDA A ESCHERICHIA COLI ENTEROTOXÍGENA" },
+  { code: "A04.2", description: "INFECCIÓN DEBIDA A ESCHERICHIA COLI ENTEROINVASIVA" },
+  { code: "A04.3", description: "INFECCIÓN DEBIDA A ESCHERICHIA COLI ENTEROHEMORRÁGICA" },
+  { code: "A04.4", description: "OTRAS INFECCIONES INTESTINALES DEBIDAS A ESCHERICHIA COLI" },
+  { code: "A04.5", description: "ENTERITIS DEBIDA A CAMPYLOBACTER" },
+  { code: "A04.6", description: "ENTERITIS DEBIDA A YERSINIA ENTEROCOLITICA" },
+  { code: "A04.7", description: "ENTEROCOLITIS DEBIDA A CLOSTRIDIUM DIFFICILE" },
+  { code: "A04.8", description: "OTRAS INFECCIONES INTESTINALES BACTERIANAS ESPECIFICADAS" },
+  { code: "A04.9", description: "INFECCIÓN INTESTINAL BACTERIANA, NO ESPECIFICADA" },
+  { code: "A05.0", description: "INTOXICACIÓN ALIMENTARIA ESTAFILOCÓCICA" },
+  { code: "A05.1", description: "BOTULISMO" },
+  { code: "A05.2", description: "INTOXICACIÓN ALIMENTARIA DEBIDA A CLOSTRIDIUM PERFRINGENS [CLOSTRIDIUM WELCHII]" },
+  { code: "A05.3", description: "INTOXICACIÓN ALIMENTARIA DEBIDA A VIBRIO PARAHAEMOLYTICUS" },
+  { code: "A05.4", description: "INTOXICACIÓN ALIMENTARIA DEBIDA A BACILLUS CEREUS" },
+  { code: "A05.8", description: "OTRAS INTOXICACIONES ALIMENTARIAS DEBIDAS A BACTERIAS ESPECIFICADAS" },
+  { code: "A05.9", description: "INTOXICACIÓN ALIMENTARIA BACTERIANA, NO ESPECIFICADA" },
+  { code: "A06.0", description: "DISENTERÍA AMEBIANA AGUDA" },
+  { code: "A06.1", description: "AMEBIASIS INTESTINAL CRÓNICA" },
+  { code: "A06.2", description: "COLITIS AMEBIANA NO DISENTÉRICA" },
+  { code: "A06.3", description: "AMEBOMA INTESTINAL" },
+  { code: "A06.4", description: "ABSCESO AMEBIANO DEL HÍGADO" },
+  { code: "A06.5", description: "ABSCESO AMEBIANO DEL PULMÓN" },
+  { code: "A06.6", description: "ABSCESO AMEBIANO DEL CEREBRO" },
+  { code: "A06.7", description: "AMEBIASIS CUTÁNEA" },
+  { code: "A06.8", description: "INFECCIÓN AMEBIANA DE OTRAS LOCALIZACIONES" },
+  { code: "A06.9", description: "AMEBIASIS, NO ESPECIFICADA" },
+  { code: "A07.0", description: "BALANTIDIASIS" },
+  { code: "A07.1", description: "GIARDIASIS [LAMBLIASIS]" },
+  { code: "A07.2", description: "CRIPTOSPORIDIOSIS" },
+  { code: "A07.3", description: "ISOSPORIASIS" },
+  { code: "A07.8", description: "OTRAS ENFERMEDADES INTESTINALES ESPECIFICADAS DEBIDAS A PROTOZOARIOS" },
+  { code: "A07.9", description: "ENFERMEDAD INTESTINAL DEBIDA A PROTOZOARIOS, NO ESPECIFICADA" },
+  { code: "A08.0", description: "ENTERITIS DEBIDA A ROTAVIRUS" },
+  { code: "A08.1", description: "GASTROENTEROPATÍA AGUDA DEBIDA AL AGENTE DE NORWALK" },
+  { code: "A08.2", description: "ENTERITIS DEBIDA A ADENOVIRUS" },
+  { code: "A08.3", description: "OTRAS ENTERITIS VIRALES" },
+  { code: "A08.4", description: "INFECCIÓN INTESTINAL VIRAL, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A08.5", description: "OTRAS INFECCIONES INTESTINALES ESPECIFICADAS" },
+  { code: "A09", description: "DIARREA Y GASTROENTERITIS DE PRESUNTO ORIGEN INFECCIOSO" },
+  { code: "A15.0", description: "TUBERCULOSIS DEL PULMÓN, CONFIRMADA POR HALLAZGO MICROSCÓPICO DEL BACILO TUBERCULOSO EN ESPUTO, CON O SIN CULTIVO" },
+  { code: "A15.1", description: "TUBERCULOSIS DEL PULMÓN, CONFIRMADA ÚNICAMENTE POR CULTIVO" },
+  { code: "A15.2", description: "TUBERCULOSIS DEL PULMÓN, CONFIRMADA HISTOLÓGICAMENTE" },
+  { code: "A15.3", description: "TUBERCULOSIS DEL PULMÓN, CONFIRMADA POR MEDIOS NO ESPECIFICADOS" },
+  { code: "A15.4", description: "TUBERCULOSIS DE GANGLIOS LINFÁTICOS INTRATORÁCICOS, CONFIRMADA BACTERIOLÓGICA E HISTOLÓGICAMENTE" },
+  { code: "A15.5", description: "TUBERCULOSIS DE LARINGE, TRÁQUEA Y BRONQUIOS, CONFIRMADA BACTERIOLÓGICA E HISTOLÓGICAMENTE" },
+  { code: "A15.6", description: "PLEURESÍA TUBERCULOSA, CONFIRMADA BACTERIOLÓGICA E HISTOLÓGICAMENTE" },
+  { code: "A15.7", description: "TUBERCULOSIS RESPIRATORIA PRIMARIA, CONFIRMADA BACTERIOLÓGICA E HISTOLÓGICAMENTE" },
+  { code: "A15.8", description: "OTRAS TUBERCULOSIS RESPIRATORIAS, CONFIRMADAS BACTERIOLÓGICA E HISTOLÓGICAMENTE" },
+  { code: "A15.9", description: "TUBERCULOSIS RESPIRATORIA NO ESPECIFICADA, CONFIRMADA BACTERIOLÓGICA E HISTOLÓGICAMENTE" },
+  { code: "A16.0", description: "TUBERCULOSIS DEL PULMÓN, CON EXAMEN BACTERIOLÓGICO E HISTOLÓGICO NEGATIVOS" },
+  { code: "A16.1", description: "TUBERCULOSIS DE PULMÓN, SIN EXAMEN BACTERIOLÓGICO E HISTOLÓGICO" },
+  { code: "A16.2", description: "TUBERCULOSIS DE PULMÓN, SIN MENCIÓN DE CONFIRMACIÓN BACTERIOLÓGICA O HISTOLÓGICA" },
+  { code: "A16.3", description: "TUBERCULOSIS DE GANGLIOS LINFÁTICOS INTRATORÁCICOS, SIN MENCIÓN DE CONFIRMACIÓN BACTERIOLÓGICA O HISTOLÓGICA" },
+  { code: "A16.4", description: "TUBERCULOSIS DE LARINGE, TRÁQUEA Y BRONQUIOS, SIN MENCIÓN DE CONFIRMACIÓN BACTERIOLÓGICA O HISTOLÓGICA" },
+  { code: "A16.5", description: "PLEURESÍA TUBERCULOSA, SIN MENCIÓN DE CONFIRMACIÓN BACTERIOLÓGICA O HISTOLÓGICA" },
+  { code: "A16.7", description: "TUBERCULOSIS RESPIRATORIA PRIMARIA, SIN MENCIÓN DE CONFIRMACIÓN BACTERIOLÓGICA O HISTOLÓGICA" },
+  { code: "A16.8", description: "OTRAS TUBERCULOSIS RESPIRATORIAS, SIN MENCIÓN DE CONFIRMACIÓN BACTERIOLÓGICA O HISTOLÓGICA" },
+  { code: "A16.9", description: "TUBERCULOSIS RESPIRATORIA NO ESPECIFICADA, SIN MENCIÓN DE CONFIRMACIÓN BACTERIOLÓGICA O HISTOLÓGICA" },
+  { code: "A17.0", description: "MENINGITIS TUBERCULOSA" },
+  { code: "A17.1", description: "TUBERCULOMA MENÍNGEO" },
+  { code: "A17.8", description: "OTRAS TUBERCULOSIS DEL SISTEMA NERVIOSO" },
+  { code: "A17.9", description: "TUBERCULOSIS DEL SISTEMA NERVIOSO, NO ESPECIFICADA" },
+  { code: "A18.0", description: "TUBERCULOSIS DE HUESOS Y ARTICULACIONES" },
+  { code: "A18.1", description: "TUBERCULOSIS DEL APARATO GENITOURINARIO" },
+  { code: "A18.2", description: "LINFADENOPATÍA PERIFÉRICA TUBERCULOSA" },
+  { code: "A18.3", description: "TUBERCULOSIS DE LOS INTESTINOS, EL PERITONEO Y LOS GANGLIOS MESENTÉRICOS" },
+  { code: "A18.4", description: "TUBERCULOSIS DE LA PIEL Y EL TEJIDO SUBCUTÁNEO" },
+  { code: "A18.5", description: "TUBERCULOSIS DEL OJO" },
+  { code: "A18.6", description: "TUBERCULOSIS DEL OÍDO" },
+  { code: "A18.7", description: "TUBERCULOSIS DE GLÁNDULAS SUPRARRENALES" },
+  { code: "A18.8", description: "TUBERCULOSIS DE OTROS ÓRGANOS ESPECIFICADOS" },
+  { code: "A19.0", description: "TUBERCULOSIS MILIAR AGUDA DE UN SOLO SITIO ESPECIFICADO" },
+  { code: "A19.1", description: "TUBERCULOSIS MILIAR AGUDA DE SITIOS MÚLTIPLES" },
+  { code: "A19.2", description: "TUBERCULOSIS MILIAR AGUDA, NO ESPECIFICADA" },
+  { code: "A19.8", description: "OTRAS TUBERCULOSIS MILIARES" },
+  { code: "A19.9", description: "TUBERCULOSIS MILIAR, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A20.0", description: "PESTE BUBÓNICA" },
+  { code: "A20.1", description: "PESTE CELULOCUTÁNEA" },
+  { code: "A20.2", description: "PESTE NEUMÓNICA" },
+  { code: "A20.3", description: "MENINGITIS POR PESTE" },
+  { code: "A20.7", description: "PESTE SEPTICÉMICA" },
+  { code: "A20.8", description: "OTRAS FORMAS DE PESTE" },
+  { code: "A20.9", description: "PESTE, NO ESPECIFICADA" },
+  { code: "A21.0", description: "TULAREMIA ULCEROGLANDULAR" },
+  { code: "A21.1", description: "TULAREMIA OCULOGLANDULAR" },
+  { code: "A21.2", description: "TULAREMIA PULMONAR" },
+  { code: "A21.3", description: "TULAREMIA GASTROINTESTINAL" },
+  { code: "A21.7", description: "TULAREMIA GENERALIZADA" },
+  { code: "A21.8", description: "OTRAS FORMAS DE TULAREMIA" },
+  { code: "A21.9", description: "TULAREMIA, NO ESPECIFICADA" },
+  { code: "A22.0", description: "CARBUNCO CUTÁNEO" },
+  { code: "A22.1", description: "CARBUNCO PULMONAR" },
+  { code: "A22.2", description: "CARBUNCO GASTROINTESTINAL" },
+  { code: "A22.7", description: "CARBUNCO SEPTICÉMICO" },
+  { code: "A22.8", description: "OTRAS FORMAS DE CARBUNCO" },
+  { code: "A22.9", description: "CARBUNCO, NO ESPECIFICADO" },
+  { code: "A23.0", description: "BRUCELOSIS DEBIDA A BRUCELLA MELITENSIS" },
+  { code: "A23.1", description: "BRUCELOSIS DEBIDA A BRUCELLA ABORTUS" },
+  { code: "A23.2", description: "BRUCELOSIS DEBIDA A BRUCELLA SUIS" },
+  { code: "A23.3", description: "BRUCELOSIS DEBIDA A BRUCELLA CANIS" },
+  { code: "A23.8", description: "OTRAS BRUCELOSIS" },
+  { code: "A23.9", description: "BRUCELOSIS, NO ESPECIFICADA" },
+  { code: "A24.0", description: "MUERMO" },
+  { code: "A24.1", description: "MELIOIDOSIS AGUDA Y FULMINANTE" },
+  { code: "A24.2", description: "MELIOIDOSIS SUBAGUDA Y CRÓNICA" },
+  { code: "A24.3", description: "OTRAS MELIOIDOSIS" },
+  { code: "A24.4", description: "MELIOIDOSIS, NO ESPECIFICADA" },
+  { code: "A25.0", description: "ESPIRILOSIS" },
+  { code: "A25.1", description: "ESTREPTOBACILOSIS" },
+  { code: "A25.9", description: "FIEBRE POR MORDEDURA DE RATA, NO ESPECIFICADA" },
+  { code: "A26.0", description: "ERISIPELOIDE CUTÁNEO" },
+  { code: "A26.7", description: "SEPTICEMIA POR ERYSIPELOTHRIX" },
+  { code: "A26.8", description: "OTRAS FORMAS DE ERISIPELOIDE" },
+  { code: "A26.9", description: "ERISIPELOIDE, NO ESPECIFICADA" },
+  { code: "A27.0", description: "LEPTOSPIROSIS ICTEROHEMORRÁGICA" },
+  { code: "A27.8", description: "OTRAS FORMAS DE LEPTOSPIROSIS" },
+  { code: "A27.9", description: "LEPTOSPIROSIS, NO ESPECIFICADA" },
+  { code: "A28.0", description: "PASTEURELOSIS" },
+  { code: "A28.1", description: "ENFERMEDAD POR RASGUÑO DE GATO" },
+  { code: "A28.2", description: "YERSINIOSIS EXTRAINTESTINAL" },
+  { code: "A28.8", description: "OTRAS ENFERMEDADES ZOONÓTICAS BACTERIANAS ESPECIFICADAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "A28.9", description: "ENFERMEDAD ZOONÓTICA BACTERIANA, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A30.0", description: "LEPRA INDETERMINADA" },
+  { code: "A30.1", description: "LEPRA TUBERCULOIDE" },
+  { code: "A30.2", description: "LEPRA TUBERCULOIDE LIMÍTROFE" },
+  { code: "A30.3", description: "LEPRA LIMÍTROFE" },
+  { code: "A30.4", description: "LEPRA LEPROMATOSA LIMÍTROFE" },
+  { code: "A30.5", description: "LEPRA LEPROMATOSA" },
+  { code: "A30.8", description: "OTRAS FORMAS DE LEPRA" },
+  { code: "A30.9", description: "LEPRA, NO ESPECIFICADA" },
+  { code: "A31.0", description: "INFECCIONES POR MICOBACTERIAS PULMONARES" },
+  { code: "A31.1", description: "INFECCIÓN CUTÁNEA POR MICOBACTERIAS" },
+  { code: "A31.8", description: "OTRAS INFECCIONES POR MICOBACTERIAS" },
+  { code: "A31.9", description: "INFECCIÓN POR MICOBACTERIA, NO ESPECIFICADA" },
+  { code: "A32.0", description: "LISTERIOSIS CUTÁNEA" },
+  { code: "A32.1", description: "MENINGITIS Y MENINGOENCEFALITIS LISTERIANA" },
+  { code: "A32.7", description: "SEPTICEMIA LISTERIANA" },
+  { code: "A32.8", description: "OTRAS FORMAS DE LISTERIOSIS" },
+  { code: "A32.9", description: "LISTERIOSIS, NO ESPECIFICADA" },
+  { code: "A33", description: "TÉTANOS NEONATAL" },
+  { code: "A34", description: "TÉTANOS OBSTÉTRICO" },
+  { code: "A35", description: "OTROS TÉTANOS" },
+  { code: "A36.0", description: "DIFTERIA FARÍNGEA" },
+  { code: "A36.1", description: "DIFTERIA NASOFARÍNGEA" },
+  { code: "A36.2", description: "DIFTERIA LARÍNGEA" },
+  { code: "A36.3", description: "DIFTERIA CUTÁNEA" },
+  { code: "A36.8", description: "OTRAS DIFTERIAS" },
+  { code: "A36.9", description: "DIFTERIA, NO ESPECIFICADA" },
+  { code: "A37.0", description: "TOS FERINA DEBIDA A BORDETELLA PERTUSSIS" },
+  { code: "A37.1", description: "TOS FERINA DEBIDA A BORDETELLA PARAPERTUSSIS" },
+  { code: "A37.8", description: "TOS FERINA DEBIDA A OTRAS ESPECIES DE BORDETELLA" },
+  { code: "A37.9", description: "TOS FERINA, NO ESPECIFICADA" },
+  { code: "A38", description: "ESCARLATINA" },
+  { code: "A39.0", description: "MENINGITIS MENINGOCÓCICA" },
+  { code: "A39.1", description: "SÍNDROME DE WATERHOUSE-FRIDERICHSEN" },
+  { code: "A39.2", description: "MENINGOCOCEMIA AGUDA" },
+  { code: "A39.3", description: "MENINGOCOCEMIA CRÓNICA" },
+  { code: "A39.4", description: "MENINGOCOCEMIA, NO ESPECIFICADA" },
+  { code: "A39.5", description: "ENFERMEDAD CARDÍACA DEBIDA A MENINGOCOCO" },
+  { code: "A39.8", description: "OTRAS FORMAS DE ENFERMEDAD MENINGOCÓCICA" },
+  { code: "A39.9", description: "ENFERMEDAD MENINGOCÓCICA, NO ESPECIFICADA" },
+  { code: "A40.0", description: "SEPTICEMIA DEBIDA A ESTREPTOCOCO, GRUPO A" },
+  { code: "A40.1", description: "SEPTICEMIA DEBIDA A ESTREPTOCOCO, GRUPO B" },
+  { code: "A40.2", description: "SEPTICEMIA DEBIDA A ESTREPTOCOCO, GRUPO D" },
+  { code: "A40.3", description: "SEPTICEMIA DEBIDA A STREPTOCOCCUS PNEUMONIAE" },
+  { code: "A40.8", description: "OTRAS SEPTICEMIAS ESTREPTOCÓCICAS" },
+  { code: "A40.9", description: "SEPTICEMIA ESTREPTOCÓCICA, NO ESPECIFICADA" },
+  { code: "A41.0", description: "SEPTICEMIA DEBIDA A STAPHYLOCOCCUS AUREUS" },
+  { code: "A41.1", description: "SEPTICEMIA DEBIDA A OTRO ESTAFILOCOCO ESPECIFICADO" },
+  { code: "A41.2", description: "SEPTICEMIA DEBIDA A ESTAFILOCOCO NO ESPECIFICADO" },
+  { code: "A41.3", description: "SEPTICEMIA DEBIDA A HAEMOPHILUS INFLUENZAE" },
+  { code: "A41.4", description: "SEPTICEMIA DEBIDA A ANAEROBIOS" },
+  { code: "A41.5", description: "SEPTICEMIA DEBIDA A OTROS ORGANISMOS GRAMNEGATIVOS" },
+  { code: "A41.8", description: "OTRAS SEPTICEMIAS ESPECIFICADAS" },
+  { code: "A41.9", description: "SEPTICEMIA, NO ESPECIFICADA" },
+  { code: "A42.0", description: "ACTINOMICOSIS PULMONAR" },
+  { code: "A42.1", description: "ACTINOMICOSIS ABDOMINAL" },
+  { code: "A42.2", description: "ACTINOMICOSIS CERVICOFACIAL" },
+  { code: "A42.7", description: "SEPTICEMIA ACTINOMICÓTICA" },
+  { code: "A42.8", description: "OTRAS FORMAS DE ACTINOMICOSIS" },
+  { code: "A42.9", description: "ACTINOMICOSIS, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A43.0", description: "NOCARDIOSIS PULMONAR" },
+  { code: "A43.1", description: "NOCARDIOSIS CUTÁNEA" },
+  { code: "A43.8", description: "OTRAS FORMAS DE NOCARDIOSIS" },
+  { code: "A43.9", description: "NOCARDIOSIS, NO ESPECIFICADA" },
+  { code: "A44.0", description: "BARTONELOSIS SISTÉMICA" },
+  { code: "A44.1", description: "BARTONELOSIS CUTÁNEA Y MUCOCUTÁNEA" },
+  { code: "A44.8", description: "OTRAS FORMAS DE BARTONELOSIS" },
+  { code: "A44.9", description: "BARTONELOSIS, NO ESPECIFICADA" },
+  { code: "A46", description: "ERISIPELA" },
+  { code: "A48.0", description: "GANGRENA GASEOSA" },
+  { code: "A48.1", description: "ENFERMEDAD DE LOS LEGIONARIOS" },
+  { code: "A48.2", description: "ENFERMEDAD DE LOS LEGIONARIOS NO NEUMÓNICA [FIEBRE DE PONTIAC]" },
+  { code: "A48.3", description: "SÍNDROME DEL CHOQUE TÓXICO" },
+  { code: "A48.4", description: "FIEBRE PURPÚRICA BRASILEÑA" },
+  { code: "A48.8", description: "OTRAS ENFERMEDADES BACTERIANAS ESPECIFICADAS" },
+  { code: "A49.0", description: "INFECCIÓN ESTAFILOCÓCICA, DE SITIO NO ESPECIFICADO" },
+  { code: "A49.1", description: "INFECCIÓN ESTREPTOCÓCICA, DE SITIO NO ESPECIFICADO" },
+  { code: "A49.2", description: "INFECCIÓN POR HAEMOPHILUS INFLUENZAE, DE SITIO NO ESPECIFICADO" },
+  { code: "A49.3", description: "INFECCIÓN POR MICOPLASMA, DE SITIO NO ESPECIFICADO" },
+  { code: "A49.8", description: "OTRAS INFECCIONES BACTERIANAS, DE SITIO NO ESPECIFICADO" },
+  { code: "A49.9", description: "INFECCIÓN BACTERIANA, NO ESPECIFICADA" },
+  { code: "A50.0", description: "SÍFILIS CONGÉNITA PRECOZ, SINTOMÁTICA" },
+  { code: "A50.1", description: "SÍFILIS CONGÉNITA PRECOZ, LATENTE" },
+  { code: "A50.2", description: "SÍFILIS CONGÉNITA PRECOZ, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A50.3", description: "OCULOPATÍA SIFILÍTICA CONGÉNITA TARDÍA" },
+  { code: "A50.4", description: "NEUROSÍFILIS CONGÉNITA TARDÍA [NEUROSÍFILIS JUVENIL]" },
+  { code: "A50.5", description: "OTRAS FORMAS DE SÍFILIS CONGÉNITA TARDÍA, SINTOMÁTICA" },
+  { code: "A50.6", description: "SÍFILIS CONGÉNITA TARDÍA, LATENTE" },
+  { code: "A50.7", description: "SÍFILIS CONGÉNITA TARDÍA, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A50.9", description: "SÍFILIS CONGÉNITA, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A51.0", description: "SÍFILIS GENITAL PRIMARIA" },
+  { code: "A51.1", description: "SÍFILIS PRIMARIA ANAL" },
+  { code: "A51.2", description: "SÍFILIS PRIMARIA EN OTROS SITIOS" },
+  { code: "A51.3", description: "SÍFILIS SECUNDARIA DE PIEL Y MEMBRANAS MUCOSAS" },
+  { code: "A51.4", description: "OTRAS SÍFILIS SECUNDARIAS" },
+  { code: "A51.5", description: "SÍFILIS PRECOZ, LATENTE" },
+  { code: "A51.9", description: "SÍFILIS PRECOZ, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A52.0", description: "SÍFILIS CARDIOVASCULAR" },
+  { code: "A52.1", description: "NEUROSÍFILIS SINTOMÁTICA" },
+  { code: "A52.2", description: "NEUROSÍFILIS ASINTOMÁTICA" },
+  { code: "A52.3", description: "NEUROSÍFILIS NO ESPECIFICADA" },
+  { code: "A52.7", description: "OTRAS SÍFILIS TARDÍAS SINTOMÁTICAS" },
+  { code: "A52.8", description: "SÍFILIS TARDÍA, LATENTE" },
+  { code: "A52.9", description: "SÍFILIS TARDÍA, NO ESPECIFICADA" },
+  { code: "A53.0", description: "SÍFILIS LATENTE, NO ESPECIFICADA COMO PRECOZ O TARDÍA" },
+  { code: "A53.9", description: "SÍFILIS, NO ESPECIFICADA" },
+  { code: "A54.0", description: "INFECCIÓN GONOCÓCICA DEL TRACTO GENITOURINARIO INFERIOR SIN ABSCESO PERIURETRAL O DE GLÁNDULA ACCESORIA" },
+  { code: "A54.1", description: "INFECCIÓN GONOCÓCICA DEL TRACTO GENITOURINARIO INFERIOR CON ABSCESO PERIURETRAL Y DE GLÁNDULAS ACCESORIAS" },
+  { code: "A54.2", description: "PELVIPERITONITIS GONOCÓCICA Y OTRAS INFECCIONES GONOCÓCICAS GENITOURINARIAS" },
+  { code: "A54.3", description: "INFECCIÓN GONOCÓCICA DEL OJO" },
+  { code: "A54.4", description: "INFECCIÓN GONOCÓCICA DEL SISTEMA OSTEOMUSCULAR" },
+  { code: "A54.5", description: "FARINGITIS GONOCÓCICA" },
+  { code: "A54.6", description: "INFECCIÓN GONOCÓCICA DEL ANO Y DEL RECTO" },
+  { code: "A54.8", description: "OTRAS INFECCIONES GONOCÓCICAS" },
+  { code: "A54.9", description: "INFECCIÓN GONOCÓCICA, NO ESPECIFICADA" },
+  { code: "A55", description: "LINFOGRANULOMA (VENÉREO) POR CLAMIDIAS" },
+  { code: "A56.0", description: "INFECCIÓN DEL TRACTO GENITOURINARIO INFERIOR DEBIDA A CLAMIDIAS" },
+  { code: "A56.1", description: "INFECCIÓN DEL PELVIPERITONEO Y OTROS ÓRGANOS GENITOURINARIOS DEBIDA A CLAMIDIAS" },
+  { code: "A56.2", description: "INFECCIONES DEL TRACTO GENITOURINARIO DEBIDAS A CLAMIDIAS, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A56.3", description: "INFECCIÓN DEL ANO Y DEL RECTO DEBIDA A CLAMIDIAS" },
+  { code: "A56.4", description: "INFECCIÓN DE FARINGE DEBIDA A CLAMIDIAS" },
+  { code: "A56.8", description: "INFECCIÓN DE TRANSMISIÓN SEXUAL DE OTROS SITIOS DEBIDA A CLAMIDIAS" },
+  { code: "A57", description: "CHANCRO BLANDO" },
+  { code: "A58", description: "GRANULOMA INGUINAL" },
+  { code: "A59.0", description: "TRICOMONIASIS UROGENITAL" },
+  { code: "A59.8", description: "TRICOMONIASIS DE OTROS SITIOS" },
+  { code: "A59.9", description: "TRICOMONIASIS, NO ESPECIFICADA" },
+  { code: "A60.0", description: "INFECCIÓN DE GENITALES Y TRAYECTO UROGENITAL DEBIDA A VIRUS DEL HERPES [HERPES SIMPLE]" },
+  { code: "A60.1", description: "INFECCIÓN DE LA PIEL PERIANAL Y RECTO POR VIRUS DEL HERPES SIMPLE" },
+  { code: "A60.9", description: "INFECCIÓN ANOGENITAL POR VIRUS DEL HERPES SIMPLE, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A63.0", description: "VERRUGAS (VENÉREAS) ANOGENITALES" },
+  { code: "A63.8", description: "OTRAS ENFERMEDADES DE TRANSMISIÓN PREDOMINANTEMENTE SEXUAL, ESPECIFICADAS" },
+  { code: "A64", description: "ENFERMEDAD DE TRANSMISIÓN SEXUAL NO ESPECIFICADA" },
+  { code: "A65", description: "SÍFILIS NO VENÉREA" },
+  { code: "A66.0", description: "LESIONES INICIALES DE FRAMBESIA" },
+  { code: "A66.1", description: "LESIONES PAPILOMATOSAS MÚLTIPLES Y FRAMBESIA CON PASO DE CANGREJO" },
+  { code: "A66.2", description: "OTRAS LESIONES PRECOCES DE LA PIEL EN LA FRAMBESIA" },
+  { code: "A66.3", description: "HIPERQUERATOSIS DE FRAMBESIA" },
+  { code: "A66.4", description: "GOMA Y ÚLCERAS DE FRAMBESIA" },
+  { code: "A66.5", description: "GANGOSA" },
+  { code: "A66.6", description: "LESIONES FRAMBÉSICAS DE LOS HUESOS Y DE LAS ARTICULACIONES" },
+  { code: "A66.7", description: "OTRAS MANIFESTACIONES DE FRAMBESIA" },
+  { code: "A66.8", description: "FRAMBESIA LATENTE" },
+  { code: "A66.9", description: "FRAMBESIA, NO ESPECIFICADA" },
+  { code: "A67.0", description: "LESIONES PRIMARIAS DE LA PINTA" },
+  { code: "A67.1", description: "LESIONES INTERMEDIAS DE LA PINTA" },
+  { code: "A67.2", description: "LESIONES TARDÍAS DE LA PINTA" },
+  { code: "A67.3", description: "LESIONES MIXTAS DE LA PINTA" },
+  { code: "A67.9", description: "PINTA, NO ESPECIFICADA" },
+  { code: "A68.0", description: "FIEBRE RECURRENTE TRANSMITIDA POR PIOJOS" },
+  { code: "A68.1", description: "FIEBRE RECURRENTE TRANSMITIDA POR GARRAPATAS" },
+  { code: "A68.9", description: "FIEBRE RECURRENTE, NO ESPECIFICADA" },
+  { code: "A69.0", description: "ESTOMATITIS ULCERATIVA NECROTIZANTE" },
+  { code: "A69.1", description: "OTRAS INFECCIONES DE VINCENT" },
+  { code: "A69.2", description: "ENFERMEDAD DE LYME" },
+  { code: "A69.8", description: "OTRAS INFECCIONES ESPECIFICADAS POR ESPIROQUETAS" },
+  { code: "A69.9", description: "INFECCIÓN POR ESPIROQUETA, NO ESPECIFICADA" },
+  { code: "A70", description: "INFECCIÓN DEBIDA A CHLAMYDIA PSITTACI" },
+  { code: "A71.0", description: "ESTADO INICIAL DE TRACOMA" },
+  { code: "A71.1", description: "ESTADO ACTIVO DE TRACOMA" },
+  { code: "A71.9", description: "TRACOMA, NO ESPECIFICADO" },
+  { code: "A74.0", description: "CONJUNTIVITIS POR CLAMIDIAS" },
+  { code: "A74.8", description: "OTRAS ENFERMEDADES POR CLAMIDIAS" },
+  { code: "A74.9", description: "INFECCIÓN POR CLAMIDIAS, NO ESPECIFICADA" },
+  { code: "A75.0", description: "TIFUS EPIDÉMICO DEBIDO A RICKETTSIA PROWAZEKII TRANSMITIDO POR PIOJOS" },
+  { code: "A75.1", description: "TIFUS RECRUDESCENTE [ENFERMEDAD DE BRILL]" },
+  { code: "A75.2", description: "TIFUS DEBIDO A RICKETTSIA TYPHI" },
+  { code: "A75.3", description: "TIFUS DEBIDO A RICKETTSIA TSUTSUGAMUSHI" },
+  { code: "A75.9", description: "TIFUS, NO ESPECIFICADO" },
+  { code: "A77.0", description: "FIEBRE MACULOSA DEBIDA A RICKETTSIA RICKETTSII" },
+  { code: "A77.1", description: "FIEBRE MACULOSA DEBIDA A RICKETTSIA CONORII" },
+  { code: "A77.2", description: "FIEBRE MACULOSA DEBIDA A RICKETTSIA SIBERICA" },
+  { code: "A77.3", description: "FIEBRE MACULOSA DEBIDA A RICKETTSIA AUSTRALIS" },
+  { code: "A77.8", description: "OTRAS FIEBRES MACULOSAS" },
+  { code: "A77.9", description: "FIEBRE MACULOSA, NO ESPECIFICADA" },
+  { code: "A78", description: "FIEBRE Q" },
+  { code: "A79.0", description: "FIEBRE DE LAS TRINCHERAS" },
+  { code: "A79.1", description: "RICKETTSIOSIS PUSTULOSA DEBIDA A RICKETTSIA AKARI" },
+  { code: "A79.8", description: "OTRAS RICKETTSIOSIS ESPECIFICADAS" },
+  { code: "A79.9", description: "RICKETTSIOSIS, NO ESPECIFICADA" },
+  { code: "A80.0", description: "POLIOMIELITIS AGUDA PARALÍTICA, ASOCIADA A VACUNA" },
+  { code: "A80.1", description: "POLIOMIELITIS AGUDA PARALÍTICA DEBIDA A VIRUS SALVAJE IMPORTADO" },
+  { code: "A80.2", description: "POLIOMIELITIS AGUDA PARALÍTICA DEBIDA A VIRUS SALVAJE AUTÓCTONO" },
+  { code: "A80.3", description: "OTRAS POLIOMIELITIS AGUDAS PARALÍTICAS, Y LAS NO ESPECIFICADAS" },
+  { code: "A80.4", description: "POLIOMIELITIS AGUDA NO PARALÍTICA" },
+  { code: "A80.9", description: "POLIOMIELITIS AGUDA, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A81.0", description: "ENFERMEDAD DE CREUTZFELDT-JAKOB" },
+  { code: "A81.1", description: "PANENCEFALITIS ESCLEROSANTE SUBAGUDA" },
+  { code: "A81.2", description: "LEUCOENCEFALOPATÍA MULTIFOCAL PROGRESIVA" },
+  { code: "A81.8", description: "OTRAS INFECCIONES DEL SISTEMA NERVIOSO CENTRAL POR VIRUS ATÍPICO" },
+  { code: "A81.9", description: "INFECCIONES DEL SISTEMA NERVIOSO CENTRAL POR VIRUS ATÍPICO, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A82.0", description: "RABIA SELVÁTICA" },
+  { code: "A82.1", description: "RABIA URBANA" },
+  { code: "A82.9", description: "RABIA, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A83.0", description: "ENCEFALITIS JAPONESA" },
+  { code: "A83.1", description: "ENCEFALITIS EQUINA DEL OESTE" },
+  { code: "A83.2", description: "ENCEFALITIS EQUINA DEL ESTE" },
+  { code: "A83.3", description: "ENCEFALITIS DE SAN LUIS" },
+  { code: "A83.4", description: "ENCEFALITIS AUSTRALIANA" },
+  { code: "A83.5", description: "ENCEFALITIS DE CALIFORNIA" },
+  { code: "A83.6", description: "ENFERMEDAD POR VIRUS ROCÍO" },
+  { code: "A83.8", description: "OTRAS ENCEFALITIS VIRALES TRANSMITIDAS POR MOSQUITOS" },
+  { code: "A83.9", description: "ENCEFALITIS VIRAL TRANSMITIDA POR MOSQUITOS, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A84.0", description: "ENCEFALITIS DEL LEJANO ORIENTE TRANSMITIDA POR GARRAPATAS [ENCEFALITIS PRIMAVEROESTIVAL RUSA]" },
+  { code: "A84.1", description: "ENCEFALITIS CENTROEUROPEA TRANSMITIDA POR GARRAPATAS" },
+  { code: "A84.8", description: "OTRAS ENCEFALITIS VIRALES TRANSMITIDAS POR GARRAPATAS" },
+  { code: "A84.9", description: "ENCEFALITIS VIRAL TRANSMITIDA POR GARRAPATAS, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A85.0", description: "ENCEFALITIS ENTEROVIRAL" },
+  { code: "A85.1", description: "ENCEFALITIS POR ADENOVIRUS" },
+  { code: "A85.2", description: "ENCEFALITIS VIRAL TRANSMITIDA POR ARTRÓPODOS, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A85.8", description: "OTRAS ENCEFALITIS VIRALES ESPECIFICADAS" },
+  { code: "A86", description: "ENCEFALITIS VIRAL, NO ESPECIFICADA" },
+  { code: "A87.0", description: "MENINGITIS ENTEROVIRAL" },
+  { code: "A87.1", description: "MENINGITIS DEBIDA A ADENOVIRUS" },
+  { code: "A87.2", description: "CORIOMENINGITIS LINFOCÍTICA" },
+  { code: "A87.8", description: "OTRAS MENINGITIS VIRALES" },
+  { code: "A87.9", description: "MENINGITIS VIRAL, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A88.0", description: "FIEBRE EXANTEMÁTICA ENTEROVIRAL [EXANTEMA DE BOSTON]" },
+  { code: "A88.1", description: "VÉRTIGO EPIDÉMICO" },
+  { code: "A88.8", description: "OTRAS INFECCIONES VIRALES ESPECIFICADAS DEL SISTEMA NERVIOSO CENTRAL" },
+  { code: "A89", description: "INFECCIÓN VIRAL DEL SISTEMA NERVIOSO CENTRAL, NO ESPECIFICADA" },
+  { code: "A90", description: "FIEBRE DEL DENGUE [DENGUE CLÁSICO]" },
+  { code: "A91", description: "FIEBRE DEL DENGUE HEMORRÁGICO" },
+  { code: "A92.0", description: "ENFERMEDAD POR VIRUS CHIKUNGUNYA" },
+  { code: "A92.1", description: "FIEBRE DE O’NYONG-NYONG" },
+  { code: "A92.2", description: "FIEBRE EQUINA VENEZOLANA" },
+  { code: "A92.3", description: "ENFERMEDAD VIRAL DEL OESTE DEL NILO" },
+  { code: "A92.4", description: "FIEBRE DEL VALLE DEL RIFT" },
+  { code: "A92.8", description: "OTRAS FIEBRES VIRALES ESPECIFICADAS TRANSMITIDAS POR MOSQUITOS" },
+  { code: "A92.9", description: "FIEBRE VIRAL TRANSMITIDA POR MOSQUITO, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A93.0", description: "ENFERMEDAD POR VIRUS DE OROPOUCHE" },
+  { code: "A93.1", description: "FIEBRE TRANSMITIDA POR FLEBÓTOMOS" },
+  { code: "A93.2", description: "FIEBRE DE COLORADO TRANSMITIDA POR GARRAPATAS" },
+  { code: "A93.8", description: "OTRAS FIEBRES VIRALES ESPECIFICADAS TRANSMITIDAS POR ARTRÓPODOS" },
+  { code: "A94", description: "FIEBRE VIRAL TRANSMITIDA POR ARTRÓPODOS, NO ESPECIFICADA" },
+  { code: "A95.0", description: "FIEBRE AMARILLA SELVÁTICA" },
+  { code: "A95.1", description: "FIEBRE AMARILLA URBANA" },
+  { code: "A95.9", description: "FIEBRE AMARILLA, NO ESPECIFICADA" },
+  { code: "A96.0", description: "FIEBRE HEMORRÁGICA DE JUNÍN" },
+  { code: "A96.1", description: "FIEBRE HEMORRÁGICA DE MACHUPO" },
+  { code: "A96.2", description: "FIEBRE DE LASSA" },
+  { code: "A96.8", description: "OTRAS FIEBRES HEMORRÁGICAS POR ARENAVIRUS" },
+  { code: "A96.9", description: "FIEBRE HEMORRÁGICA POR ARENAVIRUS, SIN OTRA ESPECIFICACIÓN" },
+  { code: "A98.0", description: "FIEBRE HEMORRÁGICA DE CRIMEA-CONGO" },
+  { code: "A98.1", description: "FIEBRE HEMORRÁGICA DE OMSK" },
+  { code: "A98.2", description: "ENFERMEDAD DE LA SELVA DE KYASANUR" },
+  { code: "A98.3", description: "ENFERMEDAD POR EL VIRUS DE MARBURG" },
+  { code: "A98.4", description: "ENFERMEDAD POR EL VIRUS DE EBOLA" },
+  { code: "A98.5", description: "FIEBRES HEMORRÁGICAS CON SÍNDROME RENAL" },
+  { code: "A98.8", description: "OTRAS FIEBRES HEMORRÁGICAS VIRALES ESPECIFICADAS" },
+  { code: "A99", description: "FIEBRE VIRAL HEMORRÁGICA, NO ESPECIFICADA" },
+  { code: "B00.0", description: "ECZEMA HERPÉTICO" },
+  { code: "B00.1", description: "DERMATITIS VESICULAR HERPÉTICA" },
+  { code: "B00.2", description: "GINGIVOESTOMATITIS Y FARINGOAMIGDALITIS HERPÉTICA" },
+  { code: "B00.3", description: "MENINGITIS HERPÉTICA" },
+  { code: "B00.4", description: "ENCEFALITIS HERPÉTICA" },
+  { code: "B00.5", description: "OCULOPATÍA HERPÉTICA" },
+  { code: "B00.7", description: "ENFERMEDAD HERPÉTICA DISEMINADA" },
+  { code: "B00.8", description: "OTRAS FORMAS DE INFECCIONES HERPÉTICAS" },
+  { code: "B00.9", description: "INFECCIÓN DEBIDA AL VIRUS DEL HERPES, NO ESPECIFICADA" },
+  { code: "B01.0", description: "MENINGITIS DEBIDA A VARICELA" },
+  { code: "B01.1", description: "ENCEFALITIS DEBIDA A VARICELA" },
+  { code: "B01.2", description: "NEUMONÍA DEBIDA A VARICELA" },
+  { code: "B01.8", description: "VARICELA CON OTRAS COMPLICACIONES" },
+  { code: "B01.9", description: "VARICELA SIN COMPLICACIONES" },
+  { code: "B02.0", description: "ENCEFALITIS DEBIDA A HERPES ZOSTER" },
+  { code: "B02.1", description: "MENINGITIS DEBIDA A HERPES ZOSTER" },
+  { code: "B02.2", description: "HERPES ZOSTER CON OTROS COMPROMISOS DEL SISTEMA NERVIOSO" },
+  { code: "B02.3", description: "HERPES ZOSTER OCULAR" },
+  { code: "B02.7", description: "HERPES ZOSTER DISEMINADO" },
+  { code: "B02.8", description: "HERPES ZOSTER CON OTRAS COMPLICACIONES" },
+  { code: "B02.9", description: "HERPES ZOSTER SIN COMPLICACIONES" },
+  { code: "B03", description: "VIRUELA" },
+  { code: "B04", description: "VIRUELA DE LOS MONOS" },
+  { code: "B05.0", description: "SARAMPIÓN COMPLICADO CON ENCEFALITIS" },
+  { code: "B05.1", description: "SARAMPIÓN COMPLICADO CON MENINGITIS" },
+  { code: "B05.2", description: "SARAMPIÓN COMPLICADO CON NEUMONÍA" },
+  { code: "B05.3", description: "SARAMPIÓN COMPLICADO CON OTITIS MEDIA" },
+  { code: "B05.4", description: "SARAMPIÓN CON COMPLICACIONES INTESTINALES" },
+  { code: "B05.8", description: "SARAMPIÓN CON OTRAS COMPLICACIONES" },
+  { code: "B05.9", description: "SARAMPIÓN SIN COMPLICACIONES" },
+  { code: "B06.0", description: "RUBÉOLA CON COMPLICACIONES NEUROLÓGICAS" },
+  { code: "B06.8", description: "RUBÉOLA CON OTRAS COMPLICACIONES" },
+  { code: "B06.9", description: "RUBÉOLA SIN COMPLICACIONES" },
+  { code: "B07", description: "VERRUGAS VÍRICAS" },
+  { code: "B08.0", description: "OTRAS INFECCIONES DEBIDAS A ORTOPOXVIRUS" },
+  { code: "B08.1", description: "MOLUSCO CONTAGIOSO" },
+  { code: "B08.2", description: "EXANTEMA SÚBITO [SEXTA ENFERMEDAD]" },
+  { code: "B08.3", description: "ERITEMA INFECCIOSO [QUINTA ENFERMEDAD]" },
+  { code: "B08.4", description: "ESTOMATITIS VESICULAR ENTEROVIRAL CON EXANTEMA" },
+  { code: "B08.5", description: "FARINGITIS VESICULAR ENTEROVÍRICA" },
+  { code: "B08.8", description: "OTRAS INFECCIONES VIRALES ESPECIFICADAS, CARACTERIZADAS POR LESIONES DE LA PIEL Y DE LAS MEMBRANAS MUCOSAS" },
+  { code: "B09", description: "INFECCIÓN VIRAL NO ESPECIFICADA, CARACTERIZADA POR LESIONES DE LA PIEL Y DE LAS MEMBRANAS MUCOSAS" },
+  { code: "B15.0", description: "HEPATITIS AGUDA TIPO A, CON COMA HEPÁTICO" },
+  { code: "B15.9", description: "HEPATITIS AGUDA TIPO A, SIN COMA HEPÁTICO" },
+  { code: "B16.0", description: "HEPATITIS AGUDA TIPO B, CON AGENTE DELTA (COINFECCIÓN), CON COMA HEPÁTICO" },
+  { code: "B16.1", description: "HEPATITIS AGUDA TIPO B, CON AGENTE DELTA (COINFECCIÓN), SIN COMA HEPÁTICO" },
+  { code: "B16.2", description: "HEPATITIS AGUDA TIPO B, SIN AGENTE DELTA, CON COMA HEPÁTICO" },
+  { code: "B16.9", description: "HEPATITIS AGUDA TIPO B, SIN AGENTE DELTA Y SIN COMA HEPÁTICO" },
+  { code: "B17.0", description: "INFECCIÓN (SUPERINFECCIÓN) AGUDA POR AGENTE DELTA EN EL PORTADOR DE HEPATITIS B" },
+  { code: "B17.1", description: "HEPATITIS AGUDA TIPO C" },
+  { code: "B17.2", description: "HEPATITIS AGUDA TIPO E" },
+  { code: "B17.8", description: "OTRAS HEPATITIS VIRALES AGUDAS ESPECIFICADAS" },
+  { code: "B18.0", description: "HEPATITIS VIRAL TIPO B CRÓNICA, CON AGENTE DELTA" },
+  { code: "B18.1", description: "HEPATITIS VIRAL TIPO B CRÓNICA, SIN AGENTE DELTA" },
+  { code: "B18.2", description: "HEPATITIS VIRAL TIPO C CRÓNICA" },
+  { code: "B18.8", description: "OTRAS HEPATITIS VIRALES CRÓNICAS" },
+  { code: "B18.9", description: "HEPATITIS VIRAL CRÓNICA, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B19.0", description: "HEPATITIS VIRAL NO ESPECIFICADA CON COMA" },
+  { code: "B19.9", description: "HEPATITIS VIRAL NO ESPECIFICADA SIN COMA" },
+  { code: "B20.0", description: "ENFERMEDAD POR VIH, RESULTANTE EN INFECCIÓN POR MICOBACTERIAS" },
+  { code: "B20.1", description: "ENFERMEDAD POR VIH, RESULTANTE EN OTRAS INFECCIONES BACTERIANAS" },
+  { code: "B20.2", description: "ENFERMEDAD POR VIH, RESULTANTE EN ENFERMEDAD POR CITOMEGALOVIRUS" },
+  { code: "B20.3", description: "ENFERMEDAD POR VIH, RESULTANTE EN OTRAS INFECCIONES VIRALES" },
+  { code: "B20.4", description: "ENFERMEDAD POR VIH, RESULTANTE EN CANDIDIASIS" },
+  { code: "B20.5", description: "ENFERMEDAD POR VIH, RESULTANTE EN OTRAS MICOSIS" },
+  { code: "B20.6", description: "ENFERMEDAD POR VIH, RESULTANTE EN NEUMONÍA POR PNEUMOCYSTIS JIROVECII" },
+  { code: "B20.7", description: "ENFERMEDAD POR VIH, RESULTANTE EN INFECCIONES MÚLTIPLES" },
+  { code: "B20.8", description: "ENFERMEDAD POR VIH, RESULTANTE EN OTRAS ENFERMEDADES INFECCIOSAS O PARASITARIAS" },
+  { code: "B20.9", description: "ENFERMEDAD POR VIH, RESULTANTE EN ENFERMEDAD INFECCIOSA O PARASITARIA NO ESPECIFICADA" },
+  { code: "B21.0", description: "ENFERMEDAD POR VIH, RESULTANTE EN SARCOMA DE KAPOSI" },
+  { code: "B21.1", description: "ENFERMEDAD POR VIH, RESULTANTE EN LINFOMA DE BURKITT" },
+  { code: "B21.2", description: "ENFERMEDAD POR VIH, RESULTANTE EN OTROS TIPOS DE LINFOMA NO HODGKIN" },
+  { code: "B21.3", description: "ENFERMEDAD POR VIH, RESULTANTE EN OTROS TUMORES MALIGNOS DEL TEJIDO LINFOIDE, HEMATOPOYÉTICO Y TEJIDOS RELACIONADOS" },
+  { code: "B21.7", description: "ENFERMEDAD POR VIH, RESULTANTE EN TUMORES MALIGNOS MÚLTIPLES" },
+  { code: "B21.8", description: "ENFERMEDAD POR VIH, RESULTANTE EN OTROS TUMORES MALIGNOS" },
+  { code: "B21.9", description: "ENFERMEDAD POR VIH, RESULTANTE EN TUMORES MALIGNOS NO ESPECIFICADOS" },
+  { code: "B22.0", description: "ENFERMEDAD POR VIH, RESULTANTE EN ENCEFALOPATÍA" },
+  { code: "B22.1", description: "ENFERMEDAD POR VIH, RESULTANTE EN NEUMONITIS LINFOIDE INTERSTICIAL" },
+  { code: "B22.2", description: "ENFERMEDAD POR VIH, RESULTANTE EN SÍNDROME CAQUÉCTICO" },
+  { code: "B22.7", description: "ENFERMEDAD POR VIH, RESULTANTE EN ENFERMEDADES MÚLTIPLES CLASIFICADAS EN OTRA PARTE" },
+  { code: "B23.0", description: "SÍNDROME DE INFECCIÓN AGUDA DEBIDA A VIH" },
+  { code: "B23.1", description: "ENFERMEDAD POR VIH, RESULTANTE EN LINFADENOPATÍA GENERALIZADA (PERSISTENTE)" },
+  { code: "B23.2", description: "ENFERMEDAD POR VIH, RESULTANTE EN ANORMALIDADES INMUNOLÓGICAS Y HEMATOLÓGICAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "B23.8", description: "ENFERMEDAD POR VIH, RESULTANTE EN OTRAS AFECCIONES ESPECIFICADAS" },
+  { code: "B24", description: "ENFERMEDAD POR VIRUS DE LA INMUNODEFICIENCIA HUMANA [VIH], SIN OTRA ESPECIFICACIÓN" },
+  { code: "B25.0", description: "NEUMONITIS DEBIDA A VIRUS CITOMEGÁLICO" },
+  { code: "B25.1", description: "HEPATITIS DEBIDA A VIRUS CITOMEGÁLICO" },
+  { code: "B25.2", description: "PANCREATITIS DEBIDA A VIRUS CITOMEGÁLICO" },
+  { code: "B25.8", description: "OTRAS ENFERMEDADES DEBIDAS A VIRUS CITOMEGÁLICO" },
+  { code: "B25.9", description: "ENFERMEDAD POR VIRUS CITOMEGÁLICO, NO ESPECIFICADA" },
+  { code: "B26.0", description: "ORQUITIS POR PAROTIDITIS" },
+  { code: "B26.1", description: "MENINGITIS POR PAROTIDITIS" },
+  { code: "B26.2", description: "ENCEFALITIS POR PAROTIDITIS" },
+  { code: "B26.3", description: "PANCREATITIS POR PAROTIDITIS" },
+  { code: "B26.8", description: "PAROTIDITIS INFECCIOSA CON OTRAS COMPLICACIONES" },
+  { code: "B26.9", description: "PAROTIDITIS, SIN COMPLICACIONES" },
+  { code: "B27.0", description: "MONONUCLEOSIS DEBIDA A HERPES VIRUS GAMMA" },
+  { code: "B27.1", description: "MONONUCLEOSIS POR CITOMEGALOVIRUS" },
+  { code: "B27.8", description: "OTRAS MONONUCLEOSIS INFECCIOSAS" },
+  { code: "B27.9", description: "MONONUCLEOSIS INFECCIOSA, NO ESPECIFICADA" },
+  { code: "B30.0", description: "QUERATOCONJUNTIVITIS DEBIDA A ADENOVIRUS" },
+  { code: "B30.1", description: "CONJUNTIVITIS DEBIDA A ADENOVIRUS" },
+  { code: "B30.2", description: "FARINGOCONJUNTIVITIS VIRAL" },
+  { code: "B30.3", description: "CONJUNTIVITIS EPIDÉMICA AGUDA HEMORRÁGICA (ENTEROVÍRICA)" },
+  { code: "B30.8", description: "OTRAS CONJUNTIVITIS VIRALES" },
+  { code: "B30.9", description: "CONJUNTIVITIS VIRAL, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B33.0", description: "MIALGIA EPIDÉMICA" },
+  { code: "B33.1", description: "ENFERMEDAD DEL RÍO ROSS" },
+  { code: "B33.2", description: "CARDITIS VIRAL" },
+  { code: "B33.3", description: "INFECCIONES DEBIDAS A RETROVIRUS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "B33.4", description: "SÍNDROME (CARDIO)-PULMONAR POR HANTAVIRUS [SPH] [SCPH]" },
+  { code: "B33.8", description: "OTRAS ENFERMEDADES VIRALES ESPECIFICADAS" },
+  { code: "B34.0", description: "INFECCIÓN DEBIDA A ADENOVIRUS, DE SITIO NO ESPECIFICADO" },
+  { code: "B34.1", description: "INFECCIÓN DEBIDA A ENTEROVIRUS, DE SITIO NO ESPECIFICADO" },
+  { code: "B34.2", description: "INFECCIÓN DEBIDA A CORONAVIRUS, DE SITIO NO ESPECIFICADO" },
+  { code: "B34.3", description: "INFECCIÓN DEBIDA A PARVOVIRUS, DE SITIO NO ESPECIFICADO" },
+  { code: "B34.4", description: "INFECCIÓN DEBIDA A PAPOVAVIRUS, DE SITIO NO ESPECIFICADO" },
+  { code: "B34.8", description: "OTRAS INFECCIONES VIRALES, DE SITIO NO ESPECIFICADO" },
+  { code: "B34.9", description: "INFECCIÓN VIRAL, NO ESPECIFICADA" },
+  { code: "B35.0", description: "TIÑA DE LA BARBA Y DEL CUERO CABELLUDO" },
+  { code: "B35.1", description: "TIÑA DE LAS UÑAS" },
+  { code: "B35.2", description: "TIÑA DE LA MANO" },
+  { code: "B35.3", description: "TIÑA DEL PIE [TINEA PEDIS]" },
+  { code: "B35.4", description: "TIÑA DEL CUERPO [TINEA CORPORIS]" },
+  { code: "B35.5", description: "TIÑA IMBRICADA [TINEA IMBRICATA]" },
+  { code: "B35.6", description: "TIÑA INGUINAL [TINEA CRURIS]" },
+  { code: "B35.8", description: "OTRAS DERMATOFITOSIS" },
+  { code: "B35.9", description: "DERMATOFITOSIS, NO ESPECIFICADA" },
+  { code: "B36.0", description: "PITIRIASIS VERSICOLOR" },
+  { code: "B36.1", description: "TIÑA NEGRA" },
+  { code: "B36.2", description: "PIEDRA BLANCA" },
+  { code: "B36.3", description: "PIEDRA NEGRA" },
+  { code: "B36.8", description: "OTRAS MICOSIS SUPERFICIALES ESPECIFICADAS" },
+  { code: "B36.9", description: "MICOSIS SUPERFICIAL, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B37.0", description: "ESTOMATITIS CANDIDIÁSICA" },
+  { code: "B37.1", description: "CANDIDIASIS PULMONAR" },
+  { code: "B37.2", description: "CANDIDIASIS DE LA PIEL Y LAS UÑAS" },
+  { code: "B37.3", description: "CANDIDIASIS DE LA VULVA Y DE LA VAGINA" },
+  { code: "B37.4", description: "CANDIDIASIS DE OTRAS LOCALIZACIONES UROGENITALES" },
+  { code: "B37.5", description: "MENINGITIS DEBIDA A CANDIDA" },
+  { code: "B37.6", description: "ENDOCARDITIS DEBIDA A CANDIDA" },
+  { code: "B37.7", description: "SEPTICEMIA DEBIDA A CANDIDA" },
+  { code: "B37.8", description: "CANDIDIASIS DE OTROS SITIOS" },
+  { code: "B37.9", description: "CANDIDIASIS, NO ESPECIFICADA" },
+  { code: "B38.0", description: "COCCIDIOIDOMICOSIS PULMONAR AGUDA" },
+  { code: "B38.1", description: "COCCIDIOIDOMICOSIS PULMONAR CRÓNICA" },
+  { code: "B38.2", description: "COCCIDIOIDOMICOSIS PULMONAR, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B38.3", description: "COCCIDIOIDOMICOSIS CUTÁNEA" },
+  { code: "B38.4", description: "MENINGITIS DEBIDA A COCCIDIOIDOMICOSIS" },
+  { code: "B38.7", description: "COCCIDIOIDOMICOSIS DISEMINADA" },
+  { code: "B38.8", description: "OTRAS FORMAS DE COCCIDIOIDOMICOSIS" },
+  { code: "B38.9", description: "COCCIDIOIDOMICOSIS, NO ESPECIFICADA" },
+  { code: "B39.0", description: "INFECCIÓN PULMONAR AGUDA DEBIDA A HISTOPLASMA CAPSULATUM" },
+  { code: "B39.1", description: "INFECCIÓN PULMONAR CRÓNICA DEBIDA A HISTOPLASMA CAPSULATUM" },
+  { code: "B39.2", description: "INFECCIÓN PULMONAR DEBIDA A HISTOPLASMA CAPSULATUM, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B39.3", description: "INFECCIÓN DISEMINADA DEBIDA A HISTOPLASMA CAPSULATUM" },
+  { code: "B39.4", description: "HISTOPLASMOSIS DEBIDA A HISTOPLASMA CAPSULATUM, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B39.5", description: "INFECCIÓN DEBIDA A HISTOPLASMA DUBOISII" },
+  { code: "B39.9", description: "HISTOPLASMOSIS, NO ESPECIFICADA" },
+  { code: "B40.0", description: "BLASTOMICOSIS PULMONAR AGUDA" },
+  { code: "B40.1", description: "BLASTOMICOSIS PULMONAR CRÓNICA" },
+  { code: "B40.2", description: "BLASTOMICOSIS PULMONAR, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B40.3", description: "BLASTOMICOSIS CUTÁNEA" },
+  { code: "B40.7", description: "BLASTOMICOSIS DISEMINADA" },
+  { code: "B40.8", description: "OTRAS FORMAS DE BLASTOMICOSIS" },
+  { code: "B40.9", description: "BLASTOMICOSIS, NO ESPECIFICADA" },
+  { code: "B41.0", description: "PARACOCCIDIOIDOMICOSIS PULMONAR" },
+  { code: "B41.7", description: "PARACOCCIDIOIDOMICOSIS DISEMINADA" },
+  { code: "B41.8", description: "OTRAS FORMAS DE PARACOCCIDIOIDOMICOSIS" },
+  { code: "B41.9", description: "PARACOCCIDIOIDOMICOSIS, NO ESPECIFICADA" },
+  { code: "B42.0", description: "ESPOROTRICOSIS PULMONAR" },
+  { code: "B42.1", description: "ESPOROTRICOSIS LINFOCUTÁNEA" },
+  { code: "B42.7", description: "ESPOROTRICOSIS DISEMINADA" },
+  { code: "B42.8", description: "OTRAS FORMAS DE ESPOROTRICOSIS" },
+  { code: "B42.9", description: "ESPOROTRICOSIS, NO ESPECIFICADA" },
+  { code: "B43.0", description: "CROMOMICOSIS CUTÁNEA" },
+  { code: "B43.1", description: "ABSCESO CEREBRAL FEOMICÓTICO" },
+  { code: "B43.2", description: "ABSCESO Y QUISTE SUBCUTÁNEO FEOMICÓTICO" },
+  { code: "B43.8", description: "OTRAS FORMAS DE CROMOMICOSIS" },
+  { code: "B43.9", description: "CROMOMICOSIS, NO ESPECIFICADA" },
+  { code: "B44.0", description: "ASPERGILOSIS PULMONAR INVASIVA" },
+  { code: "B44.1", description: "OTRAS ASPERGILOSIS PULMONARES" },
+  { code: "B44.2", description: "ASPERGILOSIS AMIGDALINA" },
+  { code: "B44.7", description: "ASPERGILOSIS DISEMINADA" },
+  { code: "B44.8", description: "OTRAS FORMAS DE ASPERGILOSIS" },
+  { code: "B44.9", description: "ASPERGILOSIS, NO ESPECIFICADA" },
+  { code: "B45.0", description: "CRIPTOCOCOSIS PULMONAR" },
+  { code: "B45.1", description: "CRIPTOCOCOSIS CEREBRAL" },
+  { code: "B45.2", description: "CRIPTOCOCOSIS CUTÁNEA" },
+  { code: "B45.3", description: "CRIPTOCOCOSIS ÓSEA" },
+  { code: "B45.7", description: "CRIPTOCOCOSIS DISEMINADA" },
+  { code: "B45.8", description: "OTRAS FORMAS DE CRIPTOCOCOSIS" },
+  { code: "B45.9", description: "CRIPTOCOCOSIS, NO ESPECIFICADA" },
+  { code: "B46.0", description: "MUCORMICOSIS PULMONAR" },
+  { code: "B46.1", description: "MUCORMICOSIS RINOCEREBRAL" },
+  { code: "B46.2", description: "MUCORMICOSIS GASTROINTESTINAL" },
+  { code: "B46.3", description: "MUCORMICOSIS CUTÁNEA" },
+  { code: "B46.4", description: "MUCORMICOSIS DISEMINADA" },
+  { code: "B46.5", description: "MUCORMICOSIS, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B46.8", description: "OTRAS CIGOMICOSIS" },
+  { code: "B46.9", description: "CIGOMICOSIS, NO ESPECIFICADA" },
+  { code: "B47.0", description: "EUMICETOMA" },
+  { code: "B47.1", description: "ACTINOMICETOMA" },
+  { code: "B47.9", description: "MICETOMA, NO ESPECIFICADO" },
+  { code: "B48.0", description: "LOBOMICOSIS" },
+  { code: "B48.1", description: "RINOSPORIDIOSIS" },
+  { code: "B48.2", description: "ALESQUERIASIS" },
+  { code: "B48.3", description: "GEOTRICOSIS" },
+  { code: "B48.4", description: "PENICILOSIS" },
+  { code: "B48.7", description: "MICOSIS OPORTUNISTAS" },
+  { code: "B48.8", description: "OTRAS MICOSIS ESPECIFICADAS" },
+  { code: "B49", description: "MICOSIS, NO ESPECIFICADA" },
+  { code: "B50.0", description: "PALUDISMO DEBIDO A PLASMODIUM FALCIPARUM CON COMPLICACIONES CEREBRALES" },
+  { code: "B50.8", description: "OTRO PALUDISMO GRAVE Y COMPLICADO DEBIDO A PLASMODIUM FALCIPARUM" },
+  { code: "B50.9", description: "PALUDISMO DEBIDO A PLASMODIUM FALCIPARUM, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B51.0", description: "PALUDISMO DEBIDO A PLASMODIUM VIVAX CON RUPTURA ESPLÉNICA" },
+  { code: "B51.8", description: "PALUDISMO DEBIDO A PLASMODIUM VIVAX CON OTRAS COMPLICACIONES" },
+  { code: "B51.9", description: "PALUDISMO DEBIDO A PLASMODIUM VIVAX, SIN COMPLICACIONES" },
+  { code: "B52.0", description: "PALUDISMO DEBIDO A PLASMODIUM MALARIAE CON NEFROPATÍA" },
+  { code: "B52.8", description: "PALUDISMO DEBIDO A PLASMODIUM MALARIAE CON OTRAS COMPLICACIONES" },
+  { code: "B52.9", description: "PALUDISMO DEBIDO A PLASMODIUM MALARIAE, SIN COMPLICACIONES" },
+  { code: "B53.0", description: "PALUDISMO DEBIDO A PLASMODIUM OVALE" },
+  { code: "B53.1", description: "PALUDISMO DEBIDO A PLASMODIOS DE LOS SIMIOS" },
+  { code: "B53.8", description: "OTRO PALUDISMO CONFIRMADO PARASITOLÓGICAMENTE, NO CLASIFICADO EN OTRA PARTE" },
+  { code: "B54", description: "PALUDISMO [MALARIA] NO ESPECIFICADO" },
+  { code: "B55.0", description: "LEISHMANIASIS VISCERAL" },
+  { code: "B55.1", description: "LEISHMANIASIS CUTÁNEA" },
+  { code: "B55.2", description: "LEISHMANIASIS MUCOCUTÁNEA" },
+  { code: "B55.9", description: "LEISHMANIASIS, NO ESPECIFICADA" },
+  { code: "B56.0", description: "TRIPANOSOMIASIS GAMBIENSE" },
+  { code: "B56.1", description: "TRIPANOSOMIASIS RHODESIENSE" },
+  { code: "B56.9", description: "TRIPANOSOMIASIS AFRICANA, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B57.0", description: "ENFERMEDAD DE CHAGAS AGUDA QUE AFECTA AL CORAZÓN" },
+  { code: "B57.1", description: "ENFERMEDAD DE CHAGAS AGUDA QUE NO AFECTA AL CORAZÓN" },
+  { code: "B57.2", description: "ENFERMEDAD DE CHAGAS (CRÓNICA) QUE AFECTA AL CORAZÓN" },
+  { code: "B57.3", description: "ENFERMEDAD DE CHAGAS (CRÓNICA) QUE AFECTA AL SISTEMA DIGESTIVO" },
+  { code: "B57.4", description: "ENFERMEDAD DE CHAGAS (CRÓNICA) QUE AFECTA AL SISTEMA NERVIOSO" },
+  { code: "B57.5", description: "ENFERMEDAD DE CHAGAS (CRÓNICA) QUE AFECTA OTROS ÓRGANOS" },
+  { code: "B58.0", description: "OCULOPATÍA DEBIDA A TOXOPLASMA" },
+  { code: "B58.1", description: "HEPATITIS DEBIDA A TOXOPLASMA" },
+  { code: "B58.2", description: "MENINGOENCEFALITIS DEBIDA A TOXOPLASMA" },
+  { code: "B58.3", description: "TOXOPLASMOSIS PULMONAR" },
+  { code: "B58.8", description: "TOXOPLASMOSIS CON OTRO ÓRGANO AFECTADO" },
+  { code: "B58.9", description: "TOXOPLASMOSIS, NO ESPECIFICADA" },
+  { code: "B59", description: "NEUMOCISTOSIS" },
+  { code: "B60.0", description: "BABESIOSIS" },
+  { code: "B60.1", description: "ACANTAMEBIASIS" },
+  { code: "B60.2", description: "NAEGLERIASIS" },
+  { code: "B60.8", description: "OTRAS ENFERMEDADES ESPECIFICADAS DEBIDAS A PROTOZOARIOS" },
+  { code: "B64", description: "ENFERMEDAD DEBIDA A PROTOZOARIOS, NO ESPECIFICADA" },
+  { code: "B65.0", description: "ESQUISTOSOMIASIS DEBIDA A SCHISTOSOMA HAEMATOBIUM [ESQUISTOSOMIASIS URINARIA]" },
+  { code: "B65.1", description: "ESQUISTOSOMIASIS DEBIDA A SCHISTOSOMA MANSONI [ESQUISTOSOMIASIS INTESTINAL]" },
+  { code: "B65.2", description: "ESQUISTOSOMIASIS DEBIDA A SCHISTOSOMA JAPONICUM" },
+  { code: "B65.3", description: "DERMATITIS POR CERCARIAS" },
+  { code: "B65.8", description: "OTRAS ESQUISTOSOMIASIS" },
+  { code: "B65.9", description: "ESQUISTOSOMIASIS, NO ESPECIFICADA" },
+  { code: "B66.0", description: "OPISTORQUIASIS" },
+  { code: "B66.1", description: "CLONORQUIASIS" },
+  { code: "B66.2", description: "DICROCOELIASIS" },
+  { code: "B66.3", description: "FASCIOLIASIS" },
+  { code: "B66.4", description: "PARAGONIMIASIS" },
+  { code: "B66.5", description: "FASCIOLOPSIASIS" },
+  { code: "B66.8", description: "OTRAS INFECCIONES ESPECIFICADAS DEBIDAS A TREMATODOS" },
+  { code: "B66.9", description: "INFECCIÓN DEBIDA A TREMATODOS, NO ESPECIFICADA" },
+  { code: "B67.0", description: "INFECCIÓN DEL HÍGADO DEBIDA A ECHINOCOCCUS GRANULOSUS" },
+  { code: "B67.1", description: "INFECCIÓN DEL PULMÓN DEBIDA A ECHINOCOCCUS GRANULOSUS" },
+  { code: "B67.2", description: "INFECCIÓN DE HUESO DEBIDA A ECHINOCOCCUS GRANULOSUS" },
+  { code: "B67.3", description: "INFECCIÓN DE OTRO ÓRGANO Y DE SITIOS MÚLTIPLES DEBIDA A ECHINOCOCCUS GRANULOSUS" },
+  { code: "B67.4", description: "INFECCIÓN DEBIDA A ECHINOCOCCUS GRANULOSUS, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B67.5", description: "INFECCIÓN DEL HÍGADO DEBIDA A ECHINOCOCCUS MULTILOCULARIS" },
+  { code: "B67.6", description: "INFECCIÓN DE OTRO ÓRGANO Y DE SITIOS MÚLTIPLES DEBIDA A ECHINOCOCCUS MULTILOCULARIS" },
+  { code: "B67.7", description: "INFECCIÓN DEBIDA A ECHINOCOCCUS MULTILOCULARIS, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B67.8", description: "EQUINOCOCOSIS DEL HÍGADO, NO ESPECIFICADA" },
+  { code: "B67.9", description: "EQUINOCOCOSIS, OTRA Y LA NO ESPECIFICADA" },
+  { code: "B68.0", description: "TENIASIS DEBIDA A TAENIA SOLIUM" },
+  { code: "B68.1", description: "INFECCIÓN DEBIDA A TAENIA SAGINATA" },
+  { code: "B68.9", description: "TENIASIS, NO ESPECIFICADA" },
+  { code: "B69.0", description: "CISTICERCOSIS DEL SISTEMA NERVIOSO CENTRAL" },
+  { code: "B69.1", description: "CISTICERCOSIS DEL OJO" },
+  { code: "B69.8", description: "CISTICERCOSIS DE OTROS SITIOS" },
+  { code: "B69.9", description: "CISTICERCOSIS, NO ESPECIFICADA" },
+  { code: "B70.0", description: "DIFILOBOTRIASIS INTESTINAL" },
+  { code: "B70.1", description: "ESPARGANOSIS" },
+  { code: "B71.0", description: "HIMENOLEPIASIS" },
+  { code: "B71.1", description: "DIPILIDIASIS" },
+  { code: "B71.8", description: "OTRAS INFECCIONES DEBIDAS A CESTODOS ESPECIFICADAS" },
+  { code: "B71.9", description: "INFECCIÓN DEBIDA A CESTODOS, NO ESPECIFICADA" },
+  { code: "B72", description: "DRACONTIASIS" },
+  { code: "B73", description: "ONCOCERCOSIS" },
+  { code: "B74.0", description: "FILARIASIS DEBIDA A WUCHERERIA BANCROFTI" },
+  { code: "B74.1", description: "FILARIASIS DEBIDA A BRUGIA MALAYI" },
+  { code: "B74.2", description: "FILARIASIS DEBIDA A BRUGIA TIMORI" },
+  { code: "B74.3", description: "LOAIASIS" },
+  { code: "B74.4", description: "MANSONELIASIS" },
+  { code: "B74.8", description: "OTRAS FILARIASIS" },
+  { code: "B74.9", description: "FILARIASIS, NO ESPECIFICADA" },
+  { code: "B75", description: "TRIQUINOSIS" },
+  { code: "B76.0", description: "ANQUILOSTOMIASIS" },
+  { code: "B76.1", description: "NECATORIASIS" },
+  { code: "B76.8", description: "OTRAS ENFERMEDADES DEBIDAS A ANQUILOSTOMAS" },
+  { code: "B76.9", description: "ENFERMEDAD DEBIDA A ANQUILOSTOMAS, NO ESPECIFICADA" },
+  { code: "B77.0", description: "ASCARIASIS CON COMPLICACIONES INTESTINALES" },
+  { code: "B77.8", description: "ASCARIASIS CON OTRAS COMPLICACIONES" },
+  { code: "B77.9", description: "ASCARIASIS, NO ESPECIFICADA" },
+  { code: "B78.0", description: "ESTRONGILOIDIASIS INTESTINAL" },
+  { code: "B78.1", description: "ESTRONGILOIDIASIS CUTÁNEA" },
+  { code: "B78.7", description: "ESTRONGILOIDIASIS DISEMINADA" },
+  { code: "B78.9", description: "ESTRONGILOIDIASIS, NO ESPECIFICADA" },
+  { code: "B79", description: "TRICURIASIS" },
+  { code: "B80", description: "ENTEROBIASIS" },
+  { code: "B81.0", description: "ANISAQUIASIS" },
+  { code: "B81.1", description: "CAPILARIASIS INTESTINAL" },
+  { code: "B81.2", description: "TRICOESTRONGILIASIS" },
+  { code: "B81.3", description: "ANGIOESTRONGILIASIS INTESTINAL" },
+  { code: "B81.4", description: "HELMINTIASIS INTESTINAL MIXTA" },
+  { code: "B81.8", description: "OTRAS HELMINTIASIS INTESTINALES ESPECIFICADAS" },
+  { code: "B82.0", description: "HELMINTIASIS INTESTINAL, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B82.9", description: "PARASITOSIS INTESTINAL, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B83.0", description: "LARVA MIGRANS VISCERAL" },
+  { code: "B83.1", description: "GNATOSTOMIASIS" },
+  { code: "B83.2", description: "ANGIOESTRONGILIASIS DEBIDA A PARASTRONGYLUS CANTONENSIS" },
+  { code: "B83.3", description: "SINGAMIASIS" },
+  { code: "B83.4", description: "HIRUDINIASIS INTERNA" },
+  { code: "B83.8", description: "OTRAS HELMINTIASIS ESPECIFICADAS" },
+  { code: "B83.9", description: "HELMINTIASIS, NO ESPECIFICADA" },
+  { code: "B85.0", description: "PEDICULOSIS DEBIDA A PEDICULUS HUMANUS CAPITIS" },
+  { code: "B85.1", description: "PEDICULOSIS DEBIDA A PEDICULUS HUMANUS CORPORIS" },
+  { code: "B85.2", description: "PEDICULOSIS, SIN OTRA ESPECIFICACIÓN" },
+  { code: "B85.3", description: "PHTHIRIASIS" },
+  { code: "B85.4", description: "PEDICULOSIS Y PHTHIRIASIS MIXTAS" },
+  { code: "B86", description: "ESCABIOSIS" },
+  { code: "B87.0", description: "MIASIS CUTÁNEA" },
+  { code: "B87.1", description: "MIASIS EN HERIDAS" },
+  { code: "B87.2", description: "MIASIS OCULAR" },
+  { code: "B87.3", description: "MIASIS NASOFARÍNGEA" },
+  { code: "B87.4", description: "MIASIS AURAL" },
+  { code: "B87.8", description: "MIASIS DE OTROS SITIOS" },
+  { code: "B87.9", description: "MIASIS, NO ESPECIFICADA" },
+  { code: "B88.0", description: "OTRAS ACARIASIS" },
+  { code: "B88.1", description: "TUNGIASIS [INFECCIÓN DEBIDA A PULGA DE ARENA]" },
+  { code: "B88.2", description: "OTRAS INFESTACIONES DEBIDAS A ARTRÓPODOS" },
+  { code: "B88.3", description: "HIRUDINIASIS EXTERNA" },
+  { code: "B88.8", description: "OTRAS INFESTACIONES ESPECIFICADAS" },
+  { code: "B88.9", description: "INFESTACIÓN, NO ESPECIFICADA" },
+  { code: "B89", description: "ENFERMEDAD PARASITARIA, NO ESPECIFICADA" },
+  { code: "B90.0", description: "SECUELAS DE TUBERCULOSIS DEL SISTEMA NERVIOSO CENTRAL" },
+  { code: "B90.1", description: "SECUELAS DE TUBERCULOSIS GENITOURINARIA" },
+  { code: "B90.2", description: "SECUELAS DE TUBERCULOSIS DE HUESOS Y ARTICULACIONES" },
+  { code: "B90.8", description: "SECUELAS DE TUBERCULOSIS DE OTROS ÓRGANOS ESPECIFICADOS" },
+  { code: "B90.9", description: "SECUELAS DE TUBERCULOSIS RESPIRATORIA Y DE TUBERCULOSIS NO ESPECIFICADA" },
+  { code: "B91", description: "SECUELAS DE POLIOMIELITIS" },
+  { code: "B92", description: "SECUELAS DE LEPRA" },
+  { code: "B94.0", description: "SECUELAS DE TRACOMA" },
+  { code: "B94.1", description: "SECUELAS DE ENCEFALITIS VIRAL" },
+  { code: "B94.2", description: "SECUELAS DE HEPATITIS VIRAL" },
+  { code: "B94.8", description: "SECUELAS DE OTRAS ENFERMEDADES INFECCIOSAS Y PARASITARIAS ESPECIFICADAS" },
+  { code: "B94.9", description: "SECUELAS DE ENFERMEDADES INFECCIOSAS Y PARASITARIAS NO ESPECIFICADAS" },
+  { code: "B95.0", description: "ESTREPTOCOCO, GRUPO A, COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B95.1", description: "ESTREPTOCOCO, GRUPO B, COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B95.2", description: "ESTREPTOCOCO, GRUPO D, COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B95.3", description: "STREPTOCOCCUS PNEUMONIAE COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B95.4", description: "OTROS ESTREPTOCOCOS COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B95.5", description: "ESTREPTOCOCO NO ESPECIFICADO COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B95.6", description: "STAPHYLOCOCCUS AUREUS COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B95.7", description: "OTROS ESTAFILOCOCOS COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B95.8", description: "ESTAFILOCOCO NO ESPECIFICADO, COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B96.0", description: "MYCOPLASMA PNEUMONIAE [M. PNEUMONIAE] COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B96.1", description: "KLEBSIELLA PNEUMONIAE [K. PNEUMONIAE] COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B96.2", description: "ESCHERICHIA COLI [E. COLI] COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B96.3", description: "HAEMOPHILUS INFLUENZAE [H. INFLUENZAE] COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B96.4", description: "PROTEUS (MIRABILIS) (MORGANII) COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B96.5", description: "PSEUDOMONAS (AERUGINOSA) (MALLEI) (PSEUDOMALLEI) COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B96.6", description: "BACILLUS FRAGILIS [B. FRAGILIS] COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B96.7", description: "CLOSTRIDIUM PERFRINGENS [C. PERFRINGENS] COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B96.8", description: "OTROS AGENTES BACTERIANOS ESPECIFICADOS COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B97.0", description: "ADENOVIRUS COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B97.1", description: "ENTEROVIRUS COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B97.2", description: "CORONAVIRUS COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B97.3", description: "RETROVIRUS COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B97.4", description: "VIRUS SINCICIAL RESPIRATORIO COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B97.5", description: "REOVIRUS COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B97.6", description: "PARVOVIRUS COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B97.7", description: "PAPILOMAVIRUS COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B97.8", description: "OTROS AGENTES VIRALES COMO CAUSA DE ENFERMEDADES CLASIFICADAS EN OTROS CAPÍTULOS" },
+  { code: "B99", description: "OTRAS ENFERMEDADES INFECCIOSAS Y LAS NO ESPECIFICADAS" },
+  { code: "C00.0", description: "TUMOR MALIGNO DEL LABIO SUPERIOR, CARA EXTERNA" },
+  { code: "C00.1", description: "TUMOR MALIGNO DEL LABIO INFERIOR, CARA EXTERNA" },
+  { code: "C00.2", description: "TUMOR MALIGNO DEL LABIO, CARA EXTERNA, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C00.3", description: "TUMOR MALIGNO DEL LABIO SUPERIOR, CARA INTERNA" },
+  { code: "C00.4", description: "TUMOR MALIGNO DEL LABIO INFERIOR, CARA INTERNA" },
+  { code: "C00.5", description: "TUMOR MALIGNO DEL LABIO, CARA INTERNA, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C00.6", description: "TUMOR MALIGNO DE LA COMISURA LABIAL" },
+  { code: "C00.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL LABIO" },
+  { code: "C00.9", description: "TUMOR MALIGNO DEL LABIO, PARTE NO ESPECIFICADA" },
+  { code: "C01", description: "TUMOR MALIGNO DE LA BASE DE LA LENGUA" },
+  { code: "C02.0", description: "TUMOR MALIGNO DE LA CARA DORSAL DE LA LENGUA" },
+  { code: "C02.1", description: "TUMOR MALIGNO DEL BORDE DE LA LENGUA" },
+  { code: "C02.2", description: "TUMOR MALIGNO DE LA CARA VENTRAL DE LA LENGUA" },
+  { code: "C02.3", description: "TUMOR MALIGNO DE LOS DOS TERCIOS ANTERIORES DE LA LENGUA, PARTE NO ESPECIFICADA" },
+  { code: "C02.4", description: "TUMOR MALIGNO DE LA AMÍGDALA LINGUAL" },
+  { code: "C02.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LA LENGUA" },
+  { code: "C02.9", description: "TUMOR MALIGNO DE LA LENGUA, PARTE NO ESPECIFICADA" },
+  { code: "C03.0", description: "TUMOR MALIGNO DE LA ENCÍA SUPERIOR" },
+  { code: "C03.1", description: "TUMOR MALIGNO DE LA ENCÍA INFERIOR" },
+  { code: "C03.9", description: "TUMOR MALIGNO DE LA ENCÍA, PARTE NO ESPECIFICADA" },
+  { code: "C04.0", description: "TUMOR MALIGNO DE LA PARTE ANTERIOR DEL PISO DE LA BOCA" },
+  { code: "C04.1", description: "TUMOR MALIGNO DE LA PARTE LATERAL DEL PISO DE LA BOCA" },
+  { code: "C04.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL PISO DE LA BOCA" },
+  { code: "C04.9", description: "TUMOR MALIGNO DEL PISO DE LA BOCA, PARTE NO ESPECIFICADA" },
+  { code: "C05.0", description: "TUMOR MALIGNO DEL PALADAR DURO" },
+  { code: "C05.1", description: "TUMOR MALIGNO DEL PALADAR BLANDO" },
+  { code: "C05.2", description: "TUMOR MALIGNO DE LA ÚVULA" },
+  { code: "C05.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL PALADAR" },
+  { code: "C05.9", description: "TUMOR MALIGNO DEL PALADAR, PARTE NO ESPECIFICADA" },
+  { code: "C06.0", description: "TUMOR MALIGNO DE LA MUCOSA DE LA MEJILLA" },
+  { code: "C06.1", description: "TUMOR MALIGNO DEL VESTÍBULO DE LA BOCA" },
+  { code: "C06.2", description: "TUMOR MALIGNO DEL ÁREA RETROMOLAR" },
+  { code: "C06.8", description: "LESIÓN DE SITIOS CONTIGUOS DE OTRAS PARTES Y DE LAS NO ESPECIFICADAS DE LA BOCA" },
+  { code: "C06.9", description: "TUMOR MALIGNO DE LA BOCA, PARTE NO ESPECIFICADA" },
+  { code: "C07", description: "TUMOR MALIGNO DE LA GLÁNDULA PARÓTIDA" },
+  { code: "C08.0", description: "TUMOR MALIGNO DE LA GLÁNDULA SUBMAXILAR" },
+  { code: "C08.1", description: "TUMOR MALIGNO DE LA GLÁNDULA SUBLINGUAL" },
+  { code: "C08.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LAS GLÁNDULAS SALIVALES MAYORES" },
+  { code: "C08.9", description: "TUMOR MALIGNO DE GLÁNDULA SALIVAL MAYOR, NO ESPECIFICADA" },
+  { code: "C09.0", description: "TUMOR MALIGNO DE LA FOSA AMIGDALINA" },
+  { code: "C09.1", description: "TUMOR MALIGNO DEL PILAR AMIGDALINO (ANTERIOR) (POSTERIOR)" },
+  { code: "C09.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LA AMÍGDALA" },
+  { code: "C09.9", description: "TUMOR MALIGNO DE LA AMÍGDALA, PARTE NO ESPECIFICADA" },
+  { code: "C10.0", description: "TUMOR MALIGNO DE LA VALÉCULA" },
+  { code: "C10.1", description: "TUMOR MALIGNO DE LA CARA ANTERIOR DE LA EPIGLOTIS" },
+  { code: "C10.2", description: "TUMOR MALIGNO DE LA PARED LATERAL DE LA OROFARINGE" },
+  { code: "C10.3", description: "TUMOR MALIGNO DE LA PARED POSTERIOR DE LA OROFARINGE" },
+  { code: "C10.4", description: "TUMOR MALIGNO DE LA HENDIDURA BRANQUIAL" },
+  { code: "C10.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LA OROFARINGE" },
+  { code: "C10.9", description: "TUMOR MALIGNO DE LA OROFARINGE, PARTE NO ESPECIFICADA" },
+  { code: "C11.0", description: "TUMOR MALIGNO DE LA PARED SUPERIOR DE LA NASOFARINGE" },
+  { code: "C11.1", description: "TUMOR MALIGNO DE LA PARED POSTERIOR DE LA NASOFARINGE" },
+  { code: "C11.2", description: "TUMOR MALIGNO DE LA PARED LATERAL DE LA NASOFARINGE" },
+  { code: "C11.3", description: "TUMOR MALIGNO DE LA PARED ANTERIOR DE LA NASOFARINGE" },
+  { code: "C11.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LA NASOFARINGE" },
+  { code: "C11.9", description: "TUMOR MALIGNO DE LA NASOFARINGE, PARTE NO ESPECIFICADA" },
+  { code: "C12", description: "TUMOR MALIGNO DEL SENO PIRIFORME" },
+  { code: "C13.0", description: "TUMOR MALIGNO DE LA REGIÓN POSTCRICOIDEA" },
+  { code: "C13.1", description: "TUMOR MALIGNO DEL PLIEGUE ARITENOEPIGLÓTICO, CARA HIPOFARÍNGEA" },
+  { code: "C13.2", description: "TUMOR MALIGNO DE LA PARED POSTERIOR DE LA HIPOFARINGE" },
+  { code: "C13.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LA HIPOFARINGE" },
+  { code: "C13.9", description: "TUMOR MALIGNO DE LA HIPOFARINGE, PARTE NO ESPECIFICADA" },
+  { code: "C14.0", description: "TUMOR MALIGNO DE LA FARINGE, PARTE NO ESPECIFICADA" },
+  { code: "C14.2", description: "TUMOR MALIGNO DEL ANILLO DE WALDEYER" },
+  { code: "C14.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL LABIO, DE LA CAVIDAD BUCAL Y DE LA FARINGE" },
+  { code: "C15.0", description: "TUMOR MALIGNO DEL ESÓFAGO, PORCIÓN CERVICAL" },
+  { code: "C15.1", description: "TUMOR MALIGNO DEL ESÓFAGO, PORCIÓN TORÁCICA" },
+  { code: "C15.2", description: "TUMOR MALIGNO DEL ESÓFAGO, PORCIÓN ABDOMINAL" },
+  { code: "C15.3", description: "TUMOR MALIGNO DEL TERCIO SUPERIOR DEL ESÓFAGO" },
+  { code: "C15.4", description: "TUMOR MALIGNO DEL TERCIO MEDIO DEL ESÓFAGO" },
+  { code: "C15.5", description: "TUMOR MALIGNO DEL TERCIO INFERIOR DEL ESÓFAGO" },
+  { code: "C15.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL ESÓFAGO" },
+  { code: "C15.9", description: "TUMOR MALIGNO DEL ESÓFAGO, PARTE NO ESPECIFICADA" },
+  { code: "C16.0", description: "TUMOR MALIGNO DEL CARDIAS" },
+  { code: "C16.1", description: "TUMOR MALIGNO DEL FUNDUS GÁSTRICO" },
+  { code: "C16.2", description: "TUMOR MALIGNO DEL CUERPO DEL ESTÓMAGO" },
+  { code: "C16.3", description: "TUMOR MALIGNO DEL ANTRO PILÓRICO" },
+  { code: "C16.4", description: "TUMOR MALIGNO DEL PÍLORO" },
+  { code: "C16.5", description: "TUMOR MALIGNO DE LA CURVATURA MENOR DEL ESTÓMAGO, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C16.6", description: "TUMOR MALIGNO DE LA CURVATURA MAYOR DEL ESTÓMAGO, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C16.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL ESTÓMAGO" },
+  { code: "C16.9", description: "TUMOR MALIGNO DEL ESTÓMAGO, PARTE NO ESPECIFICADA" },
+  { code: "C17.0", description: "TUMOR MALIGNO DEL DUODENO" },
+  { code: "C17.1", description: "TUMOR MALIGNO DEL YEYUNO" },
+  { code: "C17.2", description: "TUMOR MALIGNO DEL ÍLEON" },
+  { code: "C17.3", description: "TUMOR MALIGNO DEL DIVERTÍCULO DE MECKEL" },
+  { code: "C17.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL INTESTINO DELGADO" },
+  { code: "C17.9", description: "TUMOR MALIGNO DEL INTESTINO DELGADO, PARTE NO ESPECIFICADA" },
+  { code: "C18.0", description: "TUMOR MALIGNO DEL CIEGO" },
+  { code: "C18.1", description: "TUMOR MALIGNO DEL APÉNDICE" },
+  { code: "C18.2", description: "TUMOR MALIGNO DEL COLON ASCENDENTE" },
+  { code: "C18.3", description: "TUMOR MALIGNO DEL ÁNGULO HEPÁTICO" },
+  { code: "C18.4", description: "TUMOR MALIGNO DEL COLON TRANSVERSO" },
+  { code: "C18.5", description: "TUMOR MALIGNO DEL ÁNGULO ESPLÉNICO" },
+  { code: "C18.6", description: "TUMOR MALIGNO DEL COLON DESCENDENTE" },
+  { code: "C18.7", description: "TUMOR MALIGNO DEL COLON SIGMOIDE" },
+  { code: "C18.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL COLON" },
+  { code: "C18.9", description: "TUMOR MALIGNO DEL COLON, PARTE NO ESPECIFICADA" },
+  { code: "C19", description: "TUMOR MALIGNO DE LA UNIÓN RECTOSIGMOIDEA" },
+  { code: "C20", description: "TUMOR MALIGNO DEL RECTO" },
+  { code: "C21.0", description: "TUMOR MALIGNO DEL ANO, PARTE NO ESPECIFICADA" },
+  { code: "C21.1", description: "TUMOR MALIGNO DEL CONDUCTO ANAL" },
+  { code: "C21.2", description: "TUMOR MALIGNO DE LA ZONA CLOACOGÉNICA" },
+  { code: "C21.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL ANO, DEL CONDUCTO ANAL Y DEL RECTO" },
+  { code: "C22.0", description: "CARCINOMA DE CÉLULAS HEPÁTICAS" },
+  { code: "C22.1", description: "CARCINOMA DE VÍAS BILIARES INTRAHEPÁTICAS" },
+  { code: "C22.2", description: "HEPATOBLASTOMA" },
+  { code: "C22.3", description: "ANGIOSARCOMA DEL HÍGADO" },
+  { code: "C22.4", description: "OTROS SARCOMAS DEL HÍGADO" },
+  { code: "C22.7", description: "OTROS CARCINOMAS ESPECIFICADOS DEL HÍGADO" },
+  { code: "C22.9", description: "TUMOR MALIGNO DEL HÍGADO, NO ESPECIFICADO" },
+  { code: "C23", description: "TUMOR MALIGNO DE LA VESÍCULA BILIAR" },
+  { code: "C24.0", description: "TUMOR MALIGNO DE LAS VÍAS BILIARES EXTRAHEPÁTICAS" },
+  { code: "C24.1", description: "TUMOR MALIGNO DE LA AMPOLLA DE VATER" },
+  { code: "C24.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LAS VÍAS BILIARES" },
+  { code: "C24.9", description: "TUMOR MALIGNO DE LAS VÍAS BILIARES, PARTE NO ESPECIFICADA" },
+  { code: "C25.0", description: "TUMOR MALIGNO DE LA CABEZA DEL PÁNCREAS" },
+  { code: "C25.1", description: "TUMOR MALIGNO DEL CUERPO DEL PÁNCREAS" },
+  { code: "C25.2", description: "TUMOR MALIGNO DE LA COLA DEL PÁNCREAS" },
+  { code: "C25.3", description: "TUMOR MALIGNO DEL CONDUCTO PANCREÁTICO" },
+  { code: "C25.4", description: "TUMOR MALIGNO DEL PÁNCREAS ENDOCRINO" },
+  { code: "C25.7", description: "TUMOR MALIGNO DE OTRAS PARTES ESPECIFICADAS DEL PÁNCREAS" },
+  { code: "C25.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL PÁNCREAS" },
+  { code: "C25.9", description: "TUMOR MALIGNO DEL PÁNCREAS, PARTE NO ESPECIFICADA" },
+  { code: "C26.0", description: "TUMOR MALIGNO DEL INTESTINO, PARTE NO ESPECIFICADA" },
+  { code: "C26.1", description: "TUMOR MALIGNO DEL BAZO" },
+  { code: "C26.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LOS ÓRGANOS DIGESTIVOS" },
+  { code: "C26.9", description: "TUMOR MALIGNO DE SITIOS MAL DEFINIDOS DE LOS ÓRGANOS DIGESTIVOS" },
+  { code: "C30.0", description: "TUMOR MALIGNO DE LA FOSA NASAL" },
+  { code: "C30.1", description: "TUMOR MALIGNO DEL OÍDO MEDIO" },
+  { code: "C31.0", description: "TUMOR MALIGNO DEL SENO MAXILAR" },
+  { code: "C31.1", description: "TUMOR MALIGNO DEL SENO ETMOIDAL" },
+  { code: "C31.2", description: "TUMOR MALIGNO DEL SENO FRONTAL" },
+  { code: "C31.3", description: "TUMOR MALIGNO DEL SENO ESFENOIDAL" },
+  { code: "C31.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LOS SENOS PARANASALES" },
+  { code: "C31.9", description: "TUMOR MALIGNO DE SENO PARANASAL NO ESPECIFICADO" },
+  { code: "C32.0", description: "TUMOR MALIGNO DE LA GLOTIS" },
+  { code: "C32.1", description: "TUMOR MALIGNO DE LA REGIÓN SUPRAGLÓTICA" },
+  { code: "C32.2", description: "TUMOR MALIGNO DE LA REGIÓN SUBGLÓTICA" },
+  { code: "C32.3", description: "TUMOR MALIGNO DEL CARTÍLAGO LARÍNGEO" },
+  { code: "C32.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LA LARINGE" },
+  { code: "C32.9", description: "TUMOR MALIGNO DE LA LARINGE, PARTE NO ESPECIFICADA" },
+  { code: "C33", description: "TUMOR MALIGNO DE LA TRÁQUEA" },
+  { code: "C34.0", description: "TUMOR MALIGNO DEL BRONQUIO PRINCIPAL" },
+  { code: "C34.1", description: "TUMOR MALIGNO DEL LÓBULO SUPERIOR, BRONQUIO O PULMÓN" },
+  { code: "C34.2", description: "TUMOR MALIGNO DEL LÓBULO MEDIO, BRONQUIO O PULMÓN" },
+  { code: "C34.3", description: "TUMOR MALIGNO DEL LÓBULO INFERIOR, BRONQUIO O PULMÓN" },
+  { code: "C34.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LOS BRONQUIOS Y DEL PULMÓN" },
+  { code: "C34.9", description: "TUMOR MALIGNO DE LOS BRONQUIOS O DEL PULMÓN, PARTE NO ESPECIFICADA" },
+  { code: "C37", description: "TUMOR MALIGNO DEL TIMO" },
+  { code: "C38.0", description: "TUMOR MALIGNO DEL CORAZÓN" },
+  { code: "C38.1", description: "TUMOR MALIGNO DEL MEDIASTINO ANTERIOR" },
+  { code: "C38.2", description: "TUMOR MALIGNO DEL MEDIASTINO POSTERIOR" },
+  { code: "C38.3", description: "TUMOR MALIGNO DEL MEDIASTINO, PARTE NO ESPECIFICADA" },
+  { code: "C38.4", description: "TUMOR MALIGNO DE LA PLEURA" },
+  { code: "C38.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL CORAZÓN, DEL MEDIASTINO Y DE LA PLEURA" },
+  { code: "C39.0", description: "TUMOR MALIGNO DE LAS VÍAS RESPIRATORIAS SUPERIORES, PARTE NO ESPECIFICADA" },
+  { code: "C39.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LOS ÓRGANOS RESPIRATORIOS E INTRATORÁCICOS" },
+  { code: "C39.9", description: "TUMOR MALIGNO DE SITIOS MAL DEFINIDOS DEL SISTEMA RESPIRATORIO" },
+  { code: "C40.0", description: "TUMOR MALIGNO DEL OMÓPLATO Y DE LOS HUESOS LARGOS DEL MIEMBRO SUPERIOR" },
+  { code: "C40.1", description: "TUMOR MALIGNO DE LOS HUESOS CORTOS DEL MIEMBRO SUPERIOR" },
+  { code: "C40.2", description: "TUMOR MALIGNO DE LOS HUESOS LARGOS DEL MIEMBRO INFERIOR" },
+  { code: "C40.3", description: "TUMOR MALIGNO DE LOS HUESOS CORTOS DEL MIEMBRO INFERIOR" },
+  { code: "C40.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LOS HUESOS Y DE LOS CARTÍLAGOS ARTICULARES DE LOS MIEMBROS" },
+  { code: "C40.9", description: "TUMOR MALIGNO DE LOS HUESOS Y DE LOS CARTÍLAGOS ARTICULARES DE LOS MIEMBROS, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C41.0", description: "TUMOR MALIGNO DE LOS HUESOS DEL CRÁNEO Y DE LA CARA" },
+  { code: "C41.1", description: "TUMOR MALIGNO DEL HUESO DEL MAXILAR INFERIOR" },
+  { code: "C41.2", description: "TUMOR MALIGNO DE LA COLUMNA VERTEBRAL" },
+  { code: "C41.3", description: "TUMOR MALIGNO DE LA COSTILLA, ESTERNÓN Y CLAVÍCULA" },
+  { code: "C41.4", description: "TUMOR MALIGNO DE LOS HUESOS DE LA PELVIS, SACRO Y CÓCCIX" },
+  { code: "C41.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL HUESO Y DEL CARTÍLAGO ARTICULAR" },
+  { code: "C41.9", description: "TUMOR MALIGNO DEL HUESO Y DEL CARTÍLAGO ARTICULAR, NO ESPECIFICADO" },
+  { code: "C43.0", description: "MELANOMA MALIGNO DEL LABIO" },
+  { code: "C43.1", description: "MELANOMA MALIGNO DEL PÁRPADO, INCLUIDA LA COMISURA PALPEBRAL" },
+  { code: "C43.2", description: "MELANOMA MALIGNO DE LA OREJA Y DEL CONDUCTO AUDITIVO EXTERNO" },
+  { code: "C43.3", description: "MELANOMA MALIGNO DE LAS OTRAS PARTES Y LAS NO ESPECIFICADAS DE LA CARA" },
+  { code: "C43.4", description: "MELANOMA MALIGNO DEL CUERO CABELLUDO Y DEL CUELLO" },
+  { code: "C43.5", description: "MELANOMA MALIGNO DEL TRONCO" },
+  { code: "C43.6", description: "MELANOMA MALIGNO DEL MIEMBRO SUPERIOR, INCLUIDO EL HOMBRO" },
+  { code: "C43.7", description: "MELANOMA MALIGNO DEL MIEMBRO INFERIOR, INCLUIDA LA CADERA" },
+  { code: "C43.8", description: "MELANOMA MALIGNO DE SITIOS CONTIGUOS DE LA PIEL" },
+  { code: "C43.9", description: "MELANOMA MALIGNO DE PIEL, SITIO NO ESPECIFICADO" },
+  { code: "C44.0", description: "TUMOR MALIGNO DE LA PIEL DEL LABIO" },
+  { code: "C44.1", description: "TUMOR MALIGNO DE LA PIEL DEL PÁRPADO, INCLUIDA LA COMISURA PALPEBRAL" },
+  { code: "C44.2", description: "TUMOR MALIGNO DE LA PIEL DE LA OREJA Y DEL CONDUCTO AUDITIVO EXTERNO" },
+  { code: "C44.3", description: "TUMOR MALIGNO DE LA PIEL DE OTRAS PARTES Y DE LAS NO ESPECIFICADAS DE LA CARA" },
+  { code: "C44.4", description: "TUMOR MALIGNO DE LA PIEL DEL CUERO CABELLUDO Y DEL CUELLO" },
+  { code: "C44.5", description: "TUMOR MALIGNO DE LA PIEL DEL TRONCO" },
+  { code: "C44.6", description: "TUMOR MALIGNO DE LA PIEL DEL MIEMBRO SUPERIOR, INCLUIDO EL HOMBRO" },
+  { code: "C44.7", description: "TUMOR MALIGNO DE LA PIEL DEL MIEMBRO INFERIOR, INCLUIDA LA CADERA" },
+  { code: "C44.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LA PIEL" },
+  { code: "C44.9", description: "TUMOR MALIGNO DE LA PIEL, SITIO NO ESPECIFICADO" },
+  { code: "C45.0", description: "MESOTELIOMA DE LA PLEURA" },
+  { code: "C45.1", description: "MESOTELIOMA DEL PERITONEO" },
+  { code: "C45.2", description: "MESOTELIOMA DEL PERICARDIO" },
+  { code: "C45.7", description: "MESOTELIOMA DE OTROS SITIOS ESPECIFICADOS" },
+  { code: "C45.9", description: "MESOTELIOMA, DE SITIO NO ESPECIFICADO" },
+  { code: "C46.0", description: "SARCOMA DE KAPOSI DE LA PIEL" },
+  { code: "C46.1", description: "SARCOMA DE KAPOSI DEL TEJIDO BLANDO" },
+  { code: "C46.2", description: "SARCOMA DE KAPOSI DEL PALADAR" },
+  { code: "C46.3", description: "SARCOMA DE KAPOSI DE LOS GANGLIOS LINFÁTICOS" },
+  { code: "C46.7", description: "SARCOMA DE KAPOSI DE OTROS SITIOS ESPECIFICADOS" },
+  { code: "C46.8", description: "SARCOMA DE KAPOSI DE MÚLTIPLES ÓRGANOS" },
+  { code: "C46.9", description: "SARCOMA DE KAPOSI, DE SITIO NO ESPECIFICADO" },
+  { code: "C47.0", description: "TUMOR MALIGNO DE LOS NERVIOS PERIFÉRICOS DE LA CABEZA, CARA Y CUELLO" },
+  { code: "C47.1", description: "TUMOR MALIGNO DE LOS NERVIOS PERIFÉRICOS DEL MIEMBRO SUPERIOR, INCLUIDO EL HOMBRO" },
+  { code: "C47.2", description: "TUMOR MALIGNO DE LOS NERVIOS PERIFÉRICOS DEL MIEMBRO INFERIOR, INCLUIDA LA CADERA" },
+  { code: "C47.3", description: "TUMOR MALIGNO DE LOS NERVIOS PERIFÉRICOS DEL TÓRAX" },
+  { code: "C47.4", description: "TUMOR MALIGNO DE LOS NERVIOS PERIFÉRICOS DEL ABDOMEN" },
+  { code: "C47.5", description: "TUMOR MALIGNO DE LOS NERVIOS PERIFÉRICOS DE LA PELVIS" },
+  { code: "C47.6", description: "TUMOR MALIGNO DE LOS NERVIOS PERIFÉRICOS DEL TRONCO, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C47.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LOS NERVIOS PERIFÉRICOS Y DEL SISTEMA NERVIOSO AUTÓNOMO" },
+  { code: "C47.9", description: "TUMOR MALIGNO DE LOS NERVIOS PERIFÉRICOS Y DEL SISTEMA NERVIOSO AUTÓNOMO, PARTE NO ESPECIFICADA" },
+  { code: "C48.0", description: "TUMOR MALIGNO DEL RETROPERITONEO" },
+  { code: "C48.1", description: "TUMOR MALIGNO DE PARTE ESPECIFICADA DEL PERITONEO" },
+  { code: "C48.2", description: "TUMOR MALIGNO DEL PERITONEO, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C48.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL PERITONEO Y DEL RETROPERITONEO" },
+  { code: "C49.0", description: "TUMOR MALIGNO DEL TEJIDO CONJUNTIVO Y TEJIDO BLANDO DE LA CABEZA, CARA Y CUELLO" },
+  { code: "C49.1", description: "TUMOR MALIGNO DEL TEJIDO CONJUNTIVO Y TEJIDO BLANDO DEL MIEMBRO SUPERIOR, INCLUIDO EL HOMBRO" },
+  { code: "C49.2", description: "TUMOR MALIGNO DEL TEJIDO CONJUNTIVO Y TEJIDO BLANDO DEL MIEMBRO INFERIOR, INCLUIDA LA CADERA" },
+  { code: "C49.3", description: "TUMOR MALIGNO DEL TEJIDO CONJUNTIVO Y TEJIDO BLANDO DEL TÓRAX" },
+  { code: "C49.4", description: "TUMOR MALIGNO DEL TEJIDO CONJUNTIVO Y TEJIDO BLANDO DEL ABDOMEN" },
+  { code: "C49.5", description: "TUMOR MALIGNO DEL TEJIDO CONJUNTIVO Y TEJIDO BLANDO DE LA PELVIS" },
+  { code: "C49.6", description: "TUMOR MALIGNO DEL TEJIDO CONJUNTIVO Y TEJIDO BLANDO DEL TRONCO, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C49.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL TEJIDO CONJUNTIVO Y DEL TEJIDO BLANDO" },
+  { code: "C49.9", description: "TUMOR MALIGNO DEL TEJIDO CONJUNTIVO Y TEJIDO BLANDO, DE SITIO NO ESPECIFICADO" },
+  { code: "C50.0", description: "TUMOR MALIGNO DEL PEZÓN Y ARÉOLA MAMARIA" },
+  { code: "C50.1", description: "TUMOR MALIGNO DE LA PORCIÓN CENTRAL DE LA MAMA" },
+  { code: "C50.2", description: "TUMOR MALIGNO DEL CUADRANTE SUPERIOR INTERNO DE LA MAMA" },
+  { code: "C50.3", description: "TUMOR MALIGNO DEL CUADRANTE INFERIOR INTERNO DE LA MAMA" },
+  { code: "C50.4", description: "TUMOR MALIGNO DEL CUADRANTE SUPERIOR EXTERNO DE LA MAMA" },
+  { code: "C50.5", description: "TUMOR MALIGNO DEL CUADRANTE INFERIOR EXTERNO DE LA MAMA" },
+  { code: "C50.6", description: "TUMOR MALIGNO DE LA PROLONGACIÓN AXILAR DE LA MAMA" },
+  { code: "C50.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LA MAMA" },
+  { code: "C50.9", description: "TUMOR MALIGNO DE LA MAMA, PARTE NO ESPECIFICADA" },
+  { code: "C51.0", description: "TUMOR MALIGNO DEL LABIO MAYOR" },
+  { code: "C51.1", description: "TUMOR MALIGNO DEL LABIO MENOR" },
+  { code: "C51.2", description: "TUMOR MALIGNO DEL CLÍTORIS" },
+  { code: "C51.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LA VULVA" },
+  { code: "C51.9", description: "TUMOR MALIGNO DE LA VULVA, PARTE NO ESPECIFICADA" },
+  { code: "C52", description: "TUMOR MALIGNO DE LA VAGINA" },
+  { code: "C53.0", description: "TUMOR MALIGNO DEL ENDOCÉRVIX" },
+  { code: "C53.1", description: "TUMOR MALIGNO DEL EXOCÉRVIX" },
+  { code: "C53.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL CUELLO DEL ÚTERO" },
+  { code: "C53.9", description: "TUMOR MALIGNO DEL CUELLO DEL ÚTERO, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C54.0", description: "TUMOR MALIGNO DEL ISTMO UTERINO" },
+  { code: "C54.1", description: "TUMOR MALIGNO DEL ENDOMETRIO" },
+  { code: "C54.2", description: "TUMOR MALIGNO DEL MIOMETRIO" },
+  { code: "C54.3", description: "TUMOR MALIGNO DEL FONDO DEL ÚTERO" },
+  { code: "C54.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL CUERPO DEL ÚTERO" },
+  { code: "C54.9", description: "TUMOR MALIGNO DEL CUERPO DEL ÚTERO, PARTE NO ESPECIFICADA" },
+  { code: "C55", description: "TUMOR MALIGNO DEL ÚTERO, PARTE NO ESPECIFICADA" },
+  { code: "C56", description: "TUMOR MALIGNO DEL OVARIO" },
+  { code: "C57.0", description: "TUMOR MALIGNO DE LA TROMPA DE FALOPIO" },
+  { code: "C57.1", description: "TUMOR MALIGNO DEL LIGAMENTO ANCHO" },
+  { code: "C57.2", description: "TUMOR MALIGNO DEL LIGAMENTO REDONDO" },
+  { code: "C57.3", description: "TUMOR MALIGNO DEL PARAMETRIO" },
+  { code: "C57.4", description: "TUMOR MALIGNO DE LOS ANEXOS UTERINOS, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C57.7", description: "TUMOR MALIGNO DE OTRAS PARTES ESPECIFICADAS DE LOS ÓRGANOS GENITALES FEMENINOS" },
+  { code: "C57.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LOS ÓRGANOS GENITALES FEMENINOS" },
+  { code: "C57.9", description: "TUMOR MALIGNO DE ÓRGANO GENITAL FEMENINO, PARTE NO ESPECIFICADA" },
+  { code: "C58", description: "TUMOR MALIGNO DE LA PLACENTA" },
+  { code: "C60.0", description: "TUMOR MALIGNO DEL PREPUCIO" },
+  { code: "C60.1", description: "TUMOR MALIGNO DEL GLANDE" },
+  { code: "C60.2", description: "TUMOR MALIGNO DEL CUERPO DEL PENE" },
+  { code: "C60.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL PENE" },
+  { code: "C60.9", description: "TUMOR MALIGNO DEL PENE, PARTE NO ESPECIFICADA" },
+  { code: "C61", description: "TUMOR MALIGNO DE LA PRÓSTATA" },
+  { code: "C62.0", description: "TUMOR MALIGNO DEL TESTÍCULO NO DESCENDIDO" },
+  { code: "C62.1", description: "TUMOR MALIGNO DEL TESTÍCULO DESCENDIDO" },
+  { code: "C62.9", description: "TUMOR MALIGNO DEL TESTÍCULO, NO ESPECIFICADO" },
+  { code: "C63.0", description: "TUMOR MALIGNO DEL EPIDÍDIMO" },
+  { code: "C63.1", description: "TUMOR MALIGNO DEL CORDÓN ESPERMÁTICO" },
+  { code: "C63.2", description: "TUMOR MALIGNO DEL ESCROTO" },
+  { code: "C63.7", description: "TUMOR MALIGNO DE OTRAS PARTES ESPECIFICADAS DE LOS ÓRGANOS GENITALES MASCULINOS" },
+  { code: "C63.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LOS ÓRGANOS GENITALES MASCULINOS" },
+  { code: "C63.9", description: "TUMOR MALIGNO DE ÓRGANO GENITAL MASCULINO, PARTE NO ESPECIFICADA" },
+  { code: "C64", description: "TUMOR MALIGNO DEL RIÑÓN, EXCEPTO DE LA PELVIS RENAL" },
+  { code: "C65", description: "TUMOR MALIGNO DE LA PELVIS RENAL" },
+  { code: "C66", description: "TUMOR MALIGNO DEL URÉTER" },
+  { code: "C67.0", description: "TUMOR MALIGNO DEL TRÍGONO VESICAL" },
+  { code: "C67.1", description: "TUMOR MALIGNO DE LA CÚPULA VESICAL" },
+  { code: "C67.2", description: "TUMOR MALIGNO DE LA PARED LATERAL DE LA VEJIGA" },
+  { code: "C67.3", description: "TUMOR MALIGNO DE LA PARED ANTERIOR DE LA VEJIGA" },
+  { code: "C67.4", description: "TUMOR MALIGNO DE LA PARED POSTERIOR DE LA VEJIGA" },
+  { code: "C67.5", description: "TUMOR MALIGNO DEL CUELLO DE LA VEJIGA" },
+  { code: "C67.6", description: "TUMOR MALIGNO DEL ORIFICIO URETERAL" },
+  { code: "C67.7", description: "TUMOR MALIGNO DEL URACO" },
+  { code: "C67.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LA VEJIGA" },
+  { code: "C67.9", description: "TUMOR MALIGNO DE LA VEJIGA URINARIA, PARTE NO ESPECIFICADA" },
+  { code: "C68.0", description: "TUMOR MALIGNO DE LA URETRA" },
+  { code: "C68.1", description: "TUMOR MALIGNO DE LAS GLÁNDULAS PARAURETRALES" },
+  { code: "C68.8", description: "LESIÓN DE SITIOS CONTIGUOS DE LOS ÓRGANOS URINARIOS" },
+  { code: "C68.9", description: "TUMOR MALIGNO DE ÓRGANO URINARIO NO ESPECIFICADO" },
+  { code: "C69.0", description: "TUMOR MALIGNO DE LA CONJUNTIVA" },
+  { code: "C69.1", description: "TUMOR MALIGNO DE LA CÓRNEA" },
+  { code: "C69.2", description: "TUMOR MALIGNO DE LA RETINA" },
+  { code: "C69.3", description: "TUMOR MALIGNO DE LA COROIDES" },
+  { code: "C69.4", description: "TUMOR MALIGNO DEL CUERPO CILIAR" },
+  { code: "C69.5", description: "TUMOR MALIGNO DE LA GLÁNDULA Y CONDUCTO LAGRIMALES" },
+  { code: "C69.6", description: "TUMOR MALIGNO DE LA ÓRBITA" },
+  { code: "C69.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL OJO Y SUS ANEXOS" },
+  { code: "C69.9", description: "TUMOR MALIGNO DEL OJO, PARTE NO ESPECIFICADA" },
+  { code: "C70.0", description: "TUMOR MALIGNO DE LAS MENINGES CEREBRALES" },
+  { code: "C70.1", description: "TUMOR MALIGNO DE LAS MENINGES RAQUÍDEAS" },
+  { code: "C70.9", description: "TUMOR MALIGNO DE LAS MENINGES, PARTE NO ESPECIFICADA" },
+  { code: "C71.0", description: "TUMOR MALIGNO DEL CEREBRO, EXCEPTO LÓBULOS Y VENTRÍCULOS" },
+  { code: "C71.1", description: "TUMOR MALIGNO DEL LÓBULO FRONTAL" },
+  { code: "C71.2", description: "TUMOR MALIGNO DEL LÓBULO TEMPORAL" },
+  { code: "C71.3", description: "TUMOR MALIGNO DEL LÓBULO PARIETAL" },
+  { code: "C71.4", description: "TUMOR MALIGNO DEL LÓBULO OCCIPITAL" },
+  { code: "C71.5", description: "TUMOR MALIGNO DEL VENTRÍCULO CEREBRAL" },
+  { code: "C71.6", description: "TUMOR MALIGNO DEL CEREBELO" },
+  { code: "C71.7", description: "TUMOR MALIGNO DEL PEDÚNCULO CEREBRAL" },
+  { code: "C71.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL ENCÉFALO" },
+  { code: "C71.9", description: "TUMOR MALIGNO DEL ENCÉFALO, PARTE NO ESPECIFICADA" },
+  { code: "C72.0", description: "TUMOR MALIGNO DE LA MÉDULA ESPINAL" },
+  { code: "C72.1", description: "TUMOR MALIGNO DE LA COLA DE CABALLO" },
+  { code: "C72.2", description: "TUMOR MALIGNO DEL NERVIO OLFATORIO" },
+  { code: "C72.3", description: "TUMOR MALIGNO DEL NERVIO ÓPTICO" },
+  { code: "C72.4", description: "TUMOR MALIGNO DEL NERVIO ACÚSTICO" },
+  { code: "C72.5", description: "TUMOR MALIGNO DE OTROS NERVIOS CRANEALES Y LOS NO ESPECIFICADOS" },
+  { code: "C72.8", description: "LESIÓN DE SITIOS CONTIGUOS DEL ENCÉFALO Y OTRAS PARTES DEL SISTEMA NERVIOSO CENTRAL" },
+  { code: "C72.9", description: "TUMOR MALIGNO DEL SISTEMA NERVIOSO CENTRAL, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C73", description: "TUMOR MALIGNO DE LA GLÁNDULA TIROIDES" },
+  { code: "C74.0", description: "TUMOR MALIGNO DE LA CORTEZA DE LA GLÁNDULA SUPRARRENAL" },
+  { code: "C74.1", description: "TUMOR MALIGNO DE LA MÉDULA DE LA GLÁNDULA SUPRARRENAL" },
+  { code: "C74.9", description: "TUMOR MALIGNO DE LA GLÁNDULA SUPRARRENAL, PARTE NO ESPECIFICADA" },
+  { code: "C75.0", description: "TUMOR MALIGNO DE LA GLÁNDULA PARATIROIDES" },
+  { code: "C75.1", description: "TUMOR MALIGNO DE LA HIPÓFISIS" },
+  { code: "C75.2", description: "TUMOR MALIGNO DEL CONDUCTO CRANEOFARÍNGEO" },
+  { code: "C75.3", description: "TUMOR MALIGNO DE LA GLÁNDULA PINEAL" },
+  { code: "C75.4", description: "TUMOR MALIGNO DEL CUERPO CAROTÍDEO" },
+  { code: "C75.5", description: "TUMOR MALIGNO DEL CUERPO AÓRTICO Y OTROS CUERPOS CROMAFINES" },
+  { code: "C75.8", description: "TUMOR MALIGNO PLURIGLANDULAR, NO ESPECIFICADO" },
+  { code: "C75.9", description: "TUMOR MALIGNO DE GLÁNDULA ENDOCRINA NO ESPECIFICADA" },
+  { code: "C76.0", description: "TUMOR MALIGNO DE LA CABEZA, CARA Y CUELLO" },
+  { code: "C76.1", description: "TUMOR MALIGNO DEL TÓRAX" },
+  { code: "C76.2", description: "TUMOR MALIGNO DEL ABDOMEN" },
+  { code: "C76.3", description: "TUMOR MALIGNO DE LA PELVIS" },
+  { code: "C76.4", description: "TUMOR MALIGNO DEL MIEMBRO SUPERIOR" },
+  { code: "C76.5", description: "TUMOR MALIGNO DEL MIEMBRO INFERIOR" },
+  { code: "C76.7", description: "TUMOR MALIGNO DE OTROS SITIOS MAL DEFINIDOS" },
+  { code: "C76.8", description: "LESIÓN DE SITIOS CONTIGUOS MAL DEFINIDOS" },
+  { code: "C77.0", description: "TUMOR MALIGNO DE LOS GANGLIOS LINFÁTICOS DE LA CABEZA, CARA Y CUELLO" },
+  { code: "C77.1", description: "TUMOR MALIGNO DE LOS GANGLIOS LINFÁTICOS INTRATORÁCICOS" },
+  { code: "C77.2", description: "TUMOR MALIGNO DE LOS GANGLIOS LINFÁTICOS INTRAABDOMINALES" },
+  { code: "C77.3", description: "TUMOR MALIGNO DE LOS GANGLIOS LINFÁTICOS DE LA AXILA Y DEL MIEMBRO SUPERIOR" },
+  { code: "C77.4", description: "TUMOR MALIGNO DE LOS GANGLIOS LINFÁTICOS DE LA REGIÓN INGUINAL Y DEL MIEMBRO INFERIOR" },
+  { code: "C77.5", description: "TUMOR MALIGNO DE LOS GANGLIOS LINFÁTICOS DE LA PELVIS" },
+  { code: "C77.8", description: "TUMOR MALIGNO DE LOS GANGLIOS LINFÁTICOS DE REGIONES MÚLTIPLES" },
+  { code: "C77.9", description: "TUMOR MALIGNO DEL GANGLIO LINFÁTICO, SITIO NO ESPECIFICADO" },
+  { code: "C78.0", description: "TUMOR MALIGNO SECUNDARIO DEL PULMÓN" },
+  { code: "C78.1", description: "TUMOR MALIGNO SECUNDARIO DEL MEDIASTINO" },
+  { code: "C78.2", description: "TUMOR MALIGNO SECUNDARIO DE LA PLEURA" },
+  { code: "C78.3", description: "TUMOR MALIGNO SECUNDARIO DE OTROS ÓRGANOS RESPIRATORIOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "C78.4", description: "TUMOR MALIGNO SECUNDARIO DEL INTESTINO DELGADO" },
+  { code: "C78.5", description: "TUMOR MALIGNO SECUNDARIO DEL INTESTINO GRUESO Y DEL RECTO" },
+  { code: "C78.6", description: "TUMOR MALIGNO SECUNDARIO DEL PERITONEO Y DEL RETROPERITONEO" },
+  { code: "C78.7", description: "TUMOR MALIGNO SECUNDARIO DEL HÍGADO" },
+  { code: "C78.8", description: "TUMOR MALIGNO SECUNDARIO DE OTROS ÓRGANOS DIGESTIVOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "C79.0", description: "TUMOR MALIGNO SECUNDARIO DEL RIÑÓN Y DE LA PELVIS RENAL" },
+  { code: "C79.1", description: "TUMOR MALIGNO SECUNDARIO DE LA VEJIGA, Y DE OTROS ÓRGANOS Y LOS NO ESPECIFICADOS DE LAS VÍAS URINARIAS" },
+  { code: "C79.2", description: "TUMOR MALIGNO SECUNDARIO DE LA PIEL" },
+  { code: "C79.3", description: "TUMOR MALIGNO SECUNDARIO DEL ENCÉFALO Y DE LAS MENINGES CEREBRALES" },
+  { code: "C79.4", description: "TUMOR MALIGNO SECUNDARIO DE OTRAS PARTES DEL SISTEMA NERVIOSO Y DE LAS NO ESPECIFICADAS" },
+  { code: "C79.5", description: "TUMOR MALIGNO SECUNDARIO DE LOS HUESOS Y DE LA MÉDULA ÓSEA" },
+  { code: "C79.6", description: "TUMOR MALIGNO SECUNDARIO DEL OVARIO" },
+  { code: "C79.7", description: "TUMOR MALIGNO SECUNDARIO DE LA GLÁNDULA SUPRARRENAL" },
+  { code: "C79.8", description: "TUMOR MALIGNO SECUNDARIO DE OTROS SITIOS ESPECIFICADOS" },
+  { code: "C80", description: "TUMOR MALIGNO DE SITIOS NO ESPECIFICADOS" },
+  { code: "C81.0", description: "ENFERMEDAD DE HODGKIN CON PREDOMINIO LINFOCÍTICO" },
+  { code: "C81.1", description: "ENFERMEDAD DE HODGKIN CON ESCLEROSIS NODULAR" },
+  { code: "C81.2", description: "ENFERMEDAD DE HODGKIN CON CELULARIDAD MIXTA" },
+  { code: "C81.3", description: "ENFERMEDAD DE HODGKIN CON DEPLECIÓN LINFOCÍTICA" },
+  { code: "C81.7", description: "OTROS TIPOS DE ENFERMEDAD DE HODGKIN" },
+  { code: "C81.9", description: "ENFERMEDAD DE HODGKIN, NO ESPECIFICADA" },
+  { code: "C82.0", description: "LINFOMA NO HODGKIN DE CÉLULAS PEQUEÑAS HENDIDAS, FOLICULAR" },
+  { code: "C82.1", description: "LINFOMA NO HODKIN MIXTO, DE PEQUEÑAS CÉLULAS HENDIDAS Y DE GRANDES CÉLULAS, FOLICULAR" },
+  { code: "C82.2", description: "LINFOMA NO HODGKIN DE CÉLULAS GRANDES, FOLICULAR" },
+  { code: "C82.7", description: "OTROS TIPOS ESPECIFICADOS DE LINFOMA NO HODGKIN FOLICULAR" },
+  { code: "C82.9", description: "LINFOMA NO HODGKIN FOLICULAR, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C83.0", description: "LINFOMA NO HODGKIN DE CÉLULAS PEQUEÑAS (DIFUSO)" },
+  { code: "C83.1", description: "LINFOMA NO HODGKIN DE CÉLULAS PEQUEÑAS HENDIDAS (DIFUSO)" },
+  { code: "C83.2", description: "LINFOMA NO HODGKIN MIXTO, DE CÉLULAS PEQUEÑAS Y GRANDES (DIFUSO)" },
+  { code: "C83.3", description: "LINFOMA NO HODGKIN DE CÉLULAS GRANDES (DIFUSO)" },
+  { code: "C83.4", description: "LINFOMA NO HODGKIN INMUNOBLÁSTICO (DIFUSO)" },
+  { code: "C83.5", description: "LINFOMA NO HODGKIN LINFOBLÁSTICO (DIFUSO)" },
+  { code: "C83.6", description: "LINFOMA NO HODGKIN INDIFERENCIADO (DIFUSO)" },
+  { code: "C83.7", description: "TUMOR DE BURKITT" },
+  { code: "C83.8", description: "OTROS TIPOS ESPECIFICADOS DE LINFOMA NO HODGKIN DIFUSO" },
+  { code: "C83.9", description: "LINFOMA NO HODGKIN DIFUSO, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C84.0", description: "MICOSIS FUNGOIDE" },
+  { code: "C84.1", description: "ENFERMEDAD DE SÉZARY" },
+  { code: "C84.2", description: "LINFOMA DE ZONA T" },
+  { code: "C84.3", description: "LINFOMA LINFOEPITELIOIDE" },
+  { code: "C84.4", description: "LINFOMA DE CÉLULAS T PERIFÉRICO" },
+  { code: "C84.5", description: "OTROS LINFOMAS DE CÉLULAS T Y LOS NO ESPECIFICADOS" },
+  { code: "C85.0", description: "LINFOSARCOMA" },
+  { code: "C85.1", description: "LINFOMA DE CÉLULAS B, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C85.7", description: "OTROS TIPOS ESPECIFICADOS DE LINFOMA NO HODGKIN" },
+  { code: "C85.9", description: "LINFOMA NO HODGKIN, NO ESPECIFICADO" },
+  { code: "C88.0", description: "MACROGLOBULINEMIA DE WALDENSTRÖM" },
+  { code: "C88.1", description: "ENFERMEDAD DE CADENA PESADA ALFA" },
+  { code: "C88.2", description: "ENFERMEDAD DE CADENA PESADA GAMMA" },
+  { code: "C88.3", description: "ENFERMEDAD INMUNOPROLIFERATIVA DEL INTESTINO DELGADO" },
+  { code: "C88.7", description: "OTRAS ENFERMEDADES INMUNOPROLIFERATIVAS MALIGNAS" },
+  { code: "C88.9", description: "ENFERMEDAD INMUNOPROLIFERATIVA MALIGNA, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C90.0", description: "MIELOMA MÚLTIPLE" },
+  { code: "C90.1", description: "LEUCEMIA DE CÉLULAS PLASMÁTICAS" },
+  { code: "C90.2", description: "PLASMOCITOMA, EXTRAMEDULAR" },
+  { code: "C91.0", description: "LEUCEMIA LINFOBLÁSTICA AGUDA" },
+  { code: "C91.1", description: "LEUCEMIA LINFOCÍTICA CRÓNICA" },
+  { code: "C91.2", description: "LEUCEMIA LINFOCÍTICA SUBAGUDA" },
+  { code: "C91.3", description: "LEUCEMIA PROLINFOCÍTICA" },
+  { code: "C91.4", description: "LEUCEMIA DE CÉLULAS VELLOSAS" },
+  { code: "C91.5", description: "LEUCEMIA DE CÉLULAS T ADULTAS" },
+  { code: "C91.7", description: "OTRAS LEUCEMIAS LINFOIDES" },
+  { code: "C91.9", description: "LEUCEMIA LINFOIDE, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C92.0", description: "LEUCEMIA MIELOIDE AGUDA" },
+  { code: "C92.1", description: "LEUCEMIA MIELOIDE CRÓNICA" },
+  { code: "C92.2", description: "LEUCEMIA MIELOIDE SUBAGUDA" },
+  { code: "C92.3", description: "SARCOMA MIELOIDE" },
+  { code: "C92.4", description: "LEUCEMIA PROMIELOCÍTICA AGUDA" },
+  { code: "C92.5", description: "LEUCEMIA MIELOMONOCÍTICA AGUDA" },
+  { code: "C92.7", description: "OTRAS LEUCEMIAS MIELOIDES" },
+  { code: "C92.9", description: "LEUCEMIA MIELOIDE, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C93.0", description: "LEUCEMIA MONOCÍTICA AGUDA" },
+  { code: "C93.1", description: "LEUCEMIA MONOCÍTICA CRÓNICA" },
+  { code: "C93.2", description: "LEUCEMIA MONOCÍTICA SUBAGUDA" },
+  { code: "C93.7", description: "OTRAS LEUCEMIAS MONOCÍTICAS" },
+  { code: "C93.9", description: "LEUCEMIA MONOCÍTICA, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C94.0", description: "ERITREMIA AGUDA Y ERITROLEUCEMIA" },
+  { code: "C94.1", description: "ERITREMIA CRÓNICA" },
+  { code: "C94.2", description: "LEUCEMIA MEGACARIOBLÁSTICA AGUDA" },
+  { code: "C94.3", description: "LEUCEMIA DE MASTOCITOS" },
+  { code: "C94.4", description: "PANMIELOSIS AGUDA" },
+  { code: "C94.5", description: "MIELOFIBROSIS AGUDA" },
+  { code: "C94.7", description: "OTRAS LEUCEMIAS ESPECIFICADAS" },
+  { code: "C95.0", description: "LEUCEMIA AGUDA, CÉLULAS DE TIPO NO ESPECIFICADO" },
+  { code: "C95.1", description: "LEUCEMIA CRÓNICA, CÉLULAS DE TIPO NO ESPECIFICADO" },
+  { code: "C95.2", description: "LEUCEMIA SUBAGUDA, CÉLULAS DE TIPO NO ESPECIFICADO" },
+  { code: "C95.7", description: "OTRAS LEUCEMIAS DE CÉLULAS DE TIPO NO ESPECIFICADO" },
+  { code: "C95.9", description: "LEUCEMIA, NO ESPECIFICADA" },
+  { code: "C96.0", description: "ENFERMEDAD DE LETTERER-SIWE" },
+  { code: "C96.1", description: "HISTIOCITOSIS MALIGNA" },
+  { code: "C96.2", description: "TUMOR MALIGNO DE MASTOCITOS" },
+  { code: "C96.3", description: "LINFOMA HISTIOCÍTICO VERDADERO" },
+  { code: "C96.7", description: "OTROS TUMORES MALIGNOS ESPECIFICADOS DEL TEJIDO LINFÁTICO, HEMATOPOYÉTICO Y TEJIDOS AFINES" },
+  { code: "C96.9", description: "TUMOR MALIGNO DEL TEJIDO LINFÁTICO, HEMATOPOYÉTICO Y TEJIDOS AFINES, SIN OTRA ESPECIFICACIÓN" },
+  { code: "C97", description: "TUMORES MALIGNOS (PRIMARIOS) DE SITIOS MÚLTIPLES INDEPENDIENTES" },
+  { code: "D00.0", description: "CARCINOMA IN SITU DEL LABIO, DE LA CAVIDAD BUCAL Y DE LA FARINGE" },
+  { code: "D00.1", description: "CARCINOMA IN SITU DEL ESÓFAGO" },
+  { code: "D00.2", description: "CARCINOMA IN SITU DEL ESTÓMAGO" },
+  { code: "D01.0", description: "CARCINOMA IN SITU DEL COLON" },
+  { code: "D01.1", description: "CARCINOMA IN SITU DE LA UNIÓN RECTOSIGMOIDEA" },
+  { code: "D01.2", description: "CARCINOMA IN SITU DEL RECTO" },
+  { code: "D01.3", description: "CARCINOMA IN SITU DEL ANO Y DEL CONDUCTO ANAL" },
+  { code: "D01.4", description: "CARCINOMA IN SITU DE OTRAS PARTES Y DE LAS NO ESPECIFICADAS DEL INTESTINO" },
+  { code: "D01.5", description: "CARCINOMA IN SITU DEL HÍGADO, DE LA VESÍCULA BILIAR Y DEL CONDUCTO BILIAR" },
+  { code: "D01.7", description: "CARCINOMA IN SITU DE OTRAS PARTES ESPECIFICADAS DE ÓRGANOS DIGESTIVOS" },
+  { code: "D01.9", description: "CARCINOMA IN SITU DE ÓRGANOS DIGESTIVOS NO ESPECIFICADOS" },
+  { code: "D02.0", description: "CARCINOMA IN SITU DE LA LARINGE" },
+  { code: "D02.1", description: "CARCINOMA IN SITU DE LA TRÁQUEA" },
+  { code: "D02.2", description: "CARCINOMA IN SITU DEL BRONQUIO Y DEL PULMÓN" },
+  { code: "D02.3", description: "CARCINOMA IN SITU DE OTRAS PARTES DEL SISTEMA RESPIRATORIO" },
+  { code: "D02.4", description: "CARCINOMA IN SITU DE ÓRGANOS RESPIRATORIOS NO ESPECIFICADOS" },
+  { code: "D03.0", description: "MELANOMA IN SITU DEL LABIO" },
+  { code: "D03.1", description: "MELANOMA IN SITU DEL PÁRPADO Y DE LA COMISURA PALPEBRAL" },
+  { code: "D03.2", description: "MELANOMA IN SITU DE LA OREJA Y DEL CONDUCTO AUDITIVO EXTERNO" },
+  { code: "D03.3", description: "MELANOMA IN SITU DE OTRAS PARTES Y DE LAS NO ESPECIFICADAS DE LA CARA" },
+  { code: "D03.4", description: "MELANOMA IN SITU DEL CUERO CABELLUDO Y DEL CUELLO" },
+  { code: "D03.5", description: "MELANOMA IN SITU DEL TRONCO" },
+  { code: "D03.6", description: "MELANOMA IN SITU DEL MIEMBRO SUPERIOR, INCLUIDO EL HOMBRO" },
+  { code: "D03.7", description: "MELANOMA IN SITU DEL MIEMBRO INFERIOR, INCLUIDA LA CADERA" },
+  { code: "D03.8", description: "MELANOMA IN SITU DE OTROS SITIOS" },
+  { code: "D03.9", description: "MELANOMA IN SITU, SITIO NO ESPECIFICADO" },
+  { code: "D04.0", description: "CARCINOMA IN SITU DE LA PIEL DEL LABIO" },
+  { code: "D04.1", description: "CARCINOMA IN SITU DE LA PIEL DEL PÁRPADO Y DE LA COMISURA PALPEBRAL" },
+  { code: "D04.2", description: "CARCINOMA IN SITU DE LA PIEL DE LA OREJA Y DEL CONDUCTO AUDITIVO EXTERNO" },
+  { code: "D04.3", description: "CARCINOMA IN SITU DE LA PIEL DE OTRAS PARTES Y DE LAS NO ESPECIFICADAS DE LA CARA" },
+  { code: "D04.4", description: "CARCINOMA IN SITU DE LA PIEL DEL CUERO CABELLUDO Y CUELLO" },
+  { code: "D04.5", description: "CARCINOMA IN SITU DE LA PIEL DEL TRONCO" },
+  { code: "D04.6", description: "CARCINOMA IN SITU DE LA PIEL DEL MIEMBRO SUPERIOR, INCLUIDO EL HOMBRO" },
+  { code: "D04.7", description: "CARCINOMA IN SITU DE LA PIEL DEL MIEMBRO INFERIOR, INCLUIDA LA CADERA" },
+  { code: "D04.8", description: "CARCINOMA IN SITU DE LA PIEL DE OTROS SITIOS ESPECIFICADOS" },
+  { code: "D04.9", description: "CARCINOMA IN SITU DE LA PIEL, SITIO NO ESPECIFICADO" },
+  { code: "D05.0", description: "CARCINOMA IN SITU LOBULAR" },
+  { code: "D05.1", description: "CARCINOMA IN SITU INTRACANALICULAR" },
+  { code: "D05.7", description: "OTROS CARCINOMAS IN SITU DE LA MAMA" },
+  { code: "D05.9", description: "CARCINOMA IN SITU DE LA MAMA, PARTE NO ESPECIFICADA" },
+  { code: "D06.0", description: "CARCINOMA IN SITU DEL ENDOCÉRVIX" },
+  { code: "D06.1", description: "CARCINOMA IN SITU DEL EXOCÉRVIX" },
+  { code: "D06.7", description: "CARCINOMA IN SITU DE OTRAS PARTES ESPECIFICADAS DEL CUELLO DEL ÚTERO" },
+  { code: "D06.9", description: "CARCINOMA IN SITU DEL CUELLO DEL ÚTERO, PARTE NO ESPECIFICADA" },
+  { code: "D07.0", description: "CARCINOMA IN SITU DEL ENDOMETRIO" },
+  { code: "D07.1", description: "CARCINOMA IN SITU DE LA VULVA" },
+  { code: "D07.2", description: "CARCINOMA IN SITU DE LA VAGINA" },
+  { code: "D07.3", description: "CARCINOMA IN SITU DE OTROS SITIOS DE ÓRGANOS GENITALES FEMENINOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "D07.4", description: "CARCINOMA IN SITU DEL PENE" },
+  { code: "D07.5", description: "CARCINOMA IN SITU DE LA PRÓSTATA" },
+  { code: "D07.6", description: "CARCINOMA IN SITU DE OTROS ÓRGANOS GENITALES MASCULINOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "D09.0", description: "CARCINOMA IN SITU DE LA VEJIGA" },
+  { code: "D09.1", description: "CARCINOMA IN SITU DE OTROS ÓRGANOS URINARIOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "D09.2", description: "CARCINOMA IN SITU DEL OJO" },
+  { code: "D09.3", description: "CARCINOMA IN SITU DE LA GLÁNDULA TIROIDES Y DE OTRAS GLÁNDULAS ENDOCRINAS" },
+  { code: "D09.7", description: "CARCINOMA IN SITU DE OTROS SITIOS ESPECIFICADOS" },
+  { code: "D09.9", description: "CARCINOMA IN SITU, SITIO NO ESPECIFICADO" },
+  { code: "D10.0", description: "TUMOR BENIGNO DEL LABIO" },
+  { code: "D10.1", description: "TUMOR BENIGNO DE LA LENGUA" },
+  { code: "D10.2", description: "TUMOR BENIGNO DEL PISO DE LA BOCA" },
+  { code: "D10.3", description: "TUMOR BENIGNO DE OTRAS PARTES Y DE LAS NO ESPECIFICADAS DE LA BOCA" },
+  { code: "D10.4", description: "TUMOR BENIGNO DE LA AMÍGDALA" },
+  { code: "D10.5", description: "TUMOR BENIGNO DE OTRAS PARTES DE LA OROFARINGE" },
+  { code: "D10.6", description: "TUMOR BENIGNO DE LA NASOFARINGE" },
+  { code: "D10.7", description: "TUMOR BENIGNO DE LA HIPOFARINGE" },
+  { code: "D10.9", description: "TUMOR BENIGNO DE LA FARINGE, PARTE NO ESPECIFICADA" },
+  { code: "D11.0", description: "TUMOR BENIGNO DE LA GLÁNDULA PARÓTIDA" },
+  { code: "D11.7", description: "TUMOR BENIGNO DE OTRAS GLÁNDULAS SALIVALES MAYORES ESPECIFICADAS" },
+  { code: "D11.9", description: "TUMOR BENIGNO DE LA GLÁNDULA SALIVAL MAYOR, SIN OTRA ESPECIFICACIÓN" },
+  { code: "D12.0", description: "TUMOR BENIGNO DEL CIEGO" },
+  { code: "D12.1", description: "TUMOR BENIGNO DEL APÉNDICE" },
+  { code: "D12.2", description: "TUMOR BENIGNO DEL COLON ASCENDENTE" },
+  { code: "D12.3", description: "TUMOR BENIGNO DEL COLON TRANSVERSO" },
+  { code: "D12.4", description: "TUMOR BENIGNO DEL COLON DESCENDENTE" },
+  { code: "D12.5", description: "TUMOR BENIGNO DEL COLON SIGMOIDE" },
+  { code: "D12.6", description: "TUMOR BENIGNO DEL COLON, PARTE NO ESPECIFICADA" },
+  { code: "D12.7", description: "TUMOR BENIGNO DE LA UNIÓN RECTOSIGMOIDEA" },
+  { code: "D12.8", description: "TUMOR BENIGNO DEL RECTO" },
+  { code: "D12.9", description: "TUMOR BENIGNO DEL CONDUCTO ANAL Y DEL ANO" },
+  { code: "D13.0", description: "TUMOR BENIGNO DEL ESÓFAGO" },
+  { code: "D13.1", description: "TUMOR BENIGNO DEL ESTÓMAGO" },
+  { code: "D13.2", description: "TUMOR BENIGNO DEL DUODENO" },
+  { code: "D13.3", description: "TUMOR BENIGNO DE OTRAS PARTES Y DE LAS NO ESPECIFICADAS DEL INTESTINO DELGADO" },
+  { code: "D13.4", description: "TUMOR BENIGNO DEL HÍGADO" },
+  { code: "D13.5", description: "TUMOR BENIGNO DE LAS VÍAS BILIARES EXTRAHEPÁTICAS" },
+  { code: "D13.6", description: "TUMOR BENIGNO DEL PÁNCREAS" },
+  { code: "D13.7", description: "TUMOR BENIGNO DEL PÁNCREAS ENDOCRINO" },
+  { code: "D13.9", description: "TUMOR BENIGNO DE SITIOS MAL DEFINIDOS DEL SISTEMA DIGESTIVO" },
+  { code: "D14.0", description: "TUMOR BENIGNO DEL OÍDO MEDIO, DE LA CAVIDAD NASAL Y DE LOS SENOS PARANASALES" },
+  { code: "D14.1", description: "TUMOR BENIGNO DE LA LARINGE" },
+  { code: "D14.2", description: "TUMOR BENIGNO DE LA TRÁQUEA" },
+  { code: "D14.3", description: "TUMOR BENIGNO DE LOS BRONQUIOS Y DEL PULMÓN" },
+  { code: "D14.4", description: "TUMOR BENIGNO DEL SISTEMA RESPIRATORIO, SITIO NO ESPECIFICADO" },
+  { code: "D15.0", description: "TUMOR BENIGNO DEL TIMO" },
+  { code: "D15.1", description: "TUMOR BENIGNO DEL CORAZÓN" },
+  { code: "D15.2", description: "TUMOR BENIGNO DEL MEDIASTINO" },
+  { code: "D15.7", description: "TUMOR BENIGNO DE OTROS ÓRGANOS INTRATORÁCICOS ESPECIFICADOS" },
+  { code: "D15.9", description: "TUMOR BENIGNO DE ÓRGANO INTRATORÁCICO NO ESPECIFICADO" },
+  { code: "D16.0", description: "TUMOR BENIGNO DEL OMÓPLATO Y HUESOS LARGOS DEL MIEMBRO SUPERIOR" },
+  { code: "D16.1", description: "TUMOR BENIGNO DE LOS HUESOS CORTOS DEL MIEMBRO SUPERIOR" },
+  { code: "D16.2", description: "TUMOR BENIGNO DE LOS HUESOS LARGOS DEL MIEMBRO INFERIOR" },
+  { code: "D16.3", description: "TUMOR BENIGNO DE LOS HUESOS CORTOS DEL MIEMBRO INFERIOR" },
+  { code: "D16.4", description: "TUMOR BENIGNO DE LOS HUESOS DEL CRÁNEO Y DE LA CARA" },
+  { code: "D16.5", description: "TUMOR BENIGNO DEL MAXILAR INFERIOR" },
+  { code: "D16.6", description: "TUMOR BENIGNO DE LA COLUMNA VERTEBRAL" },
+  { code: "D16.7", description: "TUMOR BENIGNO DE LAS COSTILLAS, ESTERNÓN Y CLAVÍCULA" },
+  { code: "D16.8", description: "TUMOR BENIGNO DE LOS HUESOS PÉLVICOS, SACRO Y CÓCCIX" },
+  { code: "D16.9", description: "TUMOR BENIGNO DEL HUESO Y DEL CARTÍLAGO ARTICULAR, SITIO NO ESPECIFICADO" },
+  { code: "D17.0", description: "TUMOR BENIGNO LIPOMATOSO DE PIEL Y DE TEJIDO SUBCUTÁNEO DE CABEZA, CARA Y CUELLO" },
+  { code: "D17.1", description: "TUMOR BENIGNO LIPOMATOSO DE PIEL Y DE TEJIDO SUBCUTÁNEO DEL TRONCO" },
+  { code: "D17.2", description: "TUMOR BENIGNO LIPOMATOSO DE PIEL Y DE TEJIDO SUBCUTÁNEO DE MIEMBROS" },
+  { code: "D17.3", description: "TUMOR BENIGNO LIPOMATOSO DE PIEL Y DE TEJIDO SUBCUTÁNEO DE OTROS SITIOS Y DE LOS NO ESPECIFICADOS" },
+  { code: "D17.4", description: "TUMOR BENIGNO LIPOMATOSO DE LOS ÓRGANOS INTRATORÁCICOS" },
+  { code: "D17.5", description: "TUMOR BENIGNO LIPOMATOSO DE LOS ÓRGANOS INTRAABDOMINALES" },
+  { code: "D17.6", description: "TUMOR BENIGNO LIPOMATOSO DEL CORDÓN ESPERMÁTICO" },
+  { code: "D17.7", description: "TUMOR BENIGNO LIPOMATOSO DE OTROS SITIOS ESPECIFICADOS" },
+  { code: "D17.9", description: "TUMOR BENIGNO LIPOMATOSO, DE SITIO NO ESPECIFICADO" },
+  { code: "D18.0", description: "HEMANGIOMA, DE CUALQUIER SITIO" },
+  { code: "D18.1", description: "LINFANGIOMA, DE CUALQUIER SITIO" },
+  { code: "D19.0", description: "TUMOR BENIGNO DEL TEJIDO MESOTELIAL DE LA PLEURA" },
+  { code: "D19.1", description: "TUMOR BENIGNO DEL TEJIDO MESOTELIAL DEL PERITONEO" },
+  { code: "D19.7", description: "TUMOR BENIGNO DEL TEJIDO MESOTELIAL DE OTROS SITIOS ESPECIFICADOS" },
+  { code: "D19.9", description: "TUMOR BENIGNO DEL TEJIDO MESOTELIAL, DE SITIO NO ESPECIFICADO" },
+  { code: "D20.0", description: "TUMOR BENIGNO DEL RETROPERITONEO" },
+  { code: "D20.1", description: "TUMOR BENIGNO DEL PERITONEO" },
+  { code: "D21.0", description: "TUMOR BENIGNO DEL TEJIDO CONJUNTIVO Y DE OTROS TEJIDOS BLANDOS DE CABEZA, CARA Y CUELLO" },
+  { code: "D21.1", description: "TUMOR BENIGNO DEL TEJIDO CONJUNTIVO Y DE OTROS TEJIDOS BLANDOS DEL MIEMBRO SUPERIOR, INCLUIDO EL HOMBRO" },
+  { code: "D21.2", description: "TUMOR BENIGNO DEL TEJIDO CONJUNTIVO Y DE OTROS TEJIDOS BLANDOS DEL MIEMBRO INFERIOR, INCLUIDA LA CADERA" },
+  { code: "D21.3", description: "TUMOR BENIGNO DEL TEJIDO CONJUNTIVO Y DE OTROS TEJIDOS BLANDOS DEL TÓRAX" },
+  { code: "D21.4", description: "TUMOR BENIGNO DEL TEJIDO CONJUNTIVO Y OTROS TEJIDOS BLANDOS DEL ABDOMEN" },
+  { code: "D21.5", description: "TUMOR BENIGNO DEL TEJIDO CONJUNTIVO Y OTROS TEJIDOS BLANDOS DE LA PELVIS" },
+  { code: "D21.6", description: "TUMOR BENIGNO DEL TEJIDO CONJUNTIVO Y OTROS TEJIDOS BLANDOS DEL TRONCO, SIN OTRA ESPECIFICACIÓN" },
+  { code: "D21.9", description: "TUMOR BENIGNO DEL TEJIDO CONJUNTIVO Y OTROS TEJIDOS BLANDOS, DE SITIO NO ESPECIFICADO" },
+  { code: "D22.0", description: "NEVO MELANOCÍTICO DEL LABIO" },
+  { code: "D22.1", description: "NEVO MELANOCÍTICO DEL PÁRPADO, INCLUIDA LA COMISURA PALPEBRAL" },
+  { code: "D22.2", description: "NEVO MELANOCÍTICO DE LA OREJA Y DEL CONDUCTO AUDITIVO EXTERNO" },
+  { code: "D22.3", description: "NEVO MELANOCÍTICO DE OTRAS PARTES Y DE LAS NO ESPECIFICADAS DE LA CARA" },
+  { code: "D22.4", description: "NEVO MELANOCÍTICO DEL CUERO CABELLUDO Y DEL CUELLO" },
+  { code: "D22.5", description: "NEVO MELANOCÍTICO DEL TRONCO" },
+  { code: "D22.6", description: "NEVO MELANOCÍTICO DEL MIEMBRO SUPERIOR, INCLUIDO EL HOMBRO" },
+  { code: "D22.7", description: "NEVO MELANOCÍTICO DEL MIEMBRO INFERIOR, INCLUIDA LA CADERA" },
+  { code: "D22.9", description: "NEVO MELANOCÍTICO, SITIO NO ESPECIFICADO" },
+  { code: "D23.0", description: "TUMOR BENIGNO DE LA PIEL DEL LABIO" },
+  { code: "D23.1", description: "TUMOR BENIGNO DE LA PIEL DEL PÁRPADO, INCLUIDA LA COMISURA PALPEBRAL" },
+  { code: "D23.2", description: "TUMOR BENIGNO DE LA PIEL DE LA OREJA Y DEL CONDUCTO AUDITIVO EXTERNO" },
+  { code: "D23.3", description: "TUMOR BENIGNO DE LA PIEL DE OTRAS PARTES Y DE LAS NO ESPECIFICADAS DE LA CARA" },
+  { code: "D23.4", description: "TUMOR BENIGNO DE LA PIEL DEL CUERO CABELLUDO Y DEL CUELLO" },
+  { code: "D23.5", description: "TUMOR BENIGNO DE LA PIEL DEL TRONCO" },
+  { code: "D23.6", description: "TUMOR BENIGNO DE LA PIEL DEL MIEMBRO SUPERIOR, INCLUIDO EL HOMBRO" },
+  { code: "D23.7", description: "TUMOR BENIGNO DE LA PIEL DEL MIEMBRO INFERIOR, INCLUIDA LA CADERA" },
+  { code: "D23.9", description: "TUMOR BENIGNO DE LA PIEL, SITIO NO ESPECIFICADO" },
+  { code: "D24", description: "TUMOR BENIGNO DE LA MAMA" },
+  { code: "D25.0", description: "LEIOMIOMA SUBMUCOSO DEL ÚTERO" },
+  { code: "D25.1", description: "LEIOMIOMA INTRAMURAL DEL ÚTERO" },
+  { code: "D25.2", description: "LEIOMIOMA SUBSEROSO DEL ÚTERO" },
+  { code: "D25.9", description: "LEIOMIOMA DEL ÚTERO, SIN OTRA ESPECIFICACIÓN" },
+  { code: "D26.0", description: "TUMOR BENIGNO DEL CUELLO DEL ÚTERO" },
+  { code: "D26.1", description: "TUMOR BENIGNO DEL CUERPO DEL ÚTERO" },
+  { code: "D26.7", description: "TUMOR BENIGNO DE OTRAS PARTES ESPECIFICADAS DEL ÚTERO" },
+  { code: "D26.9", description: "TUMOR BENIGNO DEL ÚTERO, PARTE NO ESPECIFICADA" },
+  { code: "D27", description: "TUMOR BENIGNO DEL OVARIO" },
+  { code: "D28.0", description: "TUMOR BENIGNO DE LA VULVA" },
+  { code: "D28.1", description: "TUMOR BENIGNO DE LA VAGINA" },
+  { code: "D28.2", description: "TUMOR BENIGNO DE LA TROMPA DE FALOPIO Y DE LOS LIGAMENTOS UTERINOS" },
+  { code: "D28.7", description: "TUMOR BENIGNO DE OTROS SITIOS ESPECIFICADOS DE LOS ÓRGANOS GENITALES FEMENINOS" },
+  { code: "D28.9", description: "TUMOR BENIGNO DE ÓRGANO GENITAL FEMENINO, SITIO NO ESPECIFICADO" },
+  { code: "D29.0", description: "TUMOR BENIGNO DEL PENE" },
+  { code: "D29.1", description: "TUMOR BENIGNO DE LA PRÓSTATA" },
+  { code: "D29.2", description: "TUMOR BENIGNO DE LOS TESTÍCULOS" },
+  { code: "D29.3", description: "TUMOR BENIGNO DEL EPIDÍDIMO" },
+  { code: "D29.4", description: "TUMOR BENIGNO DEL ESCROTO" },
+  { code: "D29.7", description: "TUMOR BENIGNO DE OTROS ÓRGANOS GENITALES MASCULINOS" },
+  { code: "D29.9", description: "TUMOR BENIGNO DE ÓRGANO GENITAL MASCULINO, SITIO NO ESPECIFICADO" },
+  { code: "D30.0", description: "TUMOR BENIGNO DEL RIÑÓN" },
+  { code: "D30.1", description: "TUMOR BENIGNO DE LA PELVIS RENAL" },
+  { code: "D30.2", description: "TUMOR BENIGNO DEL URÉTER" },
+  { code: "D30.3", description: "TUMOR BENIGNO DE LA VEJIGA" },
+  { code: "D30.4", description: "TUMOR BENIGNO DE LA URETRA" },
+  { code: "D30.7", description: "TUMOR BENIGNO DE OTROS ÓRGANOS URINARIOS" },
+  { code: "D30.9", description: "TUMOR BENIGNO DE ÓRGANO URINARIO NO ESPECIFICADO" },
+  { code: "D31.0", description: "TUMOR BENIGNO DE LA CONJUNTIVA" },
+  { code: "D31.1", description: "TUMOR BENIGNO DE LA CÓRNEA" },
+  { code: "D31.2", description: "TUMOR BENIGNO DE LA RETINA" },
+  { code: "D31.3", description: "TUMOR BENIGNO DE LA COROIDES" },
+  { code: "D31.4", description: "TUMOR BENIGNO DEL CUERPO CILIAR" },
+  { code: "D31.5", description: "TUMOR BENIGNO DE LAS GLÁNDULAS Y DE LOS CONDUCTOS LAGRIMALES" },
+  { code: "D31.6", description: "TUMOR BENIGNO DE LA ÓRBITA, PARTE NO ESPECIFICADA" },
+  { code: "D31.9", description: "TUMOR BENIGNO DEL OJO, PARTE NO ESPECIFICADA" },
+  { code: "D32.0", description: "TUMOR BENIGNO DE LAS MENINGES CEREBRALES" },
+  { code: "D32.1", description: "TUMOR BENIGNO DE LAS MENINGES RAQUÍDEAS" },
+  { code: "D32.9", description: "TUMOR BENIGNO DE LAS MENINGES, PARTE NO ESPECIFICADA" },
+  { code: "D33.0", description: "TUMOR BENIGNO DEL ENCÉFALO, SUPRATENTORIAL" },
+  { code: "D33.1", description: "TUMOR BENIGNO DEL ENCÉFALO, INFRATENTORIAL" },
+  { code: "D33.2", description: "TUMOR BENIGNO DEL ENCÉFALO, PARTE NO ESPECIFICADA" },
+  { code: "D33.3", description: "TUMOR BENIGNO DE LOS NERVIOS CRANEALES" },
+  { code: "D33.4", description: "TUMOR BENIGNO DE LA MÉDULA ESPINAL" },
+  { code: "D33.7", description: "TUMOR BENIGNO DE OTRAS PARTES ESPECIFICADAS DEL SISTEMA NERVIOSO CENTRAL" },
+  { code: "D33.9", description: "TUMOR BENIGNO DEL SISTEMA NERVIOSO CENTRAL, SITIO NO ESPECIFICADO" },
+  { code: "D34", description: "TUMOR BENIGNO DE LA GLÁNDULA TIROIDES" },
+  { code: "D35.0", description: "TUMOR BENIGNO DE LA GLÁNDULA SUPRARRENAL" },
+  { code: "D35.1", description: "TUMOR BENIGNO DE LA GLÁNDULA PARATIROIDES" },
+  { code: "D35.2", description: "TUMOR BENIGNO DE LA HIPÓFISIS" },
+  { code: "D35.3", description: "TUMOR BENIGNO DEL CONDUCTO CRANEOFARÍNGEO" },
+  { code: "D35.4", description: "TUMOR BENIGNO DE LA GLÁNDULA PINEAL" },
+  { code: "D35.5", description: "TUMOR BENIGNO DEL CUERPO CAROTÍDEO" },
+  { code: "D35.6", description: "TUMOR BENIGNO DEL CUERPO AÓRTICO Y DE OTROS CUERPOS CROMAFINES" },
+  { code: "D35.7", description: "TUMOR BENIGNO DE OTRAS GLÁNDULAS ENDOCRINAS ESPECIFICADAS" },
+  { code: "D35.8", description: "TUMOR BENIGNO PLURIGLANDULAR" },
+  { code: "D35.9", description: "TUMOR BENIGNO DE GLÁNDULA ENDOCRINA NO ESPECIFICADA" },
+  { code: "D36.0", description: "TUMOR BENIGNO DE LOS GANGLIOS LINFÁTICOS" },
+  { code: "D36.1", description: "TUMOR BENIGNO DE LOS NERVIOS PERIFÉRICOS Y DEL SISTEMA NERVIOSO AUTÓNOMO" },
+  { code: "D36.7", description: "TUMOR BENIGNO DE OTROS SITIOS ESPECIFICADOS" },
+  { code: "D36.9", description: "TUMOR BENIGNO DE SITIO NO ESPECIFICADO" },
+  { code: "D37.0", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL LABIO, DE LA CAVIDAD BUCAL Y DE LA FARINGE" },
+  { code: "D37.1", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL ESTÓMAGO" },
+  { code: "D37.2", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL INTESTINO DELGADO" },
+  { code: "D37.3", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL APÉNDICE" },
+  { code: "D37.4", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL COLON" },
+  { code: "D37.5", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL RECTO" },
+  { code: "D37.6", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL HÍGADO, DE LA VESÍCULA BILIAR Y DEL CONDUCTO BILIAR" },
+  { code: "D37.7", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE OTROS ÓRGANOS DIGESTIVOS ESPECIFICADOS" },
+  { code: "D37.9", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE ÓRGANOS DIGESTIVOS, SITIO NO ESPECIFICADO" },
+  { code: "D38.0", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LARINGE" },
+  { code: "D38.1", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA TRÁQUEA, DE LOS BRONQUIOS Y DEL PULMÓN" },
+  { code: "D38.2", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA PLEURA" },
+  { code: "D38.3", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL MEDIASTINO" },
+  { code: "D38.4", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL TIMO" },
+  { code: "D38.5", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE OTROS ÓRGANOS RESPIRATORIOS Y DEL OÍDO MEDIO" },
+  { code: "D38.6", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE ÓRGANOS RESPIRATORIOS, SITIO NO ESPECIFICADO" },
+  { code: "D39.0", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL ÚTERO" },
+  { code: "D39.1", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL OVARIO" },
+  { code: "D39.2", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA PLACENTA" },
+  { code: "D39.7", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE OTROS ÓRGANOS GENITALES FEMENINOS" },
+  { code: "D39.9", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE ÓRGANO GENITAL FEMENINO NO ESPECIFICADO" },
+  { code: "D40.0", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA PRÓSTATA" },
+  { code: "D40.1", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL TESTÍCULO" },
+  { code: "D40.7", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE OTROS ÓRGANOS GENITALES MASCULINOS" },
+  { code: "D40.9", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE ÓRGANO GENITAL MASCULINO NO ESPECIFICADO" },
+  { code: "D41.0", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL RIÑÓN" },
+  { code: "D41.1", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA PELVIS RENAL" },
+  { code: "D41.2", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL URÉTER" },
+  { code: "D41.3", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA URETRA" },
+  { code: "D41.4", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA VEJIGA" },
+  { code: "D41.7", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE OTROS ÓRGANOS URINARIOS" },
+  { code: "D41.9", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE ÓRGANO URINARIO NO ESPECIFICADO" },
+  { code: "D42.0", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LAS MENINGES CEREBRALES" },
+  { code: "D42.1", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LAS MENINGES RAQUÍDEAS" },
+  { code: "D42.9", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LAS MENINGES, PARTE NO ESPECIFICADA" },
+  { code: "D43.0", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL ENCÉFALO, SUPRATENTORIAL" },
+  { code: "D43.1", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL ENCÉFALO, INFRATENTORIAL" },
+  { code: "D43.2", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL ENCÉFALO, PARTE NO ESPECIFICADA" },
+  { code: "D43.3", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LOS NERVIOS CRANEALES" },
+  { code: "D43.4", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA MÉDULA ESPINAL" },
+  { code: "D43.7", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE OTRAS PARTES ESPECIFICADAS DEL SISTEMA NERVIOSO CENTRAL" },
+  { code: "D43.9", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL SISTEMA NERVIOSO CENTRAL, SITIO NO ESPECIFICADO" },
+  { code: "D44.0", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA GLÁNDULA TIROIDES" },
+  { code: "D44.1", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA GLÁNDULA SUPRARRENAL" },
+  { code: "D44.2", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA GLÁNDULA PARATIROIDES" },
+  { code: "D44.3", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA GLÁNDULA HIPÓFISIS" },
+  { code: "D44.4", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL CONDUCTO CRANEOFARÍNGEO" },
+  { code: "D44.5", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA GLÁNDULA PINEAL" },
+  { code: "D44.6", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL CUERPO CAROTÍDEO" },
+  { code: "D44.7", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL CUERPO AÓRTICO Y OTROS CUERPOS CROMAFINES" },
+  { code: "D44.8", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO CON AFECTACIÓN PLURIGLANDULAR" },
+  { code: "D44.9", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE GLÁNDULA ENDOCRINA NO ESPECIFICADA" },
+  { code: "D45", description: "POLICITEMIA VERA" },
+  { code: "D46.0", description: "ANEMIA REFRACTARIA SIN SIDEROBLASTOS, ASÍ DESCRITA" },
+  { code: "D46.1", description: "ANEMIA REFRACTARIA CON SIDEROBLASTOS" },
+  { code: "D46.2", description: "ANEMIA REFRACTARIA CON EXCESO DE BLASTOS" },
+  { code: "D46.3", description: "ANEMIA REFRACTARIA CON EXCESO DE BLASTOS CON TRANSFORMACIÓN" },
+  { code: "D46.4", description: "ANEMIA REFRACTARIA, SIN OTRA ESPECIFICACIÓN" },
+  { code: "D46.7", description: "OTROS SÍNDROMES MIELODISPLÁSICOS" },
+  { code: "D46.9", description: "SÍNDROME MIELODISPLÁSICO, SIN OTRA ESPECIFICACIÓN" },
+  { code: "D47.0", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LOS MASTOCITOS E HISTIOCITOS" },
+  { code: "D47.1", description: "ENFERMEDAD MIELOPROLIFERATIVA CRÓNICA" },
+  { code: "D47.2", description: "GAMMOPATÍA MONOCLONAL" },
+  { code: "D47.3", description: "TROMBOCITOPENIA (HEMORRÁGICA) ESENCIAL" },
+  { code: "D47.7", description: "OTROS TUMORES ESPECIFICADOS DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL TEJIDO LINFÁTICO, DE LOS ÓRGANOS HEMATOPOYÉTICOS Y DE TEJIDOS AFINES" },
+  { code: "D47.9", description: "TUMORES DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL TEJIDO LINFÁTICO, DE LOS ÓRGANOS HEMATOPOYÉTICOS Y DE TEJIDOS AFINES, NO ESPECIFICADOS" },
+  { code: "D48.0", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL HUESO Y CARTÍLAGO ARTICULAR" },
+  { code: "D48.1", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL TEJIDO CONJUNTIVO Y OTRO TEJIDO BLANDO" },
+  { code: "D48.2", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LOS NERVIOS PERIFÉRICOS Y DEL SISTEMA NERVIOSO AUTÓNOMO" },
+  { code: "D48.3", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL RETROPERITONEO" },
+  { code: "D48.4", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DEL PERITONEO" },
+  { code: "D48.5", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA PIEL" },
+  { code: "D48.6", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE LA MAMA" },
+  { code: "D48.7", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO DE OTROS SITIOS ESPECIFICADOS" },
+  { code: "D48.9", description: "TUMOR DE COMPORTAMIENTO INCIERTO O DESCONOCIDO, DE SITIO NO ESPECIFICADO" },
+  { code: "D50.0", description: "ANEMIA POR DEFICIENCIA DE HIERRO SECUNDARIA A PÉRDIDA DE SANGRE (CRÓNICA)" },
+  { code: "D50.1", description: "DISFAGIA SIDEROPÉNICA" },
+  { code: "D50.8", description: "OTRAS ANEMIAS POR DEFICIENCIA DE HIERRO" },
+  { code: "D50.9", description: "ANEMIA POR DEFICIENCIA DE HIERRO SIN OTRA ESPECIFICACIÓN" },
+  { code: "D51.0", description: "ANEMIA POR DEFICIENCIA DE VITAMINA B12 DEBIDA A DEFICIENCIA DEL FACTOR INTRÍNSECO" },
+  { code: "D51.1", description: "ANEMIA POR DEFICIENCIA DE VITAMINA B12 DEBIDA A MALA ABSORCIÓN SELECTIVA DE VITAMINA B12 CON PROTEINURIA" },
+  { code: "D51.2", description: "DEFICIENCIA DE TRASCOBALAMINA II" },
+  { code: "D51.3", description: "OTRAS ANEMIAS POR DEFICIENCIA DIETÉTICA DE VITAMINA B12" },
+  { code: "D51.8", description: "OTRAS ANEMIAS POR DEFICIENCIA DE VITAMINA B12" },
+  { code: "D51.9", description: "ANEMIA POR DEFICIENCIA DE VITAMINA B12, SIN OTRA ESPECIFICACIÓN" },
+  { code: "D52.0", description: "ANEMIA POR DEFICIENCIA DIETÉTICA DE FOLATOS" },
+  { code: "D52.1", description: "ANEMIA POR DEFICIENCIA DE FOLATOS INDUCIDA POR DROGAS" },
+  { code: "D52.8", description: "OTRAS ANEMIAS POR DEFICIENCIA DE FOLATOS" },
+  { code: "D52.9", description: "ANEMIA POR DEFICIENCIA DE FOLATOS, SIN OTRA ESPECIFICACIÓN" },
+  { code: "D53.0", description: "ANEMIA POR DEFICIENCIA DE PROTEÍNAS" },
+  { code: "D53.1", description: "OTRAS ANEMIAS MEGALOBLÁSTICAS, NO CLASIFICADAS EN OTRA PARTE" },
+  { code: "D53.2", description: "ANEMIA ESCORBÚTICA" },
+  { code: "D53.8", description: "OTRAS ANEMIAS NUTRICIONALES ESPECIFICADAS" },
+  { code: "D53.9", description: "ANEMIA NUTRICIONAL, NO ESPECIFICADA" },
+  { code: "D55.0", description: "ANEMIA DEBIDA A DEFICIENCIA DE GLUCOSA-6-FOSFATO DESHIDROGENASA [G6FD]" },
+  { code: "D55.1", description: "ANEMIA DEBIDA A OTROS TRASTORNOS DEL METABOLISMO DEL GLUTATIÓN" },
+  { code: "D55.2", description: "ANEMIA DEBIDA A TRASTORNOS DE LAS ENZIMAS GLUCOLÍTICAS" },
+  { code: "D55.3", description: "ANEMIA DEBIDA A TRASTORNOS DEL METABOLISMO DE LOS NUCLEÓTIDOS" },
+  { code: "D55.8", description: "OTRAS ANEMIAS DEBIDAS A TRASTORNOS ENZIMÁTICOS" },
+  { code: "D55.9", description: "ANEMIA DEBIDA A TRASTORNOS ENZIMÁTICOS, SIN OTRA ESPECIFICACIÓN" },
+  { code: "D56.0", description: "ALFA TALASEMIA" },
+  { code: "D56.1", description: "BETA TALASEMIA" },
+  { code: "D56.2", description: "DELTA-BETA TALASEMIA" },
+  { code: "D56.3", description: "RASGO TALASÉMICO" },
+  { code: "D56.4", description: "PERSISTENCIA HEREDITARIA DE LA HEMOGLOBINA FETAL [PHHF]" },
+  { code: "D56.8", description: "OTRAS TALASEMIAS" },
+  { code: "D56.9", description: "TALASEMIA, NO ESPECIFICADA" },
+  { code: "D57.0", description: "ANEMIA FALCIFORME CON CRISIS" },
+  { code: "D57.1", description: "ANEMIA FALCIFORME SIN CRISIS" },
+  { code: "D57.2", description: "TRASTORNOS FALCIFORMES HETEROCIGOTOS DOBLES" },
+  { code: "D57.3", description: "RASGO DREPANOCÍTICO" },
+  { code: "D57.8", description: "OTROS TRASTORNOS FALCIFORMES" },
+  { code: "D58.0", description: "ESFEROCITOSIS HEREDITARIA" },
+  { code: "D58.1", description: "ELIPTOCITOSIS HEREDITARIA" },
+  { code: "D58.2", description: "OTRAS HEMOGLOBINOPATÍAS" },
+  { code: "D58.8", description: "OTRAS ANEMIAS HEMOLÍTICAS HEREDITARIAS ESPECIFICADAS" },
+  { code: "D58.9", description: "ANEMIA HEMOLÍTICA HEREDITARIA, SIN OTRA ESPECIFICACIÓN" },
+  { code: "D59.0", description: "ANEMIA HEMOLÍTICA AUTOINMUNE INDUCIDA POR DROGAS" },
+  { code: "D59.1", description: "OTRAS ANEMIAS HEMOLÍTICAS AUTOINMUNES" },
+  { code: "D59.2", description: "ANEMIA HEMOLÍTICA NO AUTOINMUNE INDUCIDA POR DROGAS" }
+
 ];
 
 // ==========================================
-// PACIENTE DE DEMOSTRACIÓN INICIAL
+// PACIENTE DE DEMOSTRACIÓN (Extraído de tus imágenes)
 // ==========================================
 const INITIAL_PATIENTS = [
   {
@@ -114,6 +3634,7 @@ const INITIAL_PATIENTS = [
     alergias: "NO",
     operaciones: "NO",
     app: "NO",
+    // Examen Físico
     fc: "61",
     fr: "20",
     ta: "100/70",
@@ -123,9 +3644,11 @@ const INITIAL_PATIENTS = [
     torax: "NORMOCONFIGURADO MV CONSERVADO EN AMBOS CAMPOS PULMONARES NO SE AUSCULTAN ESTERTORES",
     abdomen: "GLOBOSO DEPRESIBLE RHA PRESENTES NORMOACTIVOS DOLOR LEVE EN HEMIABDOMEN INFERIOR, PARTE POSTERIOR DOLOR EN REGION LUMBAR SOBRE TOO A LOS ESFUERZOS, SE NOTA DEFORMIDAD VERTEBRAL",
     extremidades: "MIEMBROS INFERIORES TONO Y TROFISMO CONSERVADO SENSIBILIDAD TACTIL Y DOLORROSA SIN ALTERACION FUERZA MUSCULAR SIN ALTERACION ARTICULACION DE LAS RODILLAS DERECHA NO DOLOROSO A LA PALPACION NO CRUJIDO ARTICULAR A LA MOVILIZACION NO EDEMA LEVE DOLOR A LA FLEXOEXTENSION MAYORMENTE A LA EXTENSION MARCHA CON LIMITACION POR DOLOR LA RODILLA IZQUIERDA SIN ALTERACION",
+    // Diagnóstico & Tratamiento
     diagnostico: "M23.8 - OTROS TRASTORNOS INTERNOS DE LA RODILLA (LESION DE LIGAMENTOS COLATERALES/CRUZADOS)",
     tratamiento: "FISIOTERAPIA",
     complementarios: "ESTUDIOS RADIOGRÁFICOS DE RODILLA IZQUIERDA Y COLUMNA LUMBAR. EVALUACIÓN REUMATOLÓGICA SUGERIDA.",
+    // Notas de Seguimiento
     seguimientos: [
       { id: "s1", fecha: "2026-05-10", nota: "Inicia primera sesión de fisioterapia analgésica. Tolerancia adecuada al ejercicio terapéutico pasivo." },
       { id: "s2", fecha: "2026-05-24", nota: "Se observa leve aumento del rango articular a la flexión de la rodilla izquierda. Dolor lumbar persiste tras esfuerzos físicos medianos." }
@@ -133,6 +3656,7 @@ const INITIAL_PATIENTS = [
   }
 ];
 
+// --- FUNCIONES AUXILIARES PARA EL FORMATEO DE FECHAS LOCALES ---
 const formatLongDate = (dateStr) => {
   if (!dateStr) return "No registrado";
   const parts = dateStr.split('-');
@@ -153,24 +3677,57 @@ const formatShortDate = (dateStr) => {
   return dateStr;
 };
 
+// Componente de Icono SVG personalizado
 const SVGIcon = ({ name, className = "w-5 h-5" }) => {
   const icons = {
-    calendar: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
-    heart: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />,
-    activity: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />,
-    thermometer: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6a3 3 0 016 0v13M9 19a3 3 0 11-6 0M9 19h6m0 0a3 3 0 116 0" />,
-    gauge: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />,
-    search: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />,
-    plus: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />,
-    printer: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4H7v4a2 2 0 002 2zM9 9h6V5a2 2 0 00-2-2H11a2 2 0 00-2 2v4z" />,
-    edit: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />,
-    trash: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />,
-    save: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />,
-    download: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />,
-    upload: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />,
-    user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
-    folder: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />,
-    info: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    calendar: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    ),
+    heart: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+    ),
+    activity: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    ),
+    thermometer: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6a3 3 0 016 0v13M9 19a3 3 0 11-6 0M9 19h6m0 0a3 3 0 116 0" />
+    ),
+    gauge: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    ),
+    search: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    ),
+    plus: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+    ),
+    printer: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4H7v4a2 2 0 002 2zM9 9h6V5a2 2 0 00-2-2H11a2 2 0 00-2 2v4z" />
+    ),
+    edit: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    ),
+    trash: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    ),
+    save: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+    ),
+    download: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+    ),
+    upload: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+    ),
+    user: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    ),
+    folder: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+    ),
+    info: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    )
   };
 
   return (
@@ -181,6 +3738,7 @@ const SVGIcon = ({ name, className = "w-5 h-5" }) => {
 };
 
 export default function App() {
+  // --- ESTADOS PRINCIPALES ---
   const [patients, setPatients] = useState(() => {
     const saved = localStorage.getItem('hc_rehab_patients');
     return saved ? JSON.parse(saved) : INITIAL_PATIENTS;
@@ -191,19 +3749,29 @@ export default function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   
+  // Tab activa en el visualizador de historias clínicas
   const [activeTab, setActiveTab] = useState("personales");
+
+  // Estado del Formulario
   const [formData, setFormData] = useState(null);
   
+  // Estado de Notas de Seguimiento rápidas
   const [newFollowUpDate, setNewFollowUpDate] = useState(new Date().toISOString().split('T')[0]);
   const [newFollowUpText, setNewFollowUpText] = useState("");
 
+  // Estado para el buscador y autocompletado CIE-10
   const [showCieSuggestions, setShowCieSuggestions] = useState(false);
 
+  // Control de alertas modal personalizadas
   const [modalAlert, setModalAlert] = useState(null);
+
+  // Control de confirmación personalizado de eliminación
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: "" });
 
+  // Referencia para la carga de archivos
   const fileInputRef = useRef(null);
 
+  // Cargar de manera asíncrona la herramienta para exportar a Excel
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
@@ -211,6 +3779,7 @@ export default function App() {
     document.body.appendChild(script);
   }, []);
 
+  // Guardar en LocalStorage automáticamente ante cambios
   useEffect(() => {
     localStorage.setItem('hc_rehab_patients', JSON.stringify(patients));
   }, [patients]);
@@ -221,32 +3790,32 @@ export default function App() {
 
   const selectedPatient = patients.find(p => p.id === selectedPatientId) || patients[0] || null;
 
+  // --- BUSCADOR ---
   const filteredPatients = patients.filter(p => 
     p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (p.diagnostico && p.diagnostico.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (p.cedulaIdentidad && p.cedulaIdentidad.includes(searchTerm))
   );
 
-  const normalizeText = (str) => {
-    if (!str) return "";
-    return str.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  };
-
+  // --- FILTRO SUGERENCIAS CIE-10 ---
   const getCieSuggestions = () => {
-    if (!formData || typeof formData.diagnostico !== 'string') return [];
-    const query = normalizeText(formData.diagnostico).trim();
-    if (query.length === 0) return [];
+    if (!formData || !formData.diagnostico) return [];
+    const searchVal = formData.diagnostico.toLowerCase().trim();
+    if (searchVal === "") return [];
 
-    return CIE10_MASTER_DATABASE.filter(item => {
-      const codeNorm = normalizeText(item.code);
-      const descNorm = normalizeText(item.description);
-      return codeNorm.includes(query) || descNorm.includes(query);
-    }).slice(0, 20);
+    // Filtrar por código o por descripción
+    return CIE10_DATABASE.filter(item => 
+      item.code.toLowerCase().includes(searchVal) || 
+      item.description.toLowerCase().includes(searchVal)
+    ).slice(0, 10); // Más sugerencias en tiempo real
   };
 
   const cieSuggestions = getCieSuggestions();
 
-  const handlePrint = () => { window.print(); };
+  // --- IMPRESIÓN Y COPIAS DE SEGURIDAD ---
+  const handlePrint = () => {
+    window.print();
+  };
 
   const handleExportData = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(patients, null, 2));
@@ -259,21 +3828,26 @@ export default function App() {
     showAlert("Respaldo JSON", "La copia de seguridad JSON se descargó con éxito.", "success");
   };
 
-  const handleImportClick = () => { fileInputRef.current?.click(); };
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
 
   const handleImportData = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target.result);
         if (Array.isArray(parsed)) {
           setPatients(parsed);
-          if (parsed.length > 0) setSelectedPatientId(parsed[0].id);
-          showAlert("Importación Exitosa", `Se han cargado ${parsed.length} historias clínicas.`, "success");
+          if (parsed.length > 0) {
+            setSelectedPatientId(parsed[0].id);
+          }
+          showAlert("Importación Exitosa", `Se han cargado ${parsed.length} historias clínicas al sistema.`, "success");
         } else {
-          showAlert("Archivo Inválido", "El formato no es válido.", "error");
+          showAlert("Archivo Inválido", "El formato del archivo cargado no es una base de datos de pacientes válida.", "error");
         }
       } catch (err) {
         showAlert("Error al Cargar", "No se pudo descifrar el archivo JSON.", "error");
@@ -283,11 +3857,13 @@ export default function App() {
     e.target.value = "";
   };
 
+  // --- EXPORTAR A EXCEL DIRECTO ---
   const handleExportExcel = () => {
     if (!window.XLSX) {
-      showAlert("Cargando Motor", "El procesador de Excel se está cargando, inténtelo de nuevo en 3 segundos.", "info");
+      showAlert("Cargando Motor", "El procesador de Excel se está cargando de fondo, inténtelo de nuevo en 3 segundos.", "info");
       return;
     }
+
     try {
       const flatData = patients.map(p => ({
         "Fecha de Registro": p.fechaRegistro || "S/R",
@@ -300,22 +3876,50 @@ export default function App() {
         "Dirección": p.direccion,
         "Teléfono": p.telefono,
         "Ocupación": p.ocupacion,
+        "Motivo / Medicación Actual": p.medicacionActual,
+        "Alergias": p.alergias,
+        "Operaciones": p.operaciones,
+        "Antecedentes Personales (APP)": p.app,
+        "FC (lpm)": p.fc,
+        "FR (rpm)": p.fr,
+        "Presión Arterial": p.ta,
+        "Temperatura (°C)": p.temperatura,
+        "Saturación O2 (%)": p.so2,
+        "Examen Físico Cabeza": p.cabeza,
+        "Examen Físico Tórax": p.torax,
+        "Examen Físico Abdomen": p.abdomen,
+        "Examen Físico Extremidades": p.extremidades,
         "Diagnóstico Principal (CIE-10)": p.diagnostico,
-        "Esquema de Tratamiento": p.tratamiento
+        "Esquema de Tratamiento": p.tratamiento,
+        "Estudios Complementarios": p.complementarios,
+        "Nro de Evoluciones": p.seguimientos ? p.seguimientos.length : 0
       }));
+
       const ws = window.XLSX.utils.json_to_sheet(flatData);
       const wb = window.XLSX.utils.book_new();
       window.XLSX.utils.book_append_sheet(wb, ws, "Historias Clínicas");
-      window.XLSX.writeFile(wb, `Fichas_Medicas_${new Date().toISOString().split('T')[0]}.xlsx`);
-      showAlert("Excel Descargado", "Archivo exportado con éxito.", "success");
+      
+      // Ajustar anchos de columnas automático
+      const maxW = flatData.reduce((acc, row) => {
+        Object.keys(row).forEach((key, i) => {
+          const v = row[key] ? row[key].toString() : "";
+          acc[i] = Math.max(acc[i] || 12, v.length + 3, key.length + 3);
+        });
+        return acc;
+      }, []);
+      ws['!cols'] = maxW.map(w => ({ wh: w }));
+
+      window.XLSX.writeFile(wb, `Fichas_Medicas_CRI_Monteagudo_${new Date().toISOString().split('T')[0]}.xlsx`);
+      showAlert("Excel Descargado", "Todas las historias clínicas se han descargado con éxito.", "success");
     } catch (error) {
-      showAlert("Error al Exportar", "Ocurrió un error al generar Excel.", "error");
+      showAlert("Error al Exportar", "Ocurrió un error inesperado al generar el archivo Excel.", "error");
     }
   };
 
+  // --- MANIPULACIÓN DE FORMULARIO ---
   const handleStartCreate = () => {
     setFormData({
-      fechaRegistro: new Date().toISOString().split('T')[0],
+      fechaRegistro: new Date().toISOString().split('T')[0], // Por defecto, hoy
       nombre: "",
       fechaNacimiento: "",
       edad: "",
@@ -363,12 +3967,16 @@ export default function App() {
     const { name, value } = e.target;
     setFormData(prev => {
       const updated = { ...prev, [name]: value };
+      
+      // Auto-calcular edad basada en fecha de nacimiento si es posible
       if (name === "fechaNacimiento" && value) {
         const birthDate = new Date(value);
         const today = new Date();
         let age = today.getFullYear() - birthDate.getFullYear();
         const m = today.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
         updated.edad = isNaN(age) ? "" : age.toString();
       }
       return updated;
@@ -379,6 +3987,7 @@ export default function App() {
     }
   };
 
+  // Autocompletar con la sugerencia seleccionada
   const handleSelectCie = (cieItem) => {
     setFormData(prev => ({
       ...prev,
@@ -403,7 +4012,7 @@ export default function App() {
       setPatients(prev => [newPatient, ...prev]);
       setSelectedPatientId(newPatient.id);
       setIsCreating(false);
-      showAlert("Paciente Registrado", `La historia clínica ha sido creada con éxito.`, "success");
+      showAlert("Paciente Registrado", `La historia clínica de ${newPatient.nombre} ha sido creada con éxito.`, "success");
     } else if (isEditing) {
       setPatients(prev => prev.map(p => p.id === formData.id ? { ...formData } : p));
       setIsEditing(false);
@@ -411,6 +4020,7 @@ export default function App() {
     }
   };
 
+  // Reemplazo sin alert ni confirm para borrado
   const triggerDeleteConfirm = (id, nombre) => {
     setDeleteConfirm({ show: true, id, name: nombre });
   };
@@ -419,12 +4029,16 @@ export default function App() {
     const targetId = deleteConfirm.id;
     const updatedList = patients.filter(p => p.id !== targetId);
     setPatients(updatedList);
-    if (updatedList.length > 0) setSelectedPatientId(updatedList[0].id);
-    else setSelectedPatientId(null);
+    if (updatedList.length > 0) {
+      setSelectedPatientId(updatedList[0].id);
+    } else {
+      setSelectedPatientId(null);
+    }
     setDeleteConfirm({ show: false, id: null, name: "" });
-    showAlert("Paciente Eliminado", "La ficha médica fue eliminada.", "info");
+    showAlert("Paciente Eliminado", "La ficha médica fue eliminada del sistema.", "info");
   };
 
+  // --- GESTIÓN DE SEGUIMIENTOS ---
   const handleAddFollowUp = (e) => {
     e.preventDefault();
     if (!newFollowUpText.trim()) return;
@@ -437,19 +4051,25 @@ export default function App() {
 
     setPatients(prev => prev.map(p => {
       if (p.id === selectedPatientId) {
-        return { ...p, seguimientos: [newNote, ...(p.seguimientos || [])] };
+        return {
+          ...p,
+          seguimientos: [newNote, ...(p.seguimientos || [])]
+        };
       }
       return p;
     }));
 
     setNewFollowUpText("");
-    showAlert("Seguimiento Añadido", "Se agregó una nueva evolución médica.", "success");
+    showAlert("Seguimiento Añadido", "Se agregó una nueva evolución médica al paciente.", "success");
   };
 
   const handleDeleteFollowUp = (patientId, noteId) => {
     setPatients(prev => prev.map(p => {
       if (p.id === patientId) {
-        return { ...p, seguimientos: p.seguimientos.filter(s => s.id !== noteId) };
+        return {
+          ...p,
+          seguimientos: p.seguimientos.filter(s => s.id !== noteId)
+        };
       }
       return p;
     }));
@@ -457,6 +4077,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased flex flex-col">
+      {/* ==========================================
+          HEADER PRINCIPAL (Invisible al imprimir)
+          ========================================== */}
       <header className="bg-gradient-to-r from-teal-700 via-cyan-700 to-blue-800 text-white shadow-lg print:hidden">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="flex items-center space-x-3">
@@ -470,36 +4093,34 @@ export default function App() {
               <p className="text-xs text-cyan-100 font-medium">SISTEMA INTEGRAL DE HISTORIAS CLÍNICAS MÉDICAS</p>
             </div>
           </div>
-
-          <div className="flex items-center space-x-2">
-            <input type="file" ref={fileInputRef} onChange={handleImportData} accept=".json" className="hidden" />
-            <button onClick={handleImportClick} className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition border border-white/20">
-              Importar
-            </button>
-            <button onClick={handleExportData} className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition border border-white/20">
-              JSON
-            </button>
-            <button onClick={handleExportExcel} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-md">
-              Excel
-            </button>
-          </div>
         </div>
       </header>
 
+      {/* ==========================================
+          CUERPO DE TRABAJO (Invisible al imprimir)
+          ========================================== */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-6 print:hidden">
+        
+        {/* PANEL IZQUIERDO: Búsqueda y Lista de Pacientes */}
         <section className="lg:col-span-4 flex flex-col space-y-4">
+          
+          {/* Panel de estadísticas express */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex justify-between items-center">
             <div>
               <span className="text-xs text-slate-400 font-semibold tracking-wider block uppercase">Historias de Pacientes</span>
               <span className="text-2xl font-bold text-teal-700">{patients.length}</span>
               <span className="text-[10px] text-emerald-600 block font-semibold">● Base de Datos Conectada</span>
             </div>
-            <button onClick={handleStartCreate} className="flex items-center space-x-2 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md transition">
+            <button 
+              onClick={handleStartCreate}
+              className="flex items-center space-x-2 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-cyan-600/10 transition transform active:scale-95"
+            >
               <SVGIcon name="plus" className="w-4 h-4" />
               <span>Nueva Historia</span>
             </button>
           </div>
 
+          {/* Buscador */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-3">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Búsqueda rápida</label>
             <div className="relative">
@@ -516,11 +4137,15 @@ export default function App() {
             </div>
           </div>
 
+          {/* Listado de Pacientes */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex-1 flex flex-col min-h-[400px]">
             <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
               <h2 className="text-sm font-bold text-slate-600 uppercase tracking-wider">Historial Clínico</h2>
-              <span className="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-bold">{filteredPatients.length}</span>
+              <span className="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-bold">
+                {filteredPatients.length}
+              </span>
             </div>
+            
             <div className="divide-y divide-slate-100 overflow-y-auto max-h-[50vh] lg:max-h-[60vh] flex-1">
               {filteredPatients.length === 0 ? (
                 <div className="p-8 text-center text-slate-400">
@@ -531,21 +4156,44 @@ export default function App() {
                 filteredPatients.map((patient) => (
                   <div
                     key={patient.id}
-                    onClick={() => { setSelectedPatientId(patient.id); setIsEditing(false); setIsCreating(false); }}
-                    className={`p-4 cursor-pointer transition flex justify-between items-start ${selectedPatientId === patient.id ? 'bg-gradient-to-r from-teal-50/50 to-cyan-50/20 border-l-4 border-teal-600' : 'hover:bg-slate-50'}`}
+                    onClick={() => {
+                      setSelectedPatientId(patient.id);
+                      setIsEditing(false);
+                      setIsCreating(false);
+                    }}
+                    className={`p-4 cursor-pointer transition flex justify-between items-start ${
+                      selectedPatientId === patient.id 
+                        ? 'bg-gradient-to-r from-teal-50/50 to-cyan-50/20 border-l-4 border-teal-600' 
+                        : 'hover:bg-slate-50'
+                    }`}
                   >
                     <div className="space-y-1">
-                      <h3 className="font-semibold text-slate-800 text-sm leading-snug uppercase">{patient.nombre}</h3>
+                      <h3 className="font-semibold text-slate-800 text-sm leading-snug uppercase">
+                        {patient.nombre}
+                      </h3>
                       <div className="flex items-center space-x-2 text-xs text-slate-400">
                         <span>C.I. {patient.cedulaIdentidad || "S/N"}</span>
                         <span>•</span>
                         <span>{patient.edad} años</span>
+                        <span>•</span>
+                        <span className="capitalize">{patient.sexo.toLowerCase()}</span>
                       </div>
                       {patient.diagnostico && (
-                        <p className="text-xs text-teal-700 font-medium line-clamp-1 italic mt-1">{patient.diagnostico}</p>
+                        <p className="text-xs text-teal-700 font-medium line-clamp-1 italic mt-1">
+                          {patient.diagnostico}
+                        </p>
                       )}
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); triggerDeleteConfirm(patient.id, patient.nombre); }} className="text-slate-300 hover:text-rose-500 p-1 rounded-lg transition">
+                    
+                    {/* Acción de borrado */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        triggerDeleteConfirm(patient.id, patient.nombre);
+                      }}
+                      className="text-slate-300 hover:text-rose-500 p-1 rounded-lg transition"
+                      title="Eliminar historia clínica"
+                    >
                       <SVGIcon name="trash" className="w-4 h-4" />
                     </button>
                   </div>
@@ -553,174 +4201,360 @@ export default function App() {
               )}
             </div>
           </div>
+
         </section>
 
+        {/* PANEL DERECHO: Visualización, Formulario de Creación / Edición */}
         <section className="lg:col-span-8 flex flex-col space-y-4">
+          
+          {/* MODO FORMULARIO: Crear o Editar */}
           {isCreating || isEditing ? (
             <form onSubmit={handleSave} className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
               <div className="px-6 py-4 bg-gradient-to-r from-teal-800 to-cyan-800 text-white flex justify-between items-center">
                 <div>
-                  <h2 className="text-lg font-bold">{isCreating ? "📝 Nueva Historia Clínica" : `✏️ Editando: ${formData.nombre}`}</h2>
+                  <h2 className="text-lg font-bold">
+                    {isCreating ? "📝 Nueva Historia Clínica" : `✏️ Editando: ${formData.nombre}`}
+                  </h2>
                   <p className="text-xs text-cyan-100">Por favor, rellene los campos correspondientes</p>
                 </div>
                 <div className="flex space-x-2">
-                  <button type="button" onClick={() => { setIsCreating(false); setIsEditing(false); }} className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-xs font-semibold transition">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCreating(false);
+                      setIsEditing(false);
+                    }}
+                    className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-xs font-semibold transition"
+                  >
                     Cancelar
                   </button>
-                  <button type="submit" className="bg-cyan-500 hover:bg-cyan-600 text-white px-5 py-2 rounded-xl text-xs font-bold transition shadow-lg">
+                  <button
+                    type="submit"
+                    className="bg-cyan-500 hover:bg-cyan-600 text-white px-5 py-2 rounded-xl text-xs font-bold transition shadow-lg shadow-cyan-500/20"
+                  >
                     Guardar Ficha
                   </button>
                 </div>
               </div>
 
               <div className="p-6 space-y-8 max-h-[75vh] overflow-y-auto">
+                
+                {/* 1. Datos Personales */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-teal-700 uppercase tracking-widest border-b border-teal-100 pb-2">1. Datos Personales del Paciente</h3>
+                  <h3 className="text-xs font-bold text-teal-700 uppercase tracking-widest border-b border-teal-100 pb-2">
+                    1. Datos Personales del Paciente
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    
+                    {/* FECHA DE REGISTRO */}
                     <div>
                       <label className="text-xs font-semibold text-teal-600 mb-1 block">Fecha de Registro *</label>
-                      <input type="date" name="fechaRegistro" required value={formData.fechaRegistro} onChange={handleFormChange} className="w-full bg-teal-50/50 border border-teal-200/60 rounded-xl px-3 py-2 text-sm font-bold text-teal-950" />
+                      <input
+                        type="date"
+                        name="fechaRegistro"
+                        required
+                        value={formData.fechaRegistro}
+                        onChange={handleFormChange}
+                        className="w-full bg-teal-50/50 border border-teal-200/60 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 font-bold text-teal-950 transition"
+                      />
                     </div>
+
                     <div className="md:col-span-2">
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Nombre Completo *</label>
-                      <input type="text" name="nombre" required value={formData.nombre} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm uppercase" />
+                      <input
+                        type="text"
+                        name="nombre"
+                        required
+                        value={formData.nombre}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
+                      />
                     </div>
+                    
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Sexo</label>
-                      <select name="sexo" value={formData.sexo} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                      <select
+                        name="sexo"
+                        value={formData.sexo}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                      >
                         <option value="MASCULINO">MASCULINO</option>
                         <option value="FEMENINO">FEMENINO</option>
                         <option value="OTRO">OTRO</option>
                       </select>
                     </div>
+
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Fecha de Nacimiento</label>
-                      <input type="date" name="fechaNacimiento" value={formData.fechaNacimiento} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                      <input
+                        type="date"
+                        name="fechaNacimiento"
+                        value={formData.fechaNacimiento}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                      />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Edad (Años)</label>
-                      <input type="number" name="edad" value={formData.edad} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                      <input
+                        type="number"
+                        name="edad"
+                        value={formData.edad}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                      />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Cédula de Identidad (C.I.)</label>
-                      <input type="text" name="cedulaIdentidad" value={formData.cedulaIdentidad} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                      <input
+                        type="text"
+                        name="cedulaIdentidad"
+                        value={formData.cedulaIdentidad}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                      />
                     </div>
+
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Carnet Discapacidad</label>
-                      <input type="text" name="carnetDiscapacidad" value={formData.carnetDiscapacidad} onChange={handleFormChange} placeholder="NO / Sí" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                      <input
+                        type="text"
+                        name="carnetDiscapacidad"
+                        value={formData.carnetDiscapacidad}
+                        onChange={handleFormChange}
+                        placeholder="NO / Sí (Grado %)"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                      />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Teléfono</label>
-                      <input type="text" name="telefono" value={formData.telefono} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                      <input
+                        type="text"
+                        name="telefono"
+                        value={formData.telefono}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                      />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Ocupación</label>
-                      <input type="text" name="ocupacion" value={formData.ocupacion} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm uppercase" />
+                      <input
+                        type="text"
+                        name="ocupacion"
+                        value={formData.ocupacion}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
+                      />
                     </div>
+
                     <div className="md:col-span-3">
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Dirección Domiciliaria</label>
-                      <input type="text" name="direccion" value={formData.direccion} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm uppercase" />
+                      <input
+                        type="text"
+                        name="direccion"
+                        value={formData.direccion}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
+                      />
                     </div>
                   </div>
                 </div>
 
+                {/* 2. Antecedentes & Patología */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-teal-700 uppercase tracking-widest border-b border-teal-100 pb-2">2. Clínica, Antecedentes & Alergias</h3>
+                  <h3 className="text-xs font-bold text-teal-700 uppercase tracking-widest border-b border-teal-100 pb-2">
+                    2. Clínica, Antecedentes & Alergias
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Motivo de consulta / Medicación Actual / Accidentes</label>
-                      <textarea name="medicacionActual" rows="3" value={formData.medicacionActual} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm uppercase" />
+                      <textarea
+                        name="medicacionActual"
+                        rows="3"
+                        value={formData.medicacionActual}
+                        onChange={handleFormChange}
+                        placeholder="Ej: Caídas, traumatismos previos, medicación recetada recientemente..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
+                      />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Alergias Conocidas</label>
-                      <input type="text" name="alergias" value={formData.alergias} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm uppercase" />
+                      <input
+                        type="text"
+                        name="alergias"
+                        value={formData.alergias}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
+                      />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Cirugías / Operaciones Previas</label>
-                      <input type="text" name="operaciones" value={formData.operaciones} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm uppercase" />
+                      <input
+                        type="text"
+                        name="operaciones"
+                        value={formData.operaciones}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
+                      />
                     </div>
                     <div className="md:col-span-2">
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Antecedentes Personales Patológicos (APP)</label>
-                      <input type="text" name="app" value={formData.app} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm uppercase" />
+                      <input
+                        type="text"
+                        name="app"
+                        value={formData.app}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
+                      />
                     </div>
                   </div>
                 </div>
 
+                {/* 3. Examen Físico */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-teal-700 uppercase tracking-widest border-b border-teal-100 pb-2">3. Examen Físico & Signos Vitales</h3>
+                  <h3 className="text-xs font-bold text-teal-700 uppercase tracking-widest border-b border-teal-100 pb-2">
+                    3. Examen Físico & Signos Vitales
+                  </h3>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Frec. Cardíaca (FC)</label>
-                      <input type="text" name="fc" value={formData.fc} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-center font-bold" />
+                      <input
+                        type="text"
+                        name="fc"
+                        placeholder="e.g. 72 lpm"
+                        value={formData.fc}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-center font-bold focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                      />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Frec. Resp. (FR)</label>
-                      <input type="text" name="fr" value={formData.fr} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-center font-bold" />
+                      <input
+                        type="text"
+                        name="fr"
+                        placeholder="e.g. 18 rpm"
+                        value={formData.fr}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-center font-bold focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                      />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Tensión Art. (TA)</label>
-                      <input type="text" name="ta" value={formData.ta} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-center font-bold" />
+                      <input
+                        type="text"
+                        name="ta"
+                        placeholder="e.g. 120/80"
+                        value={formData.ta}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-center font-bold focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                      />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Temperatura (°C)</label>
-                      <input type="text" name="temperatura" value={formData.temperatura} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-center font-bold" />
+                      <input
+                        type="text"
+                        name="temperatura"
+                        placeholder="e.g. 36.5"
+                        value={formData.temperatura}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-center font-bold focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                      />
                     </div>
                     <div className="col-span-2 md:col-span-1">
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Saturación (SO2 %)</label>
-                      <input type="text" name="so2" value={formData.so2} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-center font-bold" />
+                      <input
+                        type="text"
+                        name="so2"
+                        placeholder="e.g. 98"
+                        value={formData.so2}
+                        onChange={handleFormChange}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-center font-bold focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                      />
                     </div>
                   </div>
+
                   <div className="space-y-3">
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Evaluación de Cabeza</label>
-                      <textarea name="cabeza" rows="2" value={formData.cabeza} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm uppercase" />
+                      <textarea
+                        name="cabeza"
+                        rows="2"
+                        value={formData.cabeza}
+                        onChange={handleFormChange}
+                        placeholder="Craneo, pupilas, mucosas, reflejos..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
+                      />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Evaluación de Tórax</label>
-                      <textarea name="torax" rows="2" value={formData.torax} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm uppercase" />
+                      <textarea
+                        name="torax"
+                        rows="2"
+                        value={formData.torax}
+                        onChange={handleFormChange}
+                        placeholder="Campos pulmonares, ruidos cardiacos..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
+                      />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Evaluación de Abdomen</label>
-                      <textarea name="abdomen" rows="2" value={formData.abdomen} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm uppercase" />
+                      <textarea
+                        name="abdomen"
+                        rows="2"
+                        value={formData.abdomen}
+                        onChange={handleFormChange}
+                        placeholder="Simetría, ruidos hidroaéreos, dolores específicos..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
+                      />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-slate-500 mb-1 block">Evaluación de Extremidades</label>
-                      <textarea name="extremidades" rows="3" value={formData.extremidades} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm uppercase" />
+                      <label className="text-xs font-semibold text-slate-500 mb-1 block">Evaluación de Extremidades (Foco rehabilitación)</label>
+                      <textarea
+                        name="extremidades"
+                        rows="3"
+                        value={formData.extremidades}
+                        onChange={handleFormChange}
+                        placeholder="Miembros superiores/inferiores, arcos de movimiento, fuerza muscular, reflejos tendinosos..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
+                      />
                     </div>
                   </div>
                 </div>
 
+                {/* 4. Diagnóstico y Tratamiento */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-teal-700 uppercase tracking-widest border-b border-teal-100 pb-2">4. Diagnóstico, Tratamiento y Exámenes Complementarios</h3>
+                  <h3 className="text-xs font-bold text-teal-700 uppercase tracking-widest border-b border-teal-100 pb-2">
+                    4. Diagnóstico, Tratamiento y Exámenes Complementarios
+                  </h3>
                   <div className="space-y-3">
                     
-                    {/* SECCIÓN 4: CAMPO DE DIAGNÓSTICO PRINCIPAL */}
+                    {/* DIAGNÓSTICO PRINCIPAL CON AUTOCOMPLETADO CIE-10 */}
                     <div className="relative">
-                      <label className="text-xs font-semibold text-teal-700 mb-1 flex justify-between items-center">
-                        <span>Diagnóstico Principal (CIE-10 / Descripción) *</span>
-                        <span className="text-[10px] text-emerald-600 font-bold">Catálogo activo ({CIE10_MASTER_DATABASE.length} registros)</span>
+                      <label className="text-xs font-semibold text-teal-700 mb-1 block">
+                        Diagnóstico Principal (CIE-10 / Descripción) *
                       </label>
                       <input
                         type="text"
                         name="diagnostico"
                         required
-                        value={formData.diagnostico || ""}
+                        value={formData.diagnostico}
                         onChange={handleFormChange}
                         onFocus={() => setShowCieSuggestions(true)}
-                        onBlur={() => setTimeout(() => setShowCieSuggestions(false), 300)}
-                        placeholder="Escriba código (ej. A00, M17) o descripción..."
+                        onBlur={() => setTimeout(() => setShowCieSuggestions(false), 250)}
+                        placeholder="Escriba código o descripción de la afección..."
                         autoComplete="off"
                         className="w-full bg-teal-50/50 border border-teal-200/60 rounded-xl px-3 py-2.5 text-sm font-semibold text-teal-950 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
                       />
                       
-                      {/* DESPLEGABLE TIPO GOOGLE */}
+                      {/* Dropdown flotante con sugerencias del CIE-10 */}
                       {showCieSuggestions && cieSuggestions.length > 0 && (
-                        <div className="absolute z-30 w-full bg-white border border-slate-200 rounded-2xl shadow-2xl mt-1.5 max-h-60 overflow-y-auto divide-y divide-slate-100">
+                        <div className="absolute z-20 w-full bg-white border border-slate-200 rounded-2xl shadow-xl mt-1.5 max-h-60 overflow-y-auto divide-y divide-slate-100">
                           {cieSuggestions.map((item) => (
                             <button
                               key={item.code}
                               type="button"
-                              onMouseDown={() => handleSelectCie(item)}
+                              onClick={() => handleSelectCie(item)}
                               className="w-full text-left px-4 py-2.5 text-xs hover:bg-teal-50 transition flex items-start space-x-2.5"
                             >
                               <span className="font-black text-teal-800 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded text-[10px] uppercase shrink-0">
@@ -735,30 +4569,59 @@ export default function App() {
                       )}
                     </div>
 
+                    {/* TRATAMIENTO COMPLETAMENTE EDITABLE (Vinculación correcta name="tratamiento") */}
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Esquema de Tratamiento Indicado</label>
-                      <textarea name="tratamiento" rows="3" value={formData.tratamiento} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm uppercase" />
+                      <textarea
+                        name="tratamiento"
+                        rows="3"
+                        value={formData.tratamiento}
+                        onChange={handleFormChange}
+                        placeholder="Fisioterapia, analgésicos, pautas ergonómicas..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
+                      />
                     </div>
 
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Exámenes Complementarios y Notas Adicionales</label>
-                      <textarea name="complementarios" rows="2" value={formData.complementarios} onChange={handleFormChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm uppercase" />
+                      <textarea
+                        name="complementarios"
+                        rows="2"
+                        value={formData.complementarios}
+                        onChange={handleFormChange}
+                        placeholder="Radiografías, ecografías, interconsultas necesarias..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition uppercase"
+                      />
                     </div>
                   </div>
                 </div>
               </div>
 
+              {/* Botonera de Envío */}
               <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3">
-                <button type="button" onClick={() => { setIsCreating(false); setIsEditing(false); }} className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-semibold transition">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCreating(false);
+                    setIsEditing(false);
+                  }}
+                  className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-semibold transition"
+                >
                   Cancelar
                 </button>
-                <button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition">
+                <button
+                  type="submit"
+                  className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-teal-700/10 transition"
+                >
                   Confirmar y Guardar
                 </button>
               </div>
             </form>
           ) : selectedPatient ? (
+            /* VISUALIZACIÓN DE LA HISTORIA CLÍNICA SELECCIONADA */
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col flex-1">
+              
+              {/* Encabezado Ficha */}
               <div className="p-6 bg-gradient-to-br from-slate-900 via-slate-800 to-teal-950 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="space-y-2">
                   <div className="flex flex-wrap gap-2 items-center">
@@ -772,28 +4635,43 @@ export default function App() {
                       </span>
                     )}
                   </div>
-                  <h2 className="text-2xl font-black tracking-tight uppercase leading-snug">{selectedPatient.nombre}</h2>
+                  
+                  <h2 className="text-2xl font-black tracking-tight uppercase leading-snug">
+                    {selectedPatient.nombre}
+                  </h2>
                   <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs text-slate-300">
-                    <span>C.I: {selectedPatient.cedulaIdentidad || "S/N"}</span>
+                    <span className="flex items-center space-x-1">
+                      <SVGIcon name="user" className="w-3.5 h-3.5 text-teal-400" />
+                      <span>C.I: {selectedPatient.cedulaIdentidad || "S/N"}</span>
+                    </span>
                     <span>•</span>
                     <span>Edad: {selectedPatient.edad} años</span>
                     <span>•</span>
-                    <span className="bg-white/10 px-2 py-0.5 rounded text-[11px] font-bold">{selectedPatient.sexo}</span>
+                    <span className="bg-white/10 px-2 py-0.5 rounded text-[11px] font-bold">
+                      {selectedPatient.sexo}
+                    </span>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2 self-stretch md:self-auto justify-end">
-                  <button onClick={handlePrint} className="flex items-center space-x-1.5 bg-white/10 hover:bg-white/20 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition border border-white/10">
+                  <button
+                    onClick={handlePrint}
+                    className="flex items-center space-x-1.5 bg-white/10 hover:bg-white/20 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition border border-white/10"
+                  >
                     <SVGIcon name="printer" className="w-4 h-4" />
                     <span>Imprimir Ficha</span>
                   </button>
-                  <button onClick={handleStartEdit} className="flex items-center space-x-1.5 bg-teal-500 hover:bg-teal-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-lg">
+                  <button
+                    onClick={handleStartEdit}
+                    className="flex items-center space-x-1.5 bg-teal-500 hover:bg-teal-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-lg shadow-teal-500/20"
+                  >
                     <SVGIcon name="edit" className="w-4 h-4" />
                     <span>Editar Registro</span>
                   </button>
                 </div>
               </div>
 
+              {/* TABS INTERNAS DE NAVEGACIÓN */}
               <div className="flex border-b border-slate-100 bg-slate-50/50 p-1">
                 {[
                   { id: "personales", label: "📋 Datos Personales" },
@@ -804,24 +4682,35 @@ export default function App() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 py-3 text-xs font-extrabold rounded-xl transition uppercase tracking-wider text-center ${activeTab === tab.id ? "bg-white text-teal-700 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-800"}`}
+                    className={`flex-1 py-3 text-xs font-extrabold rounded-xl transition uppercase tracking-wider text-center ${
+                      activeTab === tab.id
+                        ? "bg-white text-teal-700 shadow-sm border border-slate-200/50"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
                   >
                     {tab.label}
                   </button>
                 ))}
               </div>
 
+              {/* CONTENIDO DE TABS */}
               <div className="p-6 flex-1 overflow-y-auto max-h-[60vh]">
+                
+                {/* Tab 1: Datos Personales */}
                 {activeTab === "personales" && (
                   <div className="space-y-6 animate-fadeIn">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                       <div className="border-b border-slate-50 pb-2">
                         <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block">Fecha de Registro</span>
-                        <span className="text-sm font-bold text-teal-800">{formatLongDate(selectedPatient.fechaRegistro)}</span>
+                        <span className="text-sm font-bold text-teal-800">
+                          {formatLongDate(selectedPatient.fechaRegistro)}
+                        </span>
                       </div>
                       <div className="border-b border-slate-50 pb-2">
                         <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block">Fecha de Nacimiento</span>
-                        <span className="text-sm font-semibold text-slate-800">{formatLongDate(selectedPatient.fechaNacimiento)}</span>
+                        <span className="text-sm font-semibold text-slate-800">
+                          {formatLongDate(selectedPatient.fechaNacimiento)}
+                        </span>
                       </div>
                       <div className="border-b border-slate-50 pb-2">
                         <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block">Discapacidad</span>
@@ -840,21 +4729,47 @@ export default function App() {
                         <span className="text-sm font-semibold text-slate-800 uppercase">{selectedPatient.direccion || "No registrada"}</span>
                       </div>
                     </div>
+
+                    <div className="bg-slate-50 rounded-2xl p-4 space-y-4 border border-slate-100">
+                      <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Historial Clínico de Entrada</h4>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-teal-700 block">Motivo & Cuadro Actual</span>
+                        <p className="text-xs font-medium text-slate-700 leading-relaxed uppercase mt-0.5">
+                          {selectedPatient.medicacionActual || "Ninguno referido."}
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-slate-200/50">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-rose-600 block">Alergias</span>
+                          <span className="text-xs font-semibold text-slate-800 uppercase">{selectedPatient.alergias || "NO"}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">Operaciones</span>
+                          <span className="text-xs font-semibold text-slate-800 uppercase">{selectedPatient.operaciones || "NO"}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">Patologías Previas (APP)</span>
+                          <span className="text-xs font-semibold text-slate-800 uppercase">{selectedPatient.app || "NO"}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
+                {/* Tab 2: Examen Físico */}
                 {activeTab === "clinica" && (
                   <div className="space-y-6 animate-fadeIn">
+                    {/* Tarjetas de Signos Vitales */}
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                       <div className="bg-rose-50/50 border border-rose-100 rounded-2xl p-3 text-center">
                         <span className="flex justify-center text-rose-600 mb-1"><SVGIcon name="heart" /></span>
                         <span className="text-[10px] uppercase tracking-wider text-rose-700 font-bold block">F. Cardíaca</span>
-                        <span className="text-lg font-black text-rose-900">{selectedPatient.fc || "--"} lpm</span>
+                        <span className="text-lg font-black text-rose-900">{selectedPatient.fc || "--"} <span className="text-[10px] font-normal">lpm</span></span>
                       </div>
                       <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-3 text-center">
                         <span className="flex justify-center text-blue-600 mb-1"><SVGIcon name="activity" /></span>
                         <span className="text-[10px] uppercase tracking-wider text-blue-700 font-bold block">F. Resp</span>
-                        <span className="text-lg font-black text-blue-900">{selectedPatient.fr || "--"} rpm</span>
+                        <span className="text-lg font-black text-blue-900">{selectedPatient.fr || "--"} <span className="text-[10px] font-normal">rpm</span></span>
                       </div>
                       <div className="bg-purple-50/50 border border-purple-100 rounded-2xl p-3 text-center">
                         <span className="flex justify-center text-purple-600 mb-1"><SVGIcon name="gauge" /></span>
@@ -864,79 +4779,362 @@ export default function App() {
                       <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-3 text-center">
                         <span className="flex justify-center text-amber-600 mb-1"><SVGIcon name="thermometer" /></span>
                         <span className="text-[10px] uppercase tracking-wider text-amber-700 font-bold block">Temp.</span>
-                        <span className="text-lg font-black text-amber-900">{selectedPatient.temperatura || "--"} °C</span>
+                        <span className="text-lg font-black text-amber-900">{selectedPatient.temperatura || "--"} <span className="text-[10px] font-normal">°C</span></span>
                       </div>
                       <div className="bg-teal-50/50 border border-teal-100 rounded-2xl p-3 text-center col-span-2 sm:col-span-1">
+                        <span className="flex justify-center text-teal-600 mb-1">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </span>
                         <span className="text-[10px] uppercase tracking-wider text-teal-700 font-bold block">Sat. O2</span>
-                        <span className="text-lg font-black text-teal-900">{selectedPatient.so2 || "--"} %</span>
+                        <span className="text-lg font-black text-teal-900">{selectedPatient.so2 || "--"} <span className="text-[10px] font-normal">%</span></span>
                       </div>
+                    </div>
+
+                    {/* Reporte de Exámenes Segmentados */}
+                    <div className="space-y-4">
+                      {["cabeza", "torax", "abdomen", "extremidades"].map((segment) => (
+                        <div key={segment} className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
+                          <span className="text-xs font-black text-teal-800 uppercase block mb-1">
+                            Exploración Física: {segment === "torax" ? "Tórax" : segment}
+                          </span>
+                          <p className="text-xs text-slate-700 leading-relaxed font-medium uppercase">
+                            {selectedPatient[segment] || "Sin observaciones particulares."}
+                          </p>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
 
+                {/* Tab 3: Diagnóstico & Tratamiento */}
                 {activeTab === "diagnostico" && (
                   <div className="space-y-5 animate-fadeIn">
                     <div className="bg-teal-50 border border-teal-100 rounded-2xl p-5">
                       <span className="text-xs font-extrabold text-teal-800 uppercase tracking-wider block mb-1">Diagnóstico Clínico (CIE-10)</span>
-                      <p className="text-base font-black text-teal-950 uppercase">{selectedPatient.diagnostico || "Evaluación pendiente."}</p>
+                      <p className="text-base font-black text-teal-950 uppercase">
+                        {selectedPatient.diagnostico || "Evaluación pendiente."}
+                      </p>
                     </div>
+
                     <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                       <span className="text-xs font-extrabold text-slate-500 uppercase tracking-wider block mb-2">Esquema Terapéutico</span>
-                      <p className="text-sm font-semibold text-slate-800 uppercase leading-relaxed whitespace-pre-wrap">{selectedPatient.tratamiento || "No definido."}</p>
+                      <p className="text-sm font-semibold text-slate-800 uppercase leading-relaxed whitespace-pre-wrap">
+                        {selectedPatient.tratamiento || "No definido."}
+                      </p>
+                    </div>
+
+                    <div className="bg-slate-50 rounded-2xl p-5">
+                      <span className="text-xs font-extrabold text-slate-500 uppercase tracking-wider block mb-2">Exámenes de Apoyo / Notas de Laboratorio</span>
+                      <p className="text-xs font-semibold text-slate-700 uppercase leading-relaxed">
+                        {selectedPatient.complementarios || "No solicitados en consulta."}
+                      </p>
                     </div>
                   </div>
                 )}
 
+                {/* Tab 4: Seguimiento e Historial */}
                 {activeTab === "seguimientos" && (
                   <div className="space-y-6 animate-fadeIn">
+                    
+                    {/* Formulario rápido para añadir notas de seguimiento */}
                     <form onSubmit={handleAddFollowUp} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 space-y-3">
                       <span className="text-xs font-bold text-slate-600 block uppercase tracking-wider">Añadir Evolución / Sesión de Fisioterapia</span>
                       <div className="flex flex-col sm:flex-row gap-3">
-                        <input type="date" value={newFollowUpDate} onChange={(e) => setNewFollowUpDate(e.target.value)} className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold" />
-                        <input type="text" value={newFollowUpText} onChange={(e) => setNewFollowUpText(e.target.value)} placeholder="Resumen de sesión o avances..." className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs" />
-                        <button type="submit" className="bg-teal-700 hover:bg-teal-800 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition">Agregar</button>
+                        <input
+                          type="date"
+                          value={newFollowUpDate}
+                          onChange={(e) => setNewFollowUpDate(e.target.value)}
+                          className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-none"
+                        />
+                        <input
+                          type="text"
+                          value={newFollowUpText}
+                          onChange={(e) => setNewFollowUpText(e.target.value)}
+                          placeholder="Resumen de sesión, avances o respuesta clínica..."
+                          className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-teal-500"
+                        />
+                        <button
+                          type="submit"
+                          className="bg-teal-700 hover:bg-teal-800 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1"
+                        >
+                          <SVGIcon name="plus" className="w-3.5 h-3.5" />
+                          <span>Agregar</span>
+                        </button>
                       </div>
                     </form>
+
+                    {/* Línea de tiempo */}
+                    <div className="relative border-l-2 border-slate-200 pl-4 space-y-5">
+                      {(!selectedPatient.seguimientos || selectedPatient.seguimientos.length === 0) ? (
+                        <p className="text-xs text-slate-400 italic">No hay notas de seguimiento registradas para este paciente.</p>
+                      ) : (
+                        selectedPatient.seguimientos.map((seg) => (
+                          <div key={seg.id} className="relative">
+                            {/* Puntero de línea de tiempo */}
+                            <span className="absolute -left-[21px] top-1 bg-teal-600 border-4 border-white w-4.5 h-4.5 rounded-full shadow-sm" />
+                            <div className="bg-white border border-slate-100 rounded-xl p-3 shadow-sm hover:shadow-md transition">
+                              <div className="flex justify-between items-center mb-1.5">
+                                <span className="text-xs font-black text-teal-800">
+                                  {formatLongDate(seg.fecha)}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteFollowUp(selectedPatient.id, seg.id)}
+                                  className="text-slate-300 hover:text-rose-500 p-0.5 rounded transition"
+                                  title="Borrar nota de evolución"
+                                >
+                                  <SVGIcon name="trash" className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                              <p className="text-xs text-slate-700 uppercase leading-relaxed font-semibold">
+                                {seg.nota}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 )}
+
               </div>
             </div>
           ) : (
             <div className="bg-white rounded-3xl p-12 text-center border border-slate-100 flex-1 flex flex-col justify-center items-center space-y-4">
+              <div className="bg-slate-50 p-4 rounded-full text-teal-600">
+                <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
               <h3 className="font-bold text-slate-700">Bienvenido al Portal Clínico</h3>
-              <p className="text-xs text-slate-400 max-w-md">Seleccione un paciente de la lista izquierda o cree uno nuevo.</p>
-              <button onClick={handleStartCreate} className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition">Crear Primer Paciente</button>
+              <p className="text-xs text-slate-400 max-w-md">
+                Seleccione un paciente de la lista izquierda o cree uno nuevo para empezar a administrar y monitorizar su historia clínica y proceso de rehabilitación física.
+              </p>
+              <button 
+                onClick={handleStartCreate}
+                className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition"
+              >
+                Crear Primer Paciente
+              </button>
             </div>
           )}
+
         </section>
       </main>
 
+      {/* ==========================================
+          PIE DE PÁGINA (Invisible al imprimir)
+          ========================================== */}
       <footer className="bg-slate-100 border-t border-slate-200 py-4 text-center text-xs text-slate-400 print:hidden mt-auto">
         <p>© 2026 Centro de Rehabilitación Integral Monteagudo. Sistema Seguro Local.</p>
       </footer>
 
-      {deleteConfirm.show && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center space-y-4">
-            <h4 className="text-base font-extrabold text-slate-800">¿Eliminar Ficha Médica?</h4>
-            <p className="text-xs text-slate-500">Borrar permanentemente el historial de <strong>{deleteConfirm.name}</strong>.</p>
-            <div className="flex gap-2.5">
-              <button type="button" onClick={() => setDeleteConfirm({ show: false, id: null, name: "" })} className="flex-1 bg-slate-100 py-2.5 rounded-xl text-xs font-bold">Cancelar</button>
-              <button type="button" onClick={executeDeletion} className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl text-xs font-bold">Eliminar</button>
+      {/* ==========================================
+          VISTA DE IMPRESIÓN EXCLUSIVA (Optimizado para hojas físicas)
+          ========================================== */}
+      {selectedPatient && (
+        <div className="hidden print:block p-8 font-serif bg-white text-black min-h-screen">
+          {/* Header Institucional */}
+          <div className="text-center border-b-4 border-double border-black pb-4 mb-6 relative">
+            <h1 className="text-2xl font-black uppercase tracking-wide">Centro de Rehabilitación Integral Monteagudo</h1>
+            <h2 className="text-sm font-bold tracking-widest uppercase text-slate-700 mt-1">Historia Clínica Médica General</h2>
+            <p className="text-[10px] italic text-slate-500 mt-0.5">Monteagudo, Bolivia - Tel: {selectedPatient.telefono || "63359333"}</p>
+            {selectedPatient.fechaRegistro && (
+              <div className="absolute top-0 right-0 border border-black p-1 text-xs font-bold uppercase">
+                Registro: {formatShortDate(selectedPatient.fechaRegistro)}
+              </div>
+            )}
+          </div>
+
+          {/* Tabla de Datos Personales */}
+          <div className="mb-6">
+            <h3 className="text-sm font-bold bg-slate-100 px-2 py-1 border border-black uppercase mb-3">1. Información Personal del Paciente</h3>
+            <table className="w-full text-xs border-collapse border border-black">
+              <tbody>
+                <tr>
+                  <td className="border border-black p-2 font-bold w-1/4">Nombre Completo:</td>
+                  <td className="border border-black p-2 uppercase" colSpan="3">{selectedPatient.nombre}</td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-2 font-bold">Fecha Registro:</td>
+                  <td className="border border-black p-2 font-bold text-teal-950">{formatShortDate(selectedPatient.fechaRegistro)}</td>
+                  <td className="border border-black p-2 font-bold w-1/4">Fecha Nacimiento:</td>
+                  <td className="border border-black p-2">{formatShortDate(selectedPatient.fechaNacimiento)}</td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-2 font-bold">Edad / Sexo:</td>
+                  <td className="border border-black p-2 uppercase">{selectedPatient.edad} años / {selectedPatient.sexo}</td>
+                  <td className="border border-black p-2 font-bold">Carnet Discapacidad:</td>
+                  <td className="border border-black p-2 uppercase">{selectedPatient.carnetDiscapacidad || "NO"}</td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-2 font-bold">Cédula de Identidad:</td>
+                  <td className="border border-black p-2">{selectedPatient.cedulaIdentidad || "S/N"}</td>
+                  <td className="border border-black p-2 font-bold">Teléfono:</td>
+                  <td className="border border-black p-2">{selectedPatient.telefono || "S/D"}</td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-2 font-bold">Ocupación:</td>
+                  <td className="border border-black p-2 uppercase">{selectedPatient.ocupacion || "S/D"}</td>
+                  <td className="border border-black p-2 font-bold">Dirección:</td>
+                  <td className="border border-black p-2 uppercase" colSpan="1">{selectedPatient.direccion || "S/D"}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Antecedentes y Clínica de Entrada */}
+          <div className="mb-6">
+            <h3 className="text-sm font-bold bg-slate-100 px-2 py-1 border border-black uppercase mb-3">2. Antecedentes & Cuadro Clínico de Entrada</h3>
+            <div className="border border-black p-3 text-xs space-y-3 leading-relaxed uppercase">
+              <p><strong>Motivo de Consulta y Cuadro Clínico:</strong> {selectedPatient.medicacionActual || "Ninguno referido"}</p>
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-dashed border-slate-300">
+                <p><strong>Alergias:</strong> {selectedPatient.alergias || "NO"}</p>
+                <p><strong>Operaciones:</strong> {selectedPatient.operaciones || "NO"}</p>
+                <p><strong>APP:</strong> {selectedPatient.app || "NO"}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Examen Físico & Signos */}
+          <div className="mb-6">
+            <h3 className="text-sm font-bold bg-slate-100 px-2 py-1 border border-black uppercase mb-3">3. Examen Físico & Signos Vitales</h3>
+            <div className="grid grid-cols-5 border border-black text-xs text-center divide-x divide-black bg-slate-50 mb-3">
+              <div className="p-2"><strong>F. Cardíaca (FC):</strong> {selectedPatient.fc || "--"} lpm</div>
+              <div className="p-2"><strong>F. Resp (FR):</strong> {selectedPatient.fr || "--"} rpm</div>
+              <div className="p-2"><strong>Presión (TA):</strong> {selectedPatient.ta || "--"}</div>
+              <div className="p-2"><strong>Temp (°C):</strong> {selectedPatient.temperatura || "--"} °C</div>
+              <div className="p-2"><strong>Saturación:</strong> {selectedPatient.so2 || "--"} %</div>
+            </div>
+            <table className="w-full text-xs border-collapse border border-black uppercase">
+              <tbody>
+                <tr>
+                  <td className="border border-black p-2 font-bold w-1/4">Cabeza:</td>
+                  <td className="border border-black p-2">{selectedPatient.cabeza || "Sin particularidades"}</td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-2 font-bold">Tórax:</td>
+                  <td className="border border-black p-2">{selectedPatient.torax || "Sin particularidades"}</td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-2 font-bold">Abdomen:</td>
+                  <td className="border border-black p-2">{selectedPatient.abdomen || "Sin particularidades"}</td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-2 font-bold">Extremidades:</td>
+                  <td className="border border-black p-2">{selectedPatient.extremidades || "Sin particularidades"}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Diagnóstico & Plan de Tratamiento */}
+          <div className="mb-6">
+            <h3 className="text-sm font-bold bg-slate-100 px-2 py-1 border border-black uppercase mb-3">4. Diagnóstico Clínico & Tratamiento de Rehabilitación</h3>
+            <div className="border border-black p-3 text-xs space-y-3 leading-relaxed uppercase">
+              <p className="text-sm"><strong>Diagnóstico Definitivo (Dx):</strong> <span className="font-bold underline">{selectedPatient.diagnostico || "Evaluación pendiente."}</span></p>
+              <p><strong>Esquema Terapéutico Indicado:</strong> {selectedPatient.tratamiento || "No indicado"}</p>
+              <p><strong>Exámenes de Apoyo / Recomendaciones:</strong> {selectedPatient.complementarios || "Ninguno solicitado"}</p>
+            </div>
+          </div>
+
+          {/* Historial de Evolución */}
+          <div className="mb-12">
+            <h3 className="text-sm font-bold bg-slate-100 px-2 py-1 border border-black uppercase mb-3">5. Historial de Evolución Terapéutica</h3>
+            <div className="border border-black divide-y divide-black text-xs uppercase">
+              {(!selectedPatient.seguimientos || selectedPatient.seguimientos.length === 0) ? (
+                <p className="p-3 italic text-slate-500">Sin evolución documentada.</p>
+              ) : (
+                selectedPatient.seguimientos.map((seg, idx) => (
+                  <div key={idx} className="p-2.5 flex justify-between gap-4">
+                    <span className="font-bold w-28 whitespace-nowrap">{formatShortDate(seg.fecha)}</span>
+                    <span className="flex-1 text-slate-700">{seg.nota}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Sección de Firmas al final de la página */}
+          <div className="mt-16 grid grid-cols-2 gap-12 text-center text-xs">
+            <div className="space-y-1">
+              <div className="border-t border-black w-2/3 mx-auto pt-2" />
+              <p className="font-bold">Firma del Profesional Responsable</p>
+              <p className="text-[10px] text-slate-500">C.R.I. Monteagudo</p>
+            </div>
+            <div className="space-y-1">
+              <div className="border-t border-black w-2/3 mx-auto pt-2" />
+              <p className="font-bold">Firma del Paciente / Tutor</p>
+              <p className="text-[10px] text-slate-500">Conformidad con el Tratamiento</p>
             </div>
           </div>
         </div>
       )}
 
-      {modalAlert && (
+      {/* ==========================================
+          MODAL DE CONFIRMACIÓN DE ELIMINACIÓN 
+          (Sustituto de confirm nativo)
+          ========================================== */}
+      {deleteConfirm.show && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4">
-            <h4 className="text-base font-extrabold text-slate-800">{modalAlert.title}</h4>
-            <p className="text-xs text-slate-500">{modalAlert.message}</p>
-            <button type="button" onClick={() => setModalAlert(null)} className="w-full bg-teal-600 text-white text-xs font-bold py-2 rounded-xl">Aceptar</button>
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center space-y-4">
+            <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-rose-50 text-rose-600">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <h4 className="text-base font-extrabold text-slate-800 leading-tight">¿Eliminar Ficha Médica?</h4>
+              <p className="text-xs text-slate-500 mt-2">
+                Está a punto de borrar permanentemente el historial de <strong>{deleteConfirm.name}</strong>. Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <div className="flex gap-2.5">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm({ show: false, id: null, name: "" })}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2.5 rounded-xl transition"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={executeDeletion}
+                className="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-2.5 rounded-xl transition shadow-md shadow-rose-600/10"
+              >
+                Eliminar de todos modos
+              </button>
+            </div>
           </div>
         </div>
       )}
+
+      {/* ==========================================
+          MODAL ALERTAS PERSONALIZADAS (Sustituto de alert nativo)
+          ========================================== */}
+      {modalAlert && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center space-y-4">
+            <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-teal-50 text-teal-600">
+              <SVGIcon name="info" className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-base font-extrabold text-slate-800 leading-tight">{modalAlert.title}</h4>
+              <p className="text-xs text-slate-500 mt-1">{modalAlert.message}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setModalAlert(null)}
+              className="w-full bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-xl transition shadow-md shadow-teal-600/10"
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
