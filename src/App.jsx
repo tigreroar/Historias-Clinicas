@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 // ==========================================
-// BASE DE DATOS CIE-10 INTEGRADA (INCORPORADA DIRECTAMENTE)
+// BASE DE DATOS CIE-10 MAESTRA (INTEGRADA)
 // ==========================================
 const CIE10_MASTER_DATABASE = [
   { "code": "A00", "description": "Cólera" },
@@ -3745,13 +3745,11 @@ export default function App() {
     (p.cedulaIdentidad && p.cedulaIdentidad.includes(searchTerm))
   );
 
-  // Función para normalizar texto (elimina acentos y pasa a minúsculas)
   const normalizeText = (str) => {
     if (!str) return "";
     return str.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   };
 
-  // --- FILTRO INTELIGENTE TIPO GOOGLE DIRECTO DE LA CONSTANTE MAESTRA ---
   const getCieSuggestions = () => {
     if (!formData || typeof formData.diagnostico !== 'string') return [];
     const query = normalizeText(formData.diagnostico).trim();
