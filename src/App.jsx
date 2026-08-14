@@ -6,7 +6,7 @@ import React, { useState, useEffect, useRef } from 'react';
 // ==========================================
 const CIE10_DATABASE = [
   // --- CIES CODIGOS TODOS ---
-  { code: "A00", description: "CÓLERA" },
+   { code: "A00", description: "CÓLERA" },
   { code: "A01", description: "FIEBRES TIFOIDEA Y PARATIFOIDEA" },
   { code: "A02", description: "OTRAS INFECCIONES DEBIDAS A SALMONELLA" },
   { code: "A03", description: "SHIGELOSIS" },
@@ -3611,7 +3611,7 @@ const CIE10_DATABASE = [
   { code: "D59.0", description: "ANEMIA HEMOLÍTICA AUTOINMUNE INDUCIDA POR DROGAS" },
   { code: "D59.1", description: "OTRAS ANEMIAS HEMOLÍTICAS AUTOINMUNES" },
   { code: "D59.2", description: "ANEMIA HEMOLÍTICA NO AUTOINMUNE INDUCIDA POR DROGAS" }
-
+  
 ];
 
 // ==========================================
@@ -3675,6 +3675,28 @@ const formatShortDate = (dateStr) => {
     return date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
   }
   return dateStr;
+};
+
+// Normalizar fechas provenientes de Excel (números seriales o cadenas) a YYYY-MM-DD
+const normalizeExcelDate = (val) => {
+  if (!val || val === "S/D" || val === "S/R") return "";
+  if (typeof val === 'number') {
+    const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+    return date.toISOString().split('T')[0];
+  }
+  const str = String(val).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  if (str.includes('/')) {
+    const parts = str.split('/');
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+      } else {
+        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+      }
+    }
+  }
+  return str;
 };
 
 // Componente de Icono SVG personalizado
@@ -3768,15 +3790,18 @@ export default function App() {
   // Control de confirmación personalizado de eliminación
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: "" });
 
-  // Referencia para la carga de archivos
+  // Referencias para carga de archivos
   const fileInputRef = useRef(null);
+  const excelFileInputRef = useRef(null);
 
-  // Cargar de manera asíncrona la herramienta para exportar a Excel
+  // Cargar de manera asíncrona la herramienta para exportar e importar Excel
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
-    script.async = true;
-    document.body.appendChild(script);
+    if (!window.XLSX) {
+      const script = document.createElement('script');
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+      script.async = true;
+      document.body.appendChild(script);
+    }
   }, []);
 
   // Guardar en LocalStorage automáticamente ante cambios
@@ -3803,16 +3828,15 @@ export default function App() {
     const searchVal = formData.diagnostico.toLowerCase().trim();
     if (searchVal === "") return [];
 
-    // Filtrar por código o por descripción
     return CIE10_DATABASE.filter(item => 
       item.code.toLowerCase().includes(searchVal) || 
       item.description.toLowerCase().includes(searchVal)
-    ).slice(0, 10); // Más sugerencias en tiempo real
+    ).slice(0, 10);
   };
 
   const cieSuggestions = getCieSuggestions();
 
-  // --- IMPRESIÓN Y COPIAS DE SEGURIDAD ---
+  // --- IMPRESIÓN Y COPIAS DE SEGURIDAD JSON ---
   const handlePrint = () => {
     window.print();
   };
@@ -3847,7 +3871,7 @@ export default function App() {
           }
           showAlert("Importación Exitosa", `Se han cargado ${parsed.length} historias clínicas al sistema.`, "success");
         } else {
-          showAlert("Archivo Inválido", "El formato del archivo cargado no es una base de datos de pacientes válida.", "error");
+          showAlert("Archivo Inválido", "El formato del archivo cargado no es una base de datos válida.", "error");
         }
       } catch (err) {
         showAlert("Error al Cargar", "No se pudo descifrar el archivo JSON.", "error");
@@ -3860,38 +3884,38 @@ export default function App() {
   // --- EXPORTAR A EXCEL DIRECTO ---
   const handleExportExcel = () => {
     if (!window.XLSX) {
-      showAlert("Cargando Motor", "El procesador de Excel se está cargando de fondo, inténtelo de nuevo en 3 segundos.", "info");
+      showAlert("Cargando Motor", "El procesador de Excel se está inicializando, por favor intente en unos segundos.", "info");
       return;
     }
 
     try {
       const flatData = patients.map(p => ({
-        "Fecha de Registro": p.fechaRegistro || "S/R",
-        "Nombre Completo": p.nombre,
-        "Fecha de Nacimiento": p.fechaNacimiento || "S/D",
-        "Edad": p.edad,
-        "Sexo": p.sexo,
-        "Cédula de Identidad": p.cedulaIdentidad,
-        "Carnet de Discapacidad": p.carnetDiscapacidad,
-        "Dirección": p.direccion,
-        "Teléfono": p.telefono,
-        "Ocupación": p.ocupacion,
-        "Motivo / Medicación Actual": p.medicacionActual,
-        "Alergias": p.alergias,
-        "Operaciones": p.operaciones,
-        "Antecedentes Personales (APP)": p.app,
-        "FC (lpm)": p.fc,
-        "FR (rpm)": p.fr,
-        "Presión Arterial": p.ta,
-        "Temperatura (°C)": p.temperatura,
-        "Saturación O2 (%)": p.so2,
-        "Examen Físico Cabeza": p.cabeza,
-        "Examen Físico Tórax": p.torax,
-        "Examen Físico Abdomen": p.abdomen,
-        "Examen Físico Extremidades": p.extremidades,
-        "Diagnóstico Principal (CIE-10)": p.diagnostico,
-        "Esquema de Tratamiento": p.tratamiento,
-        "Estudios Complementarios": p.complementarios,
+        "Fecha de Registro": p.fechaRegistro || "",
+        "Nombre Completo": p.nombre || "",
+        "Fecha de Nacimiento": p.fechaNacimiento || "",
+        "Edad": p.edad || "",
+        "Sexo": p.sexo || "MASCULINO",
+        "Cédula de Identidad": p.cedulaIdentidad || "",
+        "Carnet de Discapacidad": p.carnetDiscapacidad || "NO",
+        "Dirección": p.direccion || "",
+        "Teléfono": p.telefono || "",
+        "Ocupación": p.ocupacion || "",
+        "Motivo / Medicación Actual": p.medicacionActual || "",
+        "Alergias": p.alergias || "NO",
+        "Operaciones": p.operaciones || "NO",
+        "Antecedentes Personales (APP)": p.app || "NO",
+        "FC (lpm)": p.fc || "",
+        "FR (rpm)": p.fr || "",
+        "Presión Arterial": p.ta || "",
+        "Temperatura (°C)": p.temperatura || "",
+        "Saturación O2 (%)": p.so2 || "",
+        "Examen Físico Cabeza": p.cabeza || "",
+        "Examen Físico Tórax": p.torax || "",
+        "Examen Físico Abdomen": p.abdomen || "",
+        "Examen Físico Extremidades": p.extremidades || "",
+        "Diagnóstico Principal (CIE-10)": p.diagnostico || "",
+        "Esquema de Tratamiento": p.tratamiento || "",
+        "Estudios Complementarios": p.complementarios || "",
         "Nro de Evoluciones": p.seguimientos ? p.seguimientos.length : 0
       }));
 
@@ -3909,17 +3933,128 @@ export default function App() {
       }, []);
       ws['!cols'] = maxW.map(w => ({ wh: w }));
 
-      window.XLSX.writeFile(wb, `Fichas_Medicas_CRI_Monteagudo_${new Date().toISOString().split('T')[0]}.xlsx`);
+      window.XLSX.writeFile(wb, `Historias_Clinicas_CRI_Monteagudo_${new Date().toISOString().split('T')[0]}.xlsx`);
       showAlert("Excel Descargado", "Todas las historias clínicas se han descargado con éxito.", "success");
     } catch (error) {
       showAlert("Error al Exportar", "Ocurrió un error inesperado al generar el archivo Excel.", "error");
     }
   };
 
+  // --- IMPORTAR DESDE EXCEL DIRECTO ---
+  const handleImportExcelClick = () => {
+    excelFileInputRef.current?.click();
+  };
+
+  const handleImportExcel = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!window.XLSX) {
+      showAlert("Cargando Motor", "El procesador de Excel está cargando, intente nuevamente en unos segundos.", "info");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = window.XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonData = window.XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+        if (!jsonData || jsonData.length === 0) {
+          showAlert("Excel Vacío", "No se encontraron filas con datos en la hoja seleccionada.", "error");
+          return;
+        }
+
+        const newImportedPatients = [];
+        let count = 0;
+
+        jsonData.forEach((row, index) => {
+          // Obtener valores soportando variaciones en nombres de columnas
+          const nombre = row["Nombre Completo"] || row["Nombre"] || row["NOMBRE"] || row["Paciente"] || "";
+          if (!String(nombre).trim()) return; // Ignorar filas sin nombre
+
+          const id = `${Date.now()}_imp_${index}_${Math.random().toString(36).substr(2, 5)}`;
+          const fechaReg = normalizeExcelDate(row["Fecha de Registro"] || row["Fecha Registro"] || row["Registro"]) || new Date().toISOString().split('T')[0];
+          const fechaNac = normalizeExcelDate(row["Fecha de Nacimiento"] || row["Fecha Nacimiento"] || row["Nacimiento"]);
+          const edad = String(row["Edad"] || row["EDAD"] || "");
+          const sexo = String(row["Sexo"] || row["SEXO"] || "MASCULINO").toUpperCase();
+          const ci = String(row["Cédula de Identidad"] || row["CI"] || row["C.I."] || row["Cedula"] || "");
+          const discapacidad = String(row["Carnet de Discapacidad"] || row["Discapacidad"] || "NO").toUpperCase();
+          const dir = String(row["Dirección"] || row["Direccion"] || row["DIRECCION"] || "");
+          const tel = String(row["Teléfono"] || row["Telefono"] || row["TELEFONO"] || row["Celular"] || "");
+          const ocupacion = String(row["Ocupación"] || row["Ocupacion"] || row["OCUPACION"] || "");
+          const medicacion = String(row["Motivo / Medicación Actual"] || row["Motivo de Consulta"] || row["Medicación"] || row["Medicacion"] || "");
+          const alergias = String(row["Alergias"] || row["ALERGIAS"] || "NO");
+          const operaciones = String(row["Operaciones"] || row["Cirugías"] || row["OPERACIONES"] || "NO");
+          const app = String(row["Antecedentes Personales (APP)"] || row["APP"] || "NO");
+          const fc = String(row["FC (lpm)"] || row["FC"] || "");
+          const fr = String(row["FR (rpm)"] || row["FR"] || "");
+          const ta = String(row["Presión Arterial"] || row["TA"] || row["PA"] || "");
+          const temp = String(row["Temperatura (°C)"] || row["Temperatura"] || row["Temp"] || "");
+          const so2 = String(row["Saturación O2 (%)"] || row["Saturación"] || row["SO2"] || row["SatO2"] || "");
+          const cabeza = String(row["Examen Físico Cabeza"] || row["Cabeza"] || "");
+          const torax = String(row["Examen Físico Tórax"] || row["Tórax"] || row["Torax"] || "");
+          const abdomen = String(row["Examen Físico Abdomen"] || row["Abdomen"] || "");
+          const extremidades = String(row["Examen Físico Extremidades"] || row["Extremidades"] || "");
+          const diagnostico = String(row["Diagnóstico Principal (CIE-10)"] || row["Diagnóstico"] || row["Diagnostico"] || row["CIE-10"] || row["CIE10"] || "");
+          const tratamiento = String(row["Esquema de Tratamiento"] || row["Tratamiento"] || row["TRATAMIENTO"] || "");
+          const complementarios = String(row["Estudios Complementarios"] || row["Complementarios"] || "");
+
+          newImportedPatients.push({
+            id,
+            fechaRegistro: fechaReg,
+            nombre: String(nombre).toUpperCase().trim(),
+            fechaNacimiento: fechaNac,
+            edad: edad,
+            sexo: (sexo.includes("FEM") || sexo === "F") ? "FEMENINO" : (sexo.includes("OTR") ? "OTRO" : "MASCULINO"),
+            cedulaIdentidad: ci,
+            carnetDiscapacidad: discapacidad,
+            direccion: dir,
+            telefono: tel,
+            ocupacion: ocupacion,
+            medicacionActual: medicacion,
+            alergias: alergias,
+            operaciones: operaciones,
+            app: app,
+            fc: fc,
+            fr: fr,
+            ta: ta,
+            temperatura: temp,
+            so2: so2,
+            cabeza: cabeza,
+            torax: torax,
+            abdomen: abdomen,
+            extremidades: extremidades,
+            diagnostico: diagnostico,
+            tratamiento: tratamiento,
+            complementarios: complementarios,
+            seguimientos: []
+          });
+          count++;
+        });
+
+        if (count > 0) {
+          setPatients(prev => [...newImportedPatients, ...prev]);
+          setSelectedPatientId(newImportedPatients[0].id);
+          showAlert("Importación Exitosa", `Se han importado y guardado ${count} nuevas historias clínicas desde el archivo Excel.`, "success");
+        } else {
+          showAlert("Sin Registros", "No se detectaron historias clínicas válidas con nombres de pacientes en el archivo.", "error");
+        }
+      } catch (err) {
+        showAlert("Error al Procesar", "No se pudo leer el archivo Excel. Verifique el formato e inténtelo de nuevo.", "error");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = "";
+  };
+
   // --- MANIPULACIÓN DE FORMULARIO ---
   const handleStartCreate = () => {
     setFormData({
-      fechaRegistro: new Date().toISOString().split('T')[0], // Por defecto, hoy
+      fechaRegistro: new Date().toISOString().split('T')[0],
       nombre: "",
       fechaNacimiento: "",
       edad: "",
@@ -4077,6 +4212,22 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased flex flex-col">
+      {/* Inputs ocultos para carga de archivos */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleImportData} 
+        accept=".json" 
+        className="hidden" 
+      />
+      <input 
+        type="file" 
+        ref={excelFileInputRef} 
+        onChange={handleImportExcel} 
+        accept=".xlsx, .xls" 
+        className="hidden" 
+      />
+
       {/* ==========================================
           HEADER PRINCIPAL (Invisible al imprimir)
           ========================================== */}
@@ -4092,6 +4243,44 @@ export default function App() {
               <h1 className="text-xl font-bold tracking-wide">CENTRO DE REHABILITACIÓN INTEGRAL MONTEAGUDO</h1>
               <p className="text-xs text-cyan-100 font-medium">SISTEMA INTEGRAL DE HISTORIAS CLÍNICAS MÉDICAS</p>
             </div>
+          </div>
+
+          {/* Botones de Importación y Exportación Excel / JSON */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={handleImportExcelClick}
+              title="Importar historias clínicas desde un archivo Excel"
+              className="flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition shadow-sm"
+            >
+              <SVGIcon name="upload" className="w-4 h-4" />
+              <span>Importar Excel</span>
+            </button>
+
+            <button
+              onClick={handleExportExcel}
+              title="Exportar todas las historias clínicas a un archivo Excel"
+              className="flex items-center space-x-1.5 bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition shadow-sm"
+            >
+              <SVGIcon name="download" className="w-4 h-4" />
+              <span>Exportar Excel</span>
+            </button>
+
+            <div className="h-6 w-px bg-white/20 mx-1 hidden sm:block"></div>
+
+            <button
+              onClick={handleExportData}
+              title="Copia de seguridad en formato JSON"
+              className="bg-white/10 hover:bg-white/20 text-white px-2.5 py-2 rounded-xl text-xs font-semibold transition"
+            >
+              JSON
+            </button>
+            <button
+              onClick={handleImportClick}
+              title="Restaurar copia JSON"
+              className="bg-white/10 hover:bg-white/20 text-white px-2.5 py-2 rounded-xl text-xs font-semibold transition"
+            >
+              Restaurar
+            </button>
           </div>
         </div>
       </header>
@@ -4569,7 +4758,7 @@ export default function App() {
                       )}
                     </div>
 
-                    {/* TRATAMIENTO COMPLETAMENTE EDITABLE (Vinculación correcta name="tratamiento") */}
+                    {/* TRATAMIENTO COMPLETAMENTE EDITABLE */}
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1 block">Esquema de Tratamiento Indicado</label>
                       <textarea
@@ -4910,14 +5099,22 @@ export default function App() {
               </div>
               <h3 className="font-bold text-slate-700">Bienvenido al Portal Clínico</h3>
               <p className="text-xs text-slate-400 max-w-md">
-                Seleccione un paciente de la lista izquierda o cree uno nuevo para empezar a administrar y monitorizar su historia clínica y proceso de rehabilitación física.
+                Seleccione un paciente de la lista izquierda, importe un archivo Excel o cree uno nuevo para empezar a administrar y monitorizar su historia clínica y proceso de rehabilitación física.
               </p>
-              <button 
-                onClick={handleStartCreate}
-                className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition"
-              >
-                Crear Primer Paciente
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={handleStartCreate}
+                  className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition"
+                >
+                  Crear Primer Paciente
+                </button>
+                <button 
+                  onClick={handleImportExcelClick}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition"
+                >
+                  Importar Excel
+                </button>
+              </div>
             </div>
           )}
 
