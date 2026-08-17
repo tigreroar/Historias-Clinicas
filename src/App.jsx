@@ -3676,34 +3676,54 @@ const formatShortDate = (dateStr) => {
 };
 
 // Normalizar fechas provenientes de Excel (números seriales o cadenas como 9/7/1961) a YYYY-MM-DD
+// Normalizar fechas provenientes de Excel (números seriales o cadenas como 9/7/1961) a YYYY-MM-DD
 const normalizeExcelDate = (val) => {
   if (!val || val === "S/D" || val === "S/R") return "";
+  
+  // Manejo de serial numérico de Excel
   if (typeof val === 'number') {
     const date = new Date(Math.round((val - 25569) * 86400 * 1000));
     return date.toISOString().split('T')[0];
   }
+  
   const str = String(val).trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+
+  // Manejo de formatos tipo 9/7/1961 o 09/07/1961 o 9/7/61
   if (str.includes('/')) {
     const parts = str.split('/');
     if (parts.length === 3) {
+      // Si viene como YYYY/MM/DD
       if (parts[0].length === 4) {
         return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-      } else {
-        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
       }
+      // Si viene como D/M/YYYY o DD/MM/YYYY
+      let day = parts[0].padStart(2, '0');
+      let month = parts[1].padStart(2, '0');
+      let year = parts[2].trim();
+      if (year.length === 2) {
+        year = parseInt(year, 10) > 40 ? `19${year}` : `20${year}`;
+      }
+      return `${year}-${month}-${day}`;
     }
   }
+
   if (str.includes('-')) {
     const parts = str.split('-');
     if (parts.length === 3) {
       if (parts[0].length === 4) {
         return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-      } else {
-        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
       }
+      let day = parts[0].padStart(2, '0');
+      let month = parts[1].padStart(2, '0');
+      let year = parts[2].trim();
+      if (year.length === 2) {
+        year = parseInt(year, 10) > 40 ? `19${year}` : `20${year}`;
+      }
+      return `${year}-${month}-${day}`;
     }
   }
+
   return str;
 };
 
@@ -3986,14 +4006,18 @@ export default function App() {
         };
 
         // Identificar columnas fijas
-        const idxNombre = findColIndex(["NOMBRE", "PACIENTE"]);
-        const idxFechaNac = findColIndex(["FECHA DE NA", "FECHA NACIMIENTO", "NACIMIENTO"]);
-        const idxEdad = findColIndex(["EDAD"]);
-        const idxSexo = findColIndex(["SEXO", "GENERO"]);
-        const idxCi = findColIndex(["CEDULA DE ID", "CEDULA", "C.I.", "CI", "DNI", "IDENTIDAD"]);
-        const idxDiscapacidad = findColIndex(["CARNET DE D", "DISCAPACIDAD", "CARNET DISCAPACIDAD"]);
-        const idxDireccion = findColIndex(["DIRECCION", "DOMICILIO"]);
-        const idxTelefono = findColIndex(["TELEFONO", "CELULAR", "TELF"]);
+       // Identificar columnas fijas con búsqueda exacta y soporte para encabezados cortos
+        const idxNombre = rawHeaders.findIndex(h => h.includes("NOMBRE") || h.includes("PACIENTE"));
+        const idxFechaNac = rawHeaders.findIndex(h => h.startsWith("FECHA DE NA") || h.startsWith("FECHA NAC") || h === "FECHA DE" || h.includes("NACIMIENTO"));
+        const idxEdad = rawHeaders.findIndex(h => h === "EDAD" || h.startsWith("EDAD"));
+        const idxSexo = rawHeaders.findIndex(h => h.includes("SEXO") || h.includes("GENERO"));
+
+        // Match prioritario para Carnet / Cédula evitando que coincida con DIRECCION
+        const idxCi = rawHeaders.findIndex(h => h === "CI" || h === "C.I." || h === "CEDULA" || h.includes("CEDULA DE ID") || h.includes("IDENTIDAD") || h.includes("DNI"));
+
+        const idxDiscapacidad = rawHeaders.findIndex(h => h.includes("DISCAPACIDAD") || h.startsWith("CARNET DE D") || h.startsWith("CARNET DIS"));
+        const idxDireccion = rawHeaders.findIndex(h => h.includes("DIRECCION") || h.includes("DOMICILIO"));
+        const idxTelefono = rawHeaders.findIndex(h => h.includes("TELEFONO") || h.includes("CELULAR") || h.includes("TELF"));
         const idxOcupacion = findColIndex(["OCUPACION", "PROFESION", "TRABAJO"]);
         const idxMedicacion = findColIndex(["MEDICACION", "MOTIVO", "CUADRO"]);
         const idxAlergias = findColIndex(["ALERGIAS", "ALERGIA"]);
