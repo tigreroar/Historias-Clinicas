@@ -3679,35 +3679,57 @@ const formatShortDate = (dateStr) => {
 // Normalizar fechas provenientes de Excel (números seriales o cadenas como 9/7/1961) a YYYY-MM-DD
 const normalizeExcelDate = (val) => {
   if (!val || val === "S/D" || val === "S/R") return "";
-  
-  // Manejo de serial numérico de Excel
-  if (typeof val === 'number') {
-    const date = new Date(Math.round((val - 25569) * 86400 * 1000));
-    return date.toISOString().split('T')[0];
+
+  // Si viene como objeto Date de Javascript
+  if (val instanceof Date && !isNaN(val)) {
+    const y = val.getFullYear();
+    const m = String(val.getMonth() + 1).padStart(2, '0');
+    const d = String(val.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
-  
+
+  // Si viene como número serial de Excel (ej: 22469)
+  if (typeof val === 'number') {
+    const utcDays = Math.floor(val - 25569);
+    const utcValue = utcDays * 86400;
+    const dateInfo = new Date(utcValue * 1000);
+    const fractionalDay = val - Math.floor(val) + 0.0000001;
+    let totalSeconds = Math.floor(86400 * fractionalDay);
+    const seconds = totalSeconds % 60;
+    totalSeconds -= seconds;
+    const hours = Math.floor(totalSeconds / (60 * 60));
+    const minutes = Math.floor(totalSeconds / 60) % 60;
+    const date = new Date(dateInfo.getFullYear(), dateInfo.getMonth(), dateInfo.getDate(), hours, minutes, seconds);
+    
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
   const str = String(val).trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
 
-  // Manejo de formatos tipo 9/7/1961 o 09/07/1961 o 9/7/61
+  // Si viene con barras ej: "9/7/1961" o "09/07/1961"
   if (str.includes('/')) {
     const parts = str.split('/');
     if (parts.length === 3) {
-      // Si viene como YYYY/MM/DD
+      // Formato YYYY/MM/DD
       if (parts[0].length === 4) {
         return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
       }
-      // Si viene como D/M/YYYY o DD/MM/YYYY
+      // Formato DD/MM/YYYY o D/M/YYYY
       let day = parts[0].padStart(2, '0');
       let month = parts[1].padStart(2, '0');
       let year = parts[2].trim();
       if (year.length === 2) {
-        year = parseInt(year, 10) > 40 ? `19${year}` : `20${year}`;
+        year = parseInt(year, 10) > 30 ? `19${year}` : `20${year}`;
       }
       return `${year}-${month}-${day}`;
     }
   }
 
+  // Si viene con guiones ej: "9-7-1961"
   if (str.includes('-')) {
     const parts = str.split('-');
     if (parts.length === 3) {
@@ -3718,7 +3740,7 @@ const normalizeExcelDate = (val) => {
       let month = parts[1].padStart(2, '0');
       let year = parts[2].trim();
       if (year.length === 2) {
-        year = parseInt(year, 10) > 40 ? `19${year}` : `20${year}`;
+        year = parseInt(year, 10) > 30 ? `19${year}` : `20${year}`;
       }
       return `${year}-${month}-${day}`;
     }
@@ -3986,7 +4008,7 @@ export default function App() {
     reader.onload = (evt) => {
       try {
         const data = new Uint8Array(evt.target.result);
-        const workbook = window.XLSX.read(data, { type: 'array' });
+        const workbook = window.XLSX.read(data, { type: 'array', cellDates: false });
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         
@@ -4008,7 +4030,13 @@ export default function App() {
         // Identificar columnas fijas
        // Identificar columnas fijas con búsqueda exacta y soporte para encabezados cortos
         const idxNombre = rawHeaders.findIndex(h => h.includes("NOMBRE") || h.includes("PACIENTE"));
-        const idxFechaNac = rawHeaders.findIndex(h => h.startsWith("FECHA DE NA") || h.startsWith("FECHA NAC") || h === "FECHA DE" || h.includes("NACIMIENTO"));
+        const idxFechaNac = rawHeaders.findIndex(h => 
+  h.startsWith("FECHA DE NA") || 
+  h.startsWith("FECHA NAC") || 
+  h === "FECHA DE" || 
+  h.includes("NACIMIENTO") || 
+  h.includes("FEC. NAC")
+);
         const idxEdad = rawHeaders.findIndex(h => h === "EDAD" || h.startsWith("EDAD"));
         const idxSexo = rawHeaders.findIndex(h => h.includes("SEXO") || h.includes("GENERO"));
 
