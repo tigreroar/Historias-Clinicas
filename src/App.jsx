@@ -3680,7 +3680,7 @@ const formatShortDate = (dateStr) => {
 const normalizeExcelDate = (val) => {
   if (!val || val === "S/D" || val === "S/R") return "";
 
-  // Si viene como objeto Date de Javascript
+  // 1. Si viene como objeto Date nativo
   if (val instanceof Date && !isNaN(val)) {
     const y = val.getFullYear();
     const m = String(val.getMonth() + 1).padStart(2, '0');
@@ -3688,48 +3688,40 @@ const normalizeExcelDate = (val) => {
     return `${y}-${m}-${d}`;
   }
 
-  // Si viene como número serial de Excel (ej: 22469)
+  // 2. Si viene como número serial de Excel (ej: 22469)
   if (typeof val === 'number') {
-    const utcDays = Math.floor(val - 25569);
-    const utcValue = utcDays * 86400;
-    const dateInfo = new Date(utcValue * 1000);
-    const fractionalDay = val - Math.floor(val) + 0.0000001;
-    let totalSeconds = Math.floor(86400 * fractionalDay);
-    const seconds = totalSeconds % 60;
-    totalSeconds -= seconds;
-    const hours = Math.floor(totalSeconds / (60 * 60));
-    const minutes = Math.floor(totalSeconds / 60) % 60;
-    const date = new Date(dateInfo.getFullYear(), dateInfo.getMonth(), dateInfo.getDate(), hours, minutes, seconds);
-    
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
+    const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(date.getUTCDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
   }
 
   const str = String(val).trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
 
-  // Si viene con barras ej: "9/7/1961" o "09/07/1961"
+  // 3. Si viene con barras (ej: "09/07/61", "9/7/1961", "09/07/1961")
   if (str.includes('/')) {
     const parts = str.split('/');
     if (parts.length === 3) {
-      // Formato YYYY/MM/DD
-      if (parts[0].length === 4) {
-        return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-      }
-      // Formato DD/MM/YYYY o D/M/YYYY
       let day = parts[0].padStart(2, '0');
       let month = parts[1].padStart(2, '0');
       let year = parts[2].trim();
+
+      // Si el año viene en 2 dígitos (ej: 61 -> 1961, 99 -> 1999, 05 -> 2005)
       if (year.length === 2) {
-        year = parseInt(year, 10) > 30 ? `19${year}` : `20${year}`;
+        const numYear = parseInt(year, 10);
+        year = numYear > 30 ? `19${year}` : `20${year}`;
+      } else if (parts[0].length === 4) {
+        // Formato YYYY/MM/DD
+        return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
       }
+
       return `${year}-${month}-${day}`;
     }
   }
 
-  // Si viene con guiones ej: "9-7-1961"
+  // 4. Si viene con guiones (ej: "09-07-61", "9-7-1961")
   if (str.includes('-')) {
     const parts = str.split('-');
     if (parts.length === 3) {
@@ -3740,7 +3732,8 @@ const normalizeExcelDate = (val) => {
       let month = parts[1].padStart(2, '0');
       let year = parts[2].trim();
       if (year.length === 2) {
-        year = parseInt(year, 10) > 30 ? `19${year}` : `20${year}`;
+        const numYear = parseInt(year, 10);
+        year = numYear > 30 ? `19${year}` : `20${year}`;
       }
       return `${year}-${month}-${day}`;
     }
@@ -4030,13 +4023,20 @@ export default function App() {
         // Identificar columnas fijas
        // Identificar columnas fijas con búsqueda exacta y soporte para encabezados cortos
         const idxNombre = rawHeaders.findIndex(h => h.includes("NOMBRE") || h.includes("PACIENTE"));
-        const idxFechaNac = rawHeaders.findIndex(h => 
-  h.startsWith("FECHA DE NA") || 
-  h.startsWith("FECHA NAC") || 
-  h === "FECHA DE" || 
-  h.includes("NACIMIENTO") || 
-  h.includes("FEC. NAC")
-);
+        // Detecta "FECHA DE N", "FECHA DE NA", "FECHA NACIMIENTO", "NACIMIENTO", etc.
+        let idxFechaNac = rawHeaders.findIndex(h => 
+          h.startsWith("FECHA DE N") || 
+          h.startsWith("FECHA DE") || 
+          h.startsWith("FECHA NAC") || 
+          h.includes("NACIMIENTO") || 
+          h.includes("FEC. NAC") ||
+          h.includes("FEC NAC")
+        );
+
+        // Respaldo de seguridad: Si no encuentra el texto pero la columna 1 está entre NOMBRE y EDAD
+        if (idxFechaNac === -1 && rawHeaders.length > 1) {
+          idxFechaNac = 1;
+        }
         const idxEdad = rawHeaders.findIndex(h => h === "EDAD" || h.startsWith("EDAD"));
         const idxSexo = rawHeaders.findIndex(h => h.includes("SEXO") || h.includes("GENERO"));
 
