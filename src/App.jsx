@@ -5,8 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 // Extraídos y optimizados de la Clasificación Internacional de Enfermedades (CIE-10)
 // ==========================================
 const CIE10_DATABASE = [
-  // --- CIES CODIGOS TODOS ---
-   { code: "A00", description: "CÓLERA" },
+  { code: "A00", description: "CÓLERA" },
   { code: "A01", description: "FIEBRES TIFOIDEA Y PARATIFOIDEA" },
   { code: "A02", description: "OTRAS INFECCIONES DEBIDAS A SALMONELLA" },
   { code: "A03", description: "SHIGELOSIS" },
@@ -3611,11 +3610,10 @@ const CIE10_DATABASE = [
   { code: "D59.0", description: "ANEMIA HEMOLÍTICA AUTOINMUNE INDUCIDA POR DROGAS" },
   { code: "D59.1", description: "OTRAS ANEMIAS HEMOLÍTICAS AUTOINMUNES" },
   { code: "D59.2", description: "ANEMIA HEMOLÍTICA NO AUTOINMUNE INDUCIDA POR DROGAS" }
-  
 ];
 
 // ==========================================
-// PACIENTE DE DEMOSTRACIÓN (Extraído de tus imágenes)
+// PACIENTE DE DEMOSTRACIÓN
 // ==========================================
 const INITIAL_PATIENTS = [
   {
@@ -3677,7 +3675,7 @@ const formatShortDate = (dateStr) => {
   return dateStr;
 };
 
-// Normalizar fechas provenientes de Excel (números seriales o cadenas) a YYYY-MM-DD
+// Normalizar fechas provenientes de Excel (números seriales o cadenas como 9/7/1961) a YYYY-MM-DD
 const normalizeExcelDate = (val) => {
   if (!val || val === "S/D" || val === "S/R") return "";
   if (typeof val === 'number') {
@@ -3688,6 +3686,16 @@ const normalizeExcelDate = (val) => {
   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
   if (str.includes('/')) {
     const parts = str.split('/');
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+      } else {
+        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+      }
+    }
+  }
+  if (str.includes('-')) {
+    const parts = str.split('-');
     if (parts.length === 3) {
       if (parts[0].length === 4) {
         return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
@@ -3890,33 +3898,33 @@ export default function App() {
 
     try {
       const flatData = patients.map(p => ({
-        "Fecha de Registro": p.fechaRegistro || "",
-        "Nombre Completo": p.nombre || "",
-        "Fecha de Nacimiento": p.fechaNacimiento || "",
-        "Edad": p.edad || "",
-        "Sexo": p.sexo || "MASCULINO",
-        "Cédula de Identidad": p.cedulaIdentidad || "",
-        "Carnet de Discapacidad": p.carnetDiscapacidad || "NO",
-        "Dirección": p.direccion || "",
-        "Teléfono": p.telefono || "",
-        "Ocupación": p.ocupacion || "",
-        "Motivo / Medicación Actual": p.medicacionActual || "",
-        "Alergias": p.alergias || "NO",
-        "Operaciones": p.operaciones || "NO",
-        "Antecedentes Personales (APP)": p.app || "NO",
-        "FC (lpm)": p.fc || "",
-        "FR (rpm)": p.fr || "",
-        "Presión Arterial": p.ta || "",
-        "Temperatura (°C)": p.temperatura || "",
-        "Saturación O2 (%)": p.so2 || "",
-        "Examen Físico Cabeza": p.cabeza || "",
-        "Examen Físico Tórax": p.torax || "",
-        "Examen Físico Abdomen": p.abdomen || "",
-        "Examen Físico Extremidades": p.extremidades || "",
-        "Diagnóstico Principal (CIE-10)": p.diagnostico || "",
-        "Esquema de Tratamiento": p.tratamiento || "",
-        "Estudios Complementarios": p.complementarios || "",
-        "Nro de Evoluciones": p.seguimientos ? p.seguimientos.length : 0
+        "NOMBRE": p.nombre || "",
+        "FECHA DE NACIMIENTO": p.fechaNacimiento || "",
+        "EDAD": p.edad || "",
+        "SEXO": p.sexo || "MASCULINO",
+        "CEDULA DE IDENTIDAD": p.cedulaIdentidad || "",
+        "CARNET DE DISCAPACIDAD": p.carnetDiscapacidad || "NO",
+        "DIRECCION": p.direccion || "",
+        "TELEFONO": p.telefono || "",
+        "OCUPACION": p.ocupacion || "",
+        "MEDICACION ACTUAL": p.medicacionActual || "",
+        "ALERGIAS": p.alergias || "NO",
+        "OPERACIONES": p.operaciones || "NO",
+        "APP": p.app || "NO",
+        "FC": p.fc || "",
+        "FR": p.fr || "",
+        "TA": p.ta || "",
+        "T": p.temperatura || "",
+        "SO2": p.so2 || "",
+        "EVALUACION CABEZA": p.cabeza || "",
+        "EVALUACION TORAX": p.torax || "",
+        "EVALUACION ABDOMEN": p.abdomen || "",
+        "EVALUACION EXTREMIDADES": p.extremidades || "",
+        "DIAGNOSTICO": p.diagnostico || "",
+        "ESQUEMA DE TRATAMIENTO": p.tratamiento || "",
+        "ESTUDIOS COMPLEMENTARIOS": p.complementarios || "",
+        "FECHA DE REGISTRO": p.fechaRegistro || "",
+        "NRO DE EVOLUCIONES": p.seguimientos ? p.seguimientos.length : 0
       }));
 
       const ws = window.XLSX.utils.json_to_sheet(flatData);
@@ -3931,7 +3939,7 @@ export default function App() {
         });
         return acc;
       }, []);
-      ws['!cols'] = maxW.map(w => ({ wh: w }));
+      ws['!cols'] = maxW.map(w => ({ wch: w }));
 
       window.XLSX.writeFile(wb, `Historias_Clinicas_CRI_Monteagudo_${new Date().toISOString().split('T')[0]}.xlsx`);
       showAlert("Excel Descargado", "Todas las historias clínicas se han descargado con éxito.", "success");
@@ -3961,80 +3969,143 @@ export default function App() {
         const workbook = window.XLSX.read(data, { type: 'array' });
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
-        const jsonData = window.XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+        
+        // Obtenemos los datos en filas de matrices (header: 1) para capturar el orden exacto de columnas
+        const rows = window.XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
 
-        if (!jsonData || jsonData.length === 0) {
+        if (!rows || rows.length <= 1) {
           showAlert("Excel Vacío", "No se encontraron filas con datos en la hoja seleccionada.", "error");
           return;
         }
 
+        const rawHeaders = rows[0].map(h => String(h).trim().toUpperCase());
+
+        // Función para obtener índice de columna por múltiples nombres alternativos
+        const findColIndex = (alternatives) => {
+          return rawHeaders.findIndex(h => alternatives.some(alt => h.includes(alt.toUpperCase())));
+        };
+
+        // Identificar columnas fijas
+        const idxNombre = findColIndex(["NOMBRE", "PACIENTE"]);
+        const idxFechaNac = findColIndex(["FECHA DE NA", "FECHA NACIMIENTO", "NACIMIENTO"]);
+        const idxEdad = findColIndex(["EDAD"]);
+        const idxSexo = findColIndex(["SEXO", "GENERO"]);
+        const idxCi = findColIndex(["CEDULA DE ID", "CEDULA", "C.I.", "CI", "DNI", "IDENTIDAD"]);
+        const idxDiscapacidad = findColIndex(["CARNET DE D", "DISCAPACIDAD", "CARNET DISCAPACIDAD"]);
+        const idxDireccion = findColIndex(["DIRECCION", "DOMICILIO"]);
+        const idxTelefono = findColIndex(["TELEFONO", "CELULAR", "TELF"]);
+        const idxOcupacion = findColIndex(["OCUPACION", "PROFESION", "TRABAJO"]);
+        const idxMedicacion = findColIndex(["MEDICACION", "MOTIVO", "CUADRO"]);
+        const idxAlergias = findColIndex(["ALERGIAS", "ALERGIA"]);
+        const idxOperaciones = findColIndex(["OPERACIONES", "OPERACION", "CIRUGIAS", "CIRUGIA"]);
+        const idxApp = findColIndex(["APP", "ANTECEDENTES"]);
+        const idxFc = findColIndex(["FC"]);
+        const idxFr = findColIndex(["FR"]);
+        const idxTa = findColIndex(["TA", "PA", "PRESION"]);
+        
+        // Temperatura: buscar columna 'T' exacta o 'TEMP'
+        let idxTemp = rawHeaders.findIndex(h => h === "T" || h.includes("TEMP") || h.includes("TEMPERATURA"));
+        
+        const idxSo2 = findColIndex(["SO2", "SATURACION", "SAT"]);
+
+        // Detección de las columnas de Evaluación (Cabeza, Tórax, Abdomen, Extremidades)
+        let idxCabeza = findColIndex(["EVALUACION CABEZA", "CABEZA"]);
+        let idxTorax = findColIndex(["EVALUACION TORAX", "TORAX"]);
+        let idxAbdomen = findColIndex(["EVALUACION ABDOMEN", "ABDOMEN"]);
+        let idxExtremidades = findColIndex(["EVALUACION EXTREMIDADES", "EXTREMIDADES", "MIEMBROS"]);
+
+        // Si las 4 columnas se llaman simplemente "EVALUACION", las mapeamos por orden de aparición
+        const evaluacionIndices = [];
+        rawHeaders.forEach((h, i) => {
+          if (h === "EVALUACION" || h.startsWith("EVALUACION")) {
+            evaluacionIndices.push(i);
+          }
+        });
+
+        if (evaluacionIndices.length >= 4) {
+          if (idxCabeza === -1) idxCabeza = evaluacionIndices[0];
+          if (idxTorax === -1) idxTorax = evaluacionIndices[1];
+          if (idxAbdomen === -1) idxAbdomen = evaluacionIndices[2];
+          if (idxExtremidades === -1) idxExtremidades = evaluacionIndices[3];
+        }
+
+        const idxDiag = findColIndex(["DIAGNOSTIC", "DIAGNOSTICO", "CIE-10", "CIE10", "DX"]);
+        const idxTrat = findColIndex(["ESQUEMA DE", "TRATAMIENTO", "TX", "ESQUEMA"]);
+        const idxComp = findColIndex(["COMPLEMENTARIOS", "ESTUDIOS", "LABORATORIO"]);
+        const idxFechaReg = findColIndex(["FECHA DE REGISTRO", "FECHA REGISTRO", "REGISTRO"]);
+
         const newImportedPatients = [];
         let count = 0;
 
-        jsonData.forEach((row, index) => {
-          // Obtener valores soportando variaciones en nombres de columnas
-          const nombre = row["Nombre Completo"] || row["Nombre"] || row["NOMBRE"] || row["Paciente"] || "";
-          if (!String(nombre).trim()) return; // Ignorar filas sin nombre
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row.length === 0) continue;
 
-          const id = `${Date.now()}_imp_${index}_${Math.random().toString(36).substr(2, 5)}`;
-          const fechaReg = normalizeExcelDate(row["Fecha de Registro"] || row["Fecha Registro"] || row["Registro"]) || new Date().toISOString().split('T')[0];
-          const fechaNac = normalizeExcelDate(row["Fecha de Nacimiento"] || row["Fecha Nacimiento"] || row["Nacimiento"]);
-          const edad = String(row["Edad"] || row["EDAD"] || "");
-          const sexo = String(row["Sexo"] || row["SEXO"] || "MASCULINO").toUpperCase();
-          const ci = String(row["Cédula de Identidad"] || row["CI"] || row["C.I."] || row["Cedula"] || "");
-          const discapacidad = String(row["Carnet de Discapacidad"] || row["Discapacidad"] || "NO").toUpperCase();
-          const dir = String(row["Dirección"] || row["Direccion"] || row["DIRECCION"] || "");
-          const tel = String(row["Teléfono"] || row["Telefono"] || row["TELEFONO"] || row["Celular"] || "");
-          const ocupacion = String(row["Ocupación"] || row["Ocupacion"] || row["OCUPACION"] || "");
-          const medicacion = String(row["Motivo / Medicación Actual"] || row["Motivo de Consulta"] || row["Medicación"] || row["Medicacion"] || "");
-          const alergias = String(row["Alergias"] || row["ALERGIAS"] || "NO");
-          const operaciones = String(row["Operaciones"] || row["Cirugías"] || row["OPERACIONES"] || "NO");
-          const app = String(row["Antecedentes Personales (APP)"] || row["APP"] || "NO");
-          const fc = String(row["FC (lpm)"] || row["FC"] || "");
-          const fr = String(row["FR (rpm)"] || row["FR"] || "");
-          const ta = String(row["Presión Arterial"] || row["TA"] || row["PA"] || "");
-          const temp = String(row["Temperatura (°C)"] || row["Temperatura"] || row["Temp"] || "");
-          const so2 = String(row["Saturación O2 (%)"] || row["Saturación"] || row["SO2"] || row["SatO2"] || "");
-          const cabeza = String(row["Examen Físico Cabeza"] || row["Cabeza"] || "");
-          const torax = String(row["Examen Físico Tórax"] || row["Tórax"] || row["Torax"] || "");
-          const abdomen = String(row["Examen Físico Abdomen"] || row["Abdomen"] || "");
-          const extremidades = String(row["Examen Físico Extremidades"] || row["Extremidades"] || "");
-          const diagnostico = String(row["Diagnóstico Principal (CIE-10)"] || row["Diagnóstico"] || row["Diagnostico"] || row["CIE-10"] || row["CIE10"] || "");
-          const tratamiento = String(row["Esquema de Tratamiento"] || row["Tratamiento"] || row["TRATAMIENTO"] || "");
-          const complementarios = String(row["Estudios Complementarios"] || row["Complementarios"] || "");
+          const getVal = (idx) => (idx !== -1 && row[idx] !== undefined && row[idx] !== null) ? String(row[idx]).trim() : "";
+
+          const nombre = getVal(idxNombre);
+          if (!nombre) continue; // Saltar filas sin nombre
+
+          const id = `${Date.now()}_imp_${i}_${Math.random().toString(36).substr(2, 5)}`;
+          const fechaReg = normalizeExcelDate(getVal(idxFechaReg)) || new Date().toISOString().split('T')[0];
+          const fechaNac = normalizeExcelDate(getVal(idxFechaNac));
+          const edad = getVal(idxEdad);
+          const rawSexo = getVal(idxSexo).toUpperCase();
+          const sexo = (rawSexo.includes("FEM") || rawSexo === "F") ? "FEMENINO" : (rawSexo.includes("OTR") ? "OTRO" : "MASCULINO");
+          const ci = getVal(idxCi);
+          const discapacidad = getVal(idxDiscapacidad) || "NO";
+          const direccion = getVal(idxDireccion);
+          const telefono = getVal(idxTelefono);
+          const ocupacion = getVal(idxOcupacion);
+          const medicacion = getVal(idxMedicacion);
+          const alergias = getVal(idxAlergias) || "NO";
+          const operaciones = getVal(idxOperaciones) || "NO";
+          const app = getVal(idxApp) || "NO";
+          const fc = getVal(idxFc);
+          const fr = getVal(idxFr);
+          const ta = getVal(idxTa);
+          const temp = getVal(idxTemp);
+          const so2 = getVal(idxSo2);
+          const cabeza = getVal(idxCabeza);
+          const torax = getVal(idxTorax);
+          const abdomen = getVal(idxAbdomen);
+          const extremidades = getVal(idxExtremidades);
+          const diagnostico = getVal(idxDiag);
+          const tratamiento = getVal(idxTrat);
+          const complementarios = getVal(idxComp);
 
           newImportedPatients.push({
             id,
             fechaRegistro: fechaReg,
-            nombre: String(nombre).toUpperCase().trim(),
+            nombre: nombre.toUpperCase(),
             fechaNacimiento: fechaNac,
             edad: edad,
-            sexo: (sexo.includes("FEM") || sexo === "F") ? "FEMENINO" : (sexo.includes("OTR") ? "OTRO" : "MASCULINO"),
+            sexo: sexo,
             cedulaIdentidad: ci,
-            carnetDiscapacidad: discapacidad,
-            direccion: dir,
-            telefono: tel,
-            ocupacion: ocupacion,
-            medicacionActual: medicacion,
-            alergias: alergias,
-            operaciones: operaciones,
-            app: app,
+            carnetDiscapacidad: discapacidad.toUpperCase(),
+            direccion: direccion.toUpperCase(),
+            telefono: telefono,
+            ocupacion: ocupacion.toUpperCase(),
+            medicacionActual: medicacion.toUpperCase(),
+            alergias: alergias.toUpperCase(),
+            operaciones: operaciones.toUpperCase(),
+            app: app.toUpperCase(),
             fc: fc,
             fr: fr,
             ta: ta,
             temperatura: temp,
             so2: so2,
-            cabeza: cabeza,
-            torax: torax,
-            abdomen: abdomen,
-            extremidades: extremidades,
-            diagnostico: diagnostico,
-            tratamiento: tratamiento,
-            complementarios: complementarios,
+            cabeza: cabeza.toUpperCase(),
+            torax: torax.toUpperCase(),
+            abdomen: abdomen.toUpperCase(),
+            extremidades: extremidades.toUpperCase(),
+            diagnostico: diagnostico.toUpperCase(),
+            tratamiento: tratamiento.toUpperCase(),
+            complementarios: complementarios.toUpperCase(),
             seguimientos: []
           });
           count++;
-        });
+        }
 
         if (count > 0) {
           setPatients(prev => [...newImportedPatients, ...prev]);
@@ -4224,7 +4295,7 @@ export default function App() {
         type="file" 
         ref={excelFileInputRef} 
         onChange={handleImportExcel} 
-        accept=".xlsx, .xls" 
+        accept=".xlsx, .xls, .csv" 
         className="hidden" 
       />
 
@@ -5272,7 +5343,6 @@ export default function App() {
 
       {/* ==========================================
           MODAL DE CONFIRMACIÓN DE ELIMINACIÓN 
-          (Sustituto de confirm nativo)
           ========================================== */}
       {deleteConfirm.show && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
@@ -5309,7 +5379,7 @@ export default function App() {
       )}
 
       {/* ==========================================
-          MODAL ALERTAS PERSONALIZADAS (Sustituto de alert nativo)
+          MODAL ALERTAS PERSONALIZADAS 
           ========================================== */}
       {modalAlert && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
